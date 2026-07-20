@@ -1,0 +1,14 @@
+{
+  "name": "BaatChiit.ai",
+  "short_name": "BaatChiit",
+  "description": "Live any-to-any Indian language translation between two people on one phone.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f6f5f2",
+  "theme_color": "#f6f5f2",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
