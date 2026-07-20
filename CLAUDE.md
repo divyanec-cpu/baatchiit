@@ -10,18 +10,21 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
 - Deploy: Vercel → then pwabuilder.com wraps the live URL into an Android APK.
 - Demo mode is fully offline/scripted (Hindi↔Tamil negotiation, guest speaks first) — use it to verify UI changes without an API key.
 
-## State as of 2026-07-20
+## State as of 2026-07-20 (second session)
 
-- Fixed: `pipeline.js` moved from repo root into `api/` (Vercel only exposes functions under `/api`; the old layout 404'd `/api/pipeline`).
-- Verified in browser: demo mode works both directions (guest Hindi → Tamil, host Tamil → Hindi), language chips lock, history logs.
+- Fixed earlier: `pipeline.js` moved from repo root into `api/` (Vercel only exposes functions under `/api`; the old layout 404'd `/api/pipeline`).
+- **Built this session** (all verified in browser via local http-server + demo mode):
+  - Phrase packs: 3 packs (Greetings/Bargaining/Help) × 14 phrases, hardcoded translations in all 11 languages in `PHRASE_PACKS` in index.html; drawer opens from strip, tap shows phrase on both halves in each side's language. Translations are Claude-authored — a native-speaker read-through wouldn't hurt, esp. Odia/Punjabi.
+  - Open-mic mode: strip toggle; live-mode tap-to-talk with WebAudio RMS silence auto-stop (~1.5s quiet, thresholds 0.035/0.02 in `startSilenceWatch`). NOT yet tested with a real microphone — needs an on-device check.
+  - Polish: bubble entrance animations, "Play again" replay button for received TTS, active-speaker half highlight, animated translating dots.
+  - Fixed broken icon `<link>` paths (`/icons/…` → `/…`), manifest colors aligned to dark theme, sw.js cache bumped to v2 with `/api/` guard (old guard checked a Netlify path).
 - `netlify.toml` is leftover from an abandoned Netlify plan (hosting is Vercel); user hasn't confirmed deleting it.
-- Not yet deployed; no Vercel project linked yet.
+- Not yet deployed; no Vercel project linked. Vercel CLI installed globally. Remaining deploy steps are user-interactive: `vercel login`, `vercel`, `vercel env add SARVAM_API_KEY`, `vercel --prod`, then pwabuilder.com for the APK.
 
-## Agreed next work (user said "all three")
+## Remaining roadmap
 
-1. **Deploy prep** — get it onto Vercel (user adds `SARVAM_API_KEY` themselves), then PWABuilder APK.
-2. **Roadmap features** — accounts, phrase packs, open-mic mode (from README roadmap). Note: real accounts need a backend decision (nothing exists yet); phrase packs and open-mic can be client-side.
-3. **UI polish.**
+- **Accounts / payments** — blocked on a backend decision (nothing exists yet; user's MissionFauj project uses MSG91 OTP, ask before assuming that stack).
+- On-device testing of open-mic thresholds and iPhone audio/mp4 path.
 
 ## Context
 

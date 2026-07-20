@@ -6,8 +6,8 @@
 <meta name="theme-color" content="#14181F" />
 <title>BaatChiit.ai — Live Translator</title>
 <link rel="manifest" href="/manifest.json" />
-<link rel="apple-touch-icon" href="/icons/icon-192.png" />
-<link rel="icon" href="/icons/icon-192.png" />
+<link rel="apple-touch-icon" href="/icon-192.png" />
+<link rel="icon" href="/icon-192.png" />
 
 <!-- Fraunces = headings & language names (a printed-signboard feel).
      Inter = interface labels/buttons.
@@ -159,6 +159,32 @@
     text-transform: uppercase;
     color: var(--chalk-dim);
   }
+  /* Animated ellipsis while the pipeline is working */
+  .status-line.is-working::after {
+    content: "";
+    animation: workingDots 1.2s infinite;
+  }
+  @keyframes workingDots {
+    0% { content: ""; }
+    25% { content: "."; }
+    50% { content: ".."; }
+    75% { content: "..."; }
+  }
+
+  /* Replay the spoken translation without asking the other person to repeat */
+  .replay-btn {
+    margin-top: 6px;
+    font-size: 12px;
+    color: var(--chalk-dim);
+    border: 1px solid var(--hairline);
+    border-radius: 999px;
+    padding: 5px 12px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .replay-btn:active { background: var(--ink-soft); }
+  .replay-btn svg { width: 13px; height: 13px; }
 
   /* ---- Number chips: the signature detail. Styled like a little
      price-tag stub punched out of a receipt. ---- */
@@ -211,6 +237,12 @@
   }
   @media (prefers-reduced-motion: no-preference) {
     .ptt.is-recording { animation: pulse 1.1s ease-in-out infinite; }
+    .bubble-original, .bubble-translated, .replay-btn { animation: bubbleIn 0.25s ease both; }
+    .bubble-translated { animation-delay: 0.05s; }
+  }
+  @keyframes bubbleIn {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: none; }
   }
   @keyframes pulse {
     0%, 100% { box-shadow: 0 0 0 0 rgba(198,67,43,0.45); }
@@ -249,6 +281,13 @@
     white-space: nowrap;
   }
   .strip-btn:active { background: var(--ink-soft); }
+  .strip-btn[aria-pressed="true"] { color: var(--marigold); }
+  .strip-group { display: flex; align-items: center; }
+  /* On narrow phones, strip buttons collapse to their icons (the
+     history count stays visible so a growing session is still legible). */
+  @media (max-width: 430px) {
+    .strip-btn .btn-label { display: none; }
+  }
 
   .mode-toggle {
     display: flex;
@@ -349,6 +388,48 @@
   .history-translated { font-family: var(--font-script); font-size: 16px; margin-top: 2px; }
   .drawer-empty { padding: 30px 16px; text-align: center; color: var(--chalk-dim); font-size: 14px; }
 
+  /* ============== PHRASES DRAWER ============== */
+  .pack-tabs {
+    display: flex; gap: 6px;
+    padding: 12px 16px 2px;
+  }
+  .pack-tabs button {
+    font-size: 12px; font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+    border: 1px solid var(--hairline);
+    background: var(--ink);
+    color: var(--chalk-dim);
+  }
+  .pack-tabs button[aria-pressed="true"] {
+    background: var(--marigold);
+    border-color: var(--marigold);
+    color: var(--ink);
+  }
+  .phrase-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    width: 100%;
+    padding: 12px 2px;
+    border-bottom: 1px solid var(--hairline);
+    font-size: 15px;
+    text-align: left;
+  }
+  .phrase-item:last-child { border-bottom: none; }
+  .phrase-item:active { background: rgba(246,241,228,0.05); }
+  .phrase-item .native-preview {
+    font-family: var(--font-script);
+    color: var(--chalk-dim);
+    font-size: 13px;
+    flex-shrink: 0;
+    max-width: 46%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .phrase-hint {
+    padding: 2px 16px 0;
+    font-size: 12px;
+    color: var(--chalk-dim);
+  }
+
   /* ============== TOASTS / TIP ============== */
   .tip {
     position: absolute;
@@ -401,16 +482,29 @@
 
   <!-- ============== CONTROL STRIP ============== -->
   <div class="strip">
-    <button class="strip-btn" id="btn-history">
-      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/></svg>
-      History<span id="history-count"></span>
-    </button>
+    <div class="strip-group">
+      <button class="strip-btn" id="btn-history">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/></svg>
+        <span class="btn-label">History</span><span id="history-count"></span>
+      </button>
+      <button class="strip-btn" id="btn-phrases">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.9-.9L3 20l1-4.9a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
+        <span class="btn-label">Phrases</span>
+      </button>
+    </div>
 
     <span class="brand">BaatChiit</span>
 
-    <div class="mode-toggle" role="group" aria-label="Mode">
-      <button id="mode-demo" aria-pressed="true">Demo</button>
-      <button id="mode-live" aria-pressed="false">Live</button>
+    <div class="strip-group">
+      <button class="strip-btn" id="btn-openmic" aria-pressed="false"
+              title="Open mic: tap once to talk, recording stops by itself when you go quiet">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h2m3-4v8m4-11v14m4-11v8m4-6v4m3-2h.01"/></svg>
+        <span class="btn-label">Open mic</span>
+      </button>
+      <div class="mode-toggle" role="group" aria-label="Mode">
+        <button id="mode-demo" aria-pressed="true">Demo</button>
+        <button id="mode-live" aria-pressed="false">Live</button>
+      </div>
     </div>
   </div>
 
@@ -450,6 +544,18 @@
   <div class="drawer-list" id="drawer-list">
     <p class="drawer-empty">Nothing yet — history clears when the page refreshes.</p>
   </div>
+</div>
+
+<!-- Phrases drawer: canned essentials that work fully offline -->
+<div class="drawer-backdrop" id="phrases-backdrop"></div>
+<div class="drawer" id="phrases-drawer" role="dialog" aria-label="Phrase packs">
+  <div class="drawer-head">
+    <h2>Phrases</h2>
+    <button class="strip-btn" id="btn-close-phrases">Close</button>
+  </div>
+  <div class="pack-tabs" id="pack-tabs" role="tablist"></div>
+  <p class="phrase-hint">Tap a phrase — each side of the screen shows it in that side's language. Works offline.</p>
+  <div class="drawer-list" id="phrases-list"></div>
 </div>
 
 <script>
@@ -492,7 +598,11 @@
     micStream: null,           // shared getUserMedia stream, requested once
     recorder: null,
     recordingSide: null,
-    recordStartedAt: 0
+    recordStartedAt: 0,
+    openMic: false,            // tap-to-talk with silence auto-stop (vs hold-to-talk)
+    audioCtx: null,            // WebAudio bits for the open-mic silence watcher
+    analyser: null,
+    silenceWatch: null
   };
 
   function currentLang(side) {
@@ -593,9 +703,21 @@
   // -----------------------------------------------------------------
   // Rendering: subtitle "stage" areas + status lines
   // -----------------------------------------------------------------
-  function setStatus(side, text) { $("status-" + side).textContent = text || ""; }
+  function setStatus(side, text, working) {
+    var el = $("status-" + side);
+    el.textContent = text || "";
+    el.classList.toggle("is-working", !!working);
+  }
 
-  function showExchange(speakerSide, original, translated) {
+  function playTts(audioBase64) {
+    try {
+      new Audio("data:audio/wav;base64," + audioBase64).play().catch(function () {
+        /* Autoplay can be blocked until the user has interacted with the page once -- silent no-op is fine here. */
+      });
+    } catch (e) { /* ignore playback errors, the caption is still shown */ }
+  }
+
+  function showExchange(speakerSide, original, translated, ttsAudioBase64) {
     var listenerSide = otherSide(speakerSide);
 
     var speakerStage = $("stage-" + speakerSide);
@@ -606,7 +728,17 @@
     var listenerStage = $("stage-" + listenerSide);
     listenerStage.innerHTML =
       '<p class="bubble-original">Translated for you</p>' +
-      '<p class="bubble-translated">' + withNumberChips(translated) + "</p>";
+      '<p class="bubble-translated">' + withNumberChips(translated) + "</p>" +
+      (ttsAudioBase64
+        ? '<button class="replay-btn">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Zm5 3a5 5 0 0 1 0 8m3-11a9 9 0 0 1 0 14"/></svg>' +
+          "Play again</button>"
+        : "");
+    if (ttsAudioBase64) {
+      listenerStage.querySelector(".replay-btn").addEventListener("click", function () {
+        playTts(ttsAudioBase64);
+      });
+    }
   }
 
   function showError(side, message) {
@@ -663,6 +795,96 @@
   });
 
   // -----------------------------------------------------------------
+  // Phrase packs. Pre-translated at build time in all 11 supported
+  // languages, so they work with no network and no API key — useful
+  // exactly when the live pipeline can't be (dead zone, key trouble,
+  // or before the first deploy). Tapping a phrase shows it on BOTH
+  // halves, each in that side's currently selected language.
+  // -----------------------------------------------------------------
+  var PHRASE_PACKS = [
+    { name: "Greetings", phrases: [
+      { "en-IN": "Hello", "hi-IN": "नमस्ते", "bn-IN": "নমস্কার", "gu-IN": "નમસ્તે", "kn-IN": "ನಮಸ್ಕಾರ", "ml-IN": "നമസ്കാരം", "mr-IN": "नमस्कार", "od-IN": "ନମସ୍କାର", "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "ta-IN": "வணக்கம்", "te-IN": "నమస్కారం" },
+      { "en-IN": "Thank you", "hi-IN": "धन्यवाद", "bn-IN": "ধন্যবাদ", "gu-IN": "આભાર", "kn-IN": "ಧನ್ಯವಾದಗಳು", "ml-IN": "നന്ദി", "mr-IN": "धन्यवाद", "od-IN": "ଧନ୍ୟବାଦ", "pa-IN": "ਧੰਨਵਾਦ", "ta-IN": "நன்றி", "te-IN": "ధన్యవాదాలు" },
+      { "en-IN": "Okay", "hi-IN": "ठीक है", "bn-IN": "ঠিক আছে", "gu-IN": "બરાબર", "kn-IN": "ಸರಿ", "ml-IN": "ശരി", "mr-IN": "ठीक आहे", "od-IN": "ଠିକ୍ ଅଛି", "pa-IN": "ਠੀਕ ਹੈ", "ta-IN": "சரி", "te-IN": "సరే" },
+      { "en-IN": "See you again", "hi-IN": "फिर मिलेंगे", "bn-IN": "আবার দেখা হবে", "gu-IN": "આવજો", "kn-IN": "ಮತ್ತೆ ಸಿಗೋಣ", "ml-IN": "പിന്നെ കാണാം", "mr-IN": "पुन्हा भेटू", "od-IN": "ପୁଣି ଦେଖା ହେବ", "pa-IN": "ਫਿਰ ਮਿਲਾਂਗੇ", "ta-IN": "மீண்டும் சந்திப்போம்", "te-IN": "మళ్ళీ కలుద్దాం" }
+    ]},
+    { name: "Bargaining", phrases: [
+      { "en-IN": "How much is this?", "hi-IN": "यह कितने का है?", "bn-IN": "এটার দাম কত?", "gu-IN": "આ કેટલાનું છે?", "kn-IN": "ಇದು ಎಷ್ಟು?", "ml-IN": "ഇതിന് എത്രയാണ്?", "mr-IN": "हे किती रुपयांचे आहे?", "od-IN": "ଏହା କେତେ ଟଙ୍କା?", "pa-IN": "ਇਹ ਕਿੰਨੇ ਦਾ ਹੈ?", "ta-IN": "இது எவ்வளவு?", "te-IN": "ఇది ఎంత?" },
+      { "en-IN": "That's too expensive", "hi-IN": "यह बहुत महंगा है।", "bn-IN": "এটা খুব দামি।", "gu-IN": "આ બહુ મોંઘું છે.", "kn-IN": "ಇದು ತುಂಬಾ ದುಬಾರಿ.", "ml-IN": "ഇത് വളരെ വിലകൂടുതലാണ്.", "mr-IN": "हे खूप महाग आहे.", "od-IN": "ଏହା ବହୁତ ମହଙ୍ଗା।", "pa-IN": "ਇਹ ਬਹੁਤ ਮਹਿੰਗਾ ਹੈ।", "ta-IN": "இது ரொம்ப விலை அதிகம்.", "te-IN": "ఇది చాలా ఖరీదు." },
+      { "en-IN": "Please lower the price a little", "hi-IN": "थोड़ा कम कर दीजिए।", "bn-IN": "একটু কম করুন।", "gu-IN": "થોડું ઓછું કરો.", "kn-IN": "ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ.", "ml-IN": "കുറച്ച് കുറയ്ക്കാമോ?", "mr-IN": "थोडे कमी करा.", "od-IN": "ଟିକେ କମ୍ କରନ୍ତୁ।", "pa-IN": "ਥੋੜ੍ਹਾ ਘੱਟ ਕਰ ਦਿਓ।", "ta-IN": "கொஞ்சம் குறைத்துக் கொடுங்கள்.", "te-IN": "కొంచెం తగ్గించండి." },
+      { "en-IN": "What's your final price?", "hi-IN": "आख़िरी दाम क्या होगा?", "bn-IN": "শেষ দাম কত হবে?", "gu-IN": "છેલ્લો ભાવ શું થશે?", "kn-IN": "ಕೊನೆಯ ಬೆಲೆ ಎಷ್ಟು?", "ml-IN": "അവസാന വില എത്ര?", "mr-IN": "शेवटची किंमत किती?", "od-IN": "ଶେଷ ଦାମ କେତେ?", "pa-IN": "ਆਖਰੀ ਭਾਅ ਕੀ ਹੋਵੇਗਾ?", "ta-IN": "கடைசி விலை என்ன?", "te-IN": "చివరి ధర ఎంత?" },
+      { "en-IN": "Okay, I'll take it", "hi-IN": "ठीक है, दे दीजिए।", "bn-IN": "ঠিক আছে, দিন।", "gu-IN": "બરાબર, આપી દો.", "kn-IN": "ಸರಿ, ಕೊಡಿ.", "ml-IN": "ശരി, തരൂ.", "mr-IN": "ठीक आहे, द्या.", "od-IN": "ଠିକ୍ ଅଛି, ଦିଅନ୍ତୁ।", "pa-IN": "ਠੀਕ ਹੈ, ਦੇ ਦਿਓ।", "ta-IN": "சரி, கொடுங்கள்.", "te-IN": "సరే, ఇవ్వండి." }
+    ]},
+    { name: "Help", phrases: [
+      { "en-IN": "I need help", "hi-IN": "मुझे मदद चाहिए।", "bn-IN": "আমার সাহায্য দরকার।", "gu-IN": "મને મદદ જોઈએ છે.", "kn-IN": "ನನಗೆ ಸಹಾಯ ಬೇಕು.", "ml-IN": "എനിക്ക് സഹായം വേണം.", "mr-IN": "मला मदत हवी आहे.", "od-IN": "ମୋତେ ସାହାଯ୍ୟ ଦରକାର।", "pa-IN": "ਮੈਨੂੰ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।", "ta-IN": "எனக்கு உதவி வேண்டும்.", "te-IN": "నాకు సహాయం కావాలి." },
+      { "en-IN": "Please call a doctor", "hi-IN": "कृपया डॉक्टर को बुलाइए।", "bn-IN": "দয়া করে ডাক্তার ডাকুন।", "gu-IN": "મહેરબાની કરીને ડૉક્ટરને બોલાવો.", "kn-IN": "ದಯವಿಟ್ಟು ವೈದ್ಯರನ್ನು ಕರೆಯಿರಿ.", "ml-IN": "ദയവായി ഡോക്ടറെ വിളിക്കൂ.", "mr-IN": "कृपया डॉक्टरांना बोलवा.", "od-IN": "ଦୟାକରି ଡାକ୍ତରଙ୍କୁ ଡାକନ୍ତୁ।", "pa-IN": "ਕਿਰਪਾ ਕਰਕੇ ਡਾਕਟਰ ਨੂੰ ਬੁਲਾਓ।", "ta-IN": "தயவுசெய்து டாக்டரை கூப்பிடுங்கள்.", "te-IN": "దయచేసి డాక్టర్‌ని పిలవండి." },
+      { "en-IN": "Where is the toilet?", "hi-IN": "शौचालय कहाँ है?", "bn-IN": "টয়লেট কোথায়?", "gu-IN": "શૌચાલય ક્યાં છે?", "kn-IN": "ಶೌಚಾಲಯ ಎಲ್ಲಿದೆ?", "ml-IN": "ടോയ്‌ലറ്റ് എവിടെയാണ്?", "mr-IN": "स्वच्छतागृह कुठे आहे?", "od-IN": "ଶୌଚାଳୟ କେଉଁଠି ଅଛି?", "pa-IN": "ਪਖਾਨਾ ਕਿੱਥੇ ਹੈ?", "ta-IN": "கழிவறை எங்கே இருக்கிறது?", "te-IN": "టాయిలెట్ ఎక్కడ ఉంది?" },
+      { "en-IN": "I don't understand", "hi-IN": "मुझे समझ नहीं आया।", "bn-IN": "আমি বুঝতে পারিনি।", "gu-IN": "મને સમજાયું નહીં.", "kn-IN": "ನನಗೆ ಅರ್ಥವಾಗಲಿಲ್ಲ.", "ml-IN": "എനിക്ക് മനസ്സിലായില്ല.", "mr-IN": "मला समजले नाही.", "od-IN": "ମୁଁ ବୁଝିପାରିଲି ନାହିଁ।", "pa-IN": "ਮੈਨੂੰ ਸਮਝ ਨਹੀਂ ਆਇਆ।", "ta-IN": "எனக்கு புரியவில்லை.", "te-IN": "నాకు అర్థం కాలేదు." },
+      { "en-IN": "Please speak slowly", "hi-IN": "कृपया धीरे बोलिए।", "bn-IN": "দয়া করে আস্তে বলুন।", "gu-IN": "મહેરબાની કરીને ધીમે બોલો.", "kn-IN": "ದಯವಿಟ್ಟು ನಿಧಾನವಾಗಿ ಮಾತನಾಡಿ.", "ml-IN": "ദയവായി പതുക്കെ പറയൂ.", "mr-IN": "कृपया हळू बोला.", "od-IN": "ଦୟାକରି ଧୀରେ କୁହନ୍ତୁ।", "pa-IN": "ਕਿਰਪਾ ਕਰਕੇ ਹੌਲੀ ਬੋਲੋ।", "ta-IN": "தயவுசெய்து மெதுவாக பேசுங்கள்.", "te-IN": "దయచేసి నెమ్మదిగా మాట్లాడండి." }
+    ]}
+  ];
+  var activePack = 0;
+
+  function renderPhrasePacks() {
+    var tabs = $("pack-tabs");
+    tabs.innerHTML = "";
+    PHRASE_PACKS.forEach(function (pack, i) {
+      var b = document.createElement("button");
+      b.textContent = pack.name;
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-pressed", i === activePack ? "true" : "false");
+      b.addEventListener("click", function () { activePack = i; renderPhrasePacks(); });
+      tabs.appendChild(b);
+    });
+
+    var list = $("phrases-list");
+    list.innerHTML = "";
+    PHRASE_PACKS[activePack].phrases.forEach(function (phrase) {
+      var b = document.createElement("button");
+      b.className = "phrase-item";
+      var label = document.createElement("span");
+      label.textContent = phrase["en-IN"];
+      // Preview in the guest's language (the person the host is most
+      // likely showing the phrase to); falls back to Hindi before any
+      // language has locked.
+      var previewCode = currentLang("guest") || "hi-IN";
+      var preview = document.createElement("span");
+      preview.className = "native-preview";
+      preview.textContent = phrase[previewCode];
+      b.appendChild(label);
+      b.appendChild(preview);
+      b.addEventListener("click", function () { showPhrase(phrase); });
+      list.appendChild(b);
+    });
+  }
+
+  function showPhrase(phrase) {
+    ["host", "guest"].forEach(function (side) {
+      hideTip(side);
+      var code = currentLang(side) || "en-IN";
+      var text = phrase[code] || phrase["en-IN"];
+      var gloss = code === "en-IN" ? "Phrase" : phrase["en-IN"];
+      $("stage-" + side).innerHTML =
+        '<p class="bubble-original">' + escapeHtml(gloss) + "</p>" +
+        '<p class="bubble-translated">' + withNumberChips(text) + "</p>";
+    });
+    closePhrases();
+  }
+
+  function openPhrases() {
+    renderPhrasePacks(); // re-render so previews follow the current languages
+    $("phrases-drawer").classList.add("open");
+    $("phrases-backdrop").classList.add("open");
+  }
+  function closePhrases() {
+    $("phrases-drawer").classList.remove("open");
+    $("phrases-backdrop").classList.remove("open");
+  }
+  $("btn-phrases").addEventListener("click", openPhrases);
+  $("btn-close-phrases").addEventListener("click", closePhrases);
+  $("phrases-backdrop").addEventListener("click", closePhrases);
+
+  // -----------------------------------------------------------------
   // Mode toggle (Demo / Live)
   // -----------------------------------------------------------------
   function setMode(mode) {
@@ -673,6 +895,23 @@
   }
   $("mode-demo").addEventListener("click", function () { setMode("demo"); });
   $("mode-live").addEventListener("click", function () { setMode("live"); });
+
+  // -----------------------------------------------------------------
+  // Open-mic toggle: tap once to talk, auto-stops on silence. Only
+  // changes live-mode behaviour; demo taps are single taps already.
+  // -----------------------------------------------------------------
+  $("btn-openmic").addEventListener("click", function () {
+    state.openMic = !state.openMic;
+    this.setAttribute("aria-pressed", state.openMic ? "true" : "false");
+    var hint = state.openMic
+      ? "Open mic on — tap once to talk, it stops when you pause"
+      : "Open mic off — hold the button while you talk";
+    setStatus("host", hint);
+    setTimeout(function () {
+      // Don't wipe a status some other flow has since written.
+      if ($("status-host").textContent === hint) setStatus("host", "");
+    }, 2200);
+  });
 
   // -----------------------------------------------------------------
   // Demo mode: a scripted Hindi <-> Tamil price negotiation. Tapping
@@ -713,13 +952,15 @@
 
     hideTip(side);
     setStatus(side, "Listening…");
+    $("half-" + side).setAttribute("data-active-speaker", "true");
     state[side].detected = step.speakerLang; // simulate the language-lock behaviour
 
     setTimeout(function () {
-      setStatus(side, "Translating…");
+      setStatus(side, "Translating", true);
       setTimeout(function () {
         showExchange(side, step.original, step.translated);
         setStatus(side, "");
+        $("half-" + side).removeAttribute("data-active-speaker");
         renderLangChip(side);
         addHistory({
           speaker: side,
@@ -753,6 +994,57 @@
     });
   }
 
+  // Open-mic silence watcher: samples the mic level ~8x a second and
+  // stops the recording once the speaker has said something and then
+  // gone quiet for 1.5s. Thresholds are RMS of the raw waveform --
+  // speech normally sits well above 0.035, room hum well below 0.02.
+  function startSilenceWatch(side) {
+    try {
+      if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      if (state.audioCtx.state === "suspended") state.audioCtx.resume();
+      if (!state.analyser) {
+        var src = state.audioCtx.createMediaStreamSource(state.micStream);
+        state.analyser = state.audioCtx.createAnalyser();
+        state.analyser.fftSize = 1024;
+        src.connect(state.analyser);
+      }
+      var data = new Uint8Array(state.analyser.fftSize);
+      var spoke = false;
+      var silentSince = 0;
+      state.silenceWatch = setInterval(function () {
+        state.analyser.getByteTimeDomainData(data);
+        var sum = 0;
+        for (var i = 0; i < data.length; i++) {
+          var v = (data[i] - 128) / 128;
+          sum += v * v;
+        }
+        var rms = Math.sqrt(sum / data.length);
+        var now = Date.now();
+        if (rms > 0.035) {                    // clearly speaking
+          spoke = true;
+          silentSince = 0;
+        } else if (rms < 0.02) {              // clearly quiet
+          if (spoke) {
+            if (!silentSince) silentSince = now;
+            else if (now - silentSince > 1500) stopRecording(side);
+          }
+        } else {                              // in-between: not silence yet
+          silentSince = 0;
+        }
+      }, 120);
+    } catch (e) {
+      // If WebAudio isn't available the watcher just doesn't run --
+      // the tap-again-to-stop path and the 25s cap still work.
+      console.warn("Silence detection unavailable:", e);
+    }
+  }
+  function stopSilenceWatch() {
+    if (state.silenceWatch) {
+      clearInterval(state.silenceWatch);
+      state.silenceWatch = null;
+    }
+  }
+
   function startRecording(side) {
     var pttBtn = $("ptt-" + side);
     ensureMicStream().then(function (stream) {
@@ -764,8 +1056,10 @@
       recorder.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
       recorder.onstop = function () {
         clearTimeout(state.autoStopTimer);
+        stopSilenceWatch();
         var heldMs = Date.now() - state.recordStartedAt;
         pttBtn.classList.remove("is-recording");
+        $("half-" + side).removeAttribute("data-active-speaker");
         state.recordingSide = null;
         if (heldMs < 300) { // too short to be real speech -- likely an accidental tap
           setStatus(side, "Hold a little longer");
@@ -782,7 +1076,9 @@
       state.recordStartedAt = Date.now();
       recorder.start();
       pttBtn.classList.add("is-recording");
-      setStatus(side, "Listening…");
+      $("half-" + side).setAttribute("data-active-speaker", "true");
+      setStatus(side, state.openMic ? "Listening — tap again to stop" : "Listening…");
+      if (state.openMic) startSilenceWatch(side);
       // Safety net: Sarvam's synchronous speech-to-text endpoint only
       // accepts clips under 30 seconds, so auto-stop a little before
       // that if someone holds the button down for a very long time.
@@ -816,7 +1112,7 @@
     var listenerSide = otherSide(side);
     var pttBtn = $("ptt-" + side);
     pttBtn.classList.add("is-busy");
-    setStatus(side, "Translating…");
+    setStatus(side, "Translating", true);
 
     blobToBase64(blob).then(function (audioBase64) {
       return fetch("/api/pipeline", {
@@ -848,16 +1144,10 @@
         renderLangChip(side);
       }
 
-      showExchange(side, data.transcript, data.translatedText);
+      showExchange(side, data.transcript, data.translatedText, data.ttsAudioBase64);
       addHistory({ speaker: side, original: data.transcript, translated: data.translatedText, ts: Date.now() });
 
-      if (data.ttsAudioBase64) {
-        try {
-          new Audio("data:audio/wav;base64," + data.ttsAudioBase64).play().catch(function () {
-            /* Autoplay can be blocked until the user has interacted with the page once -- silent no-op is fine here. */
-          });
-        } catch (e) { /* ignore playback errors, the caption is still shown */ }
-      }
+      if (data.ttsAudioBase64) playTts(data.ttsAudioBase64);
     }).catch(function (err) {
       pttBtn.classList.remove("is-busy");
       console.error(err);
@@ -880,13 +1170,17 @@
       e.preventDefault();
       if (state.mode === "demo") {
         runDemoStep(side);
+      } else if (state.openMic && state.recordingSide === side) {
+        stopRecording(side); // open mic: second tap = manual stop
       } else {
         startRecording(side);
       }
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (evt) {
       ptt.addEventListener(evt, function () {
-        if (state.mode === "live") stopRecording(side);
+        // In open-mic mode letting go doesn't stop the recording --
+        // the silence watcher (or a second tap) does.
+        if (state.mode === "live" && !state.openMic) stopRecording(side);
       });
     });
 

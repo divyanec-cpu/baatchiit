@@ -31,6 +31,14 @@ package.json            — pins the Node version Vercel runs the function on
 
 Tap **Demo** in the top bar — the app fakes a Hindi↔Tamil price negotiation with no API calls, so you can feel the full UI flow (including number chips) immediately.
 
+## Phrase packs (works fully offline)
+
+**Phrases** in the control strip opens three packs — Greetings, Bargaining, Help — pre-translated into all 11 languages at build time (no API call, no network). Tapping a phrase shows it on *both* halves of the screen, each in that side's currently selected language, with the English gloss above it. The drawer previews each phrase in the guest's language. Useful exactly when the live pipeline can't be: dead zones, key trouble, or before the first deploy.
+
+## Open-mic mode
+
+The **Open mic** toggle in the control strip switches live mode from hold-to-talk to tap-to-talk: tap once to start, and a WebAudio level watcher stops the recording automatically after ~1.5s of silence (tap again to stop manually; the 25-second hard cap still applies). If WebAudio isn't available the watcher simply doesn't run and the manual stop paths still work. Silence thresholds live in `startSilenceWatch()` in index.html — worth a real-world check in a noisy market before trusting them.
+
 ## Generate the APK
 
 1. With the Vercel deployment live, go to **pwabuilder.com**, paste your site URL.
@@ -63,6 +71,6 @@ Model names and endpoints evolve. In `api/pipeline.js`, confirm:
 ## Known MVP limits (by design)
 
 - Session-only history — clears on refresh (this is the free-tier behaviour anyway).
-- No accounts, payments, phrase packs, open-mic, or offline mode yet — all roadmap.
+- No accounts or payments yet — those need a backend decision (roadmap). Phrase packs and open-mic mode are in (see above).
 - iOS Safari records audio/mp4 rather than webm; the function passes the mime type through, but test an iPhone once.
 - A single push-to-talk clip auto-stops at 25 seconds. This isn't arbitrary: Sarvam's synchronous speech-to-text endpoint only accepts clips under 30 seconds, and Vercel caps a function's whole request body at 4.5MB — 25 seconds of compressed speech is nowhere near that, but a much longer hold could get there. If you need longer utterances later, that means Sarvam's batch STT API and chunked uploads, not this REST call.
