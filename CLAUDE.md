@@ -18,7 +18,6 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
   - Open-mic mode: strip toggle; live-mode tap-to-talk with WebAudio RMS silence auto-stop (~1.5s quiet, thresholds 0.035/0.02 in `startSilenceWatch`). NOT yet tested with a real microphone — needs an on-device check.
   - Polish: bubble entrance animations, "Play again" replay button for received TTS, active-speaker half highlight, animated translating dots.
   - Fixed broken icon `<link>` paths (`/icons/…` → `/…`), manifest colors aligned to dark theme, sw.js cache bumped to v2 with `/api/` guard (old guard checked a Netlify path).
-- `netlify.toml` is leftover from an abandoned Netlify plan (hosting is Vercel); user hasn't confirmed deleting it.
 - Not yet deployed; no Vercel project linked. Vercel CLI installed globally. Remaining deploy steps are user-interactive: `vercel login`, `vercel`, `vercel env add SARVAM_API_KEY`, `vercel --prod`, then pwabuilder.com for the APK.
 
 ## Remaining roadmap
