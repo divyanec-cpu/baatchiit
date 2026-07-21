@@ -892,6 +892,17 @@
     $("mode-demo").setAttribute("aria-pressed", mode === "demo" ? "true" : "false");
     $("mode-live").setAttribute("aria-pressed", mode === "live" ? "true" : "false");
     updateDemoHighlight();
+    // Ask for mic permission as soon as Live is chosen, not on the first
+    // push-to-talk hold. Requesting it mid-hold means answering the
+    // permission prompt lifts the finger that was supposed to be
+    // holding the button, so the tap that grants permission never
+    // actually records anything.
+    if (mode === "live") {
+      ensureMicStream().catch(function (err) {
+        console.error(err);
+        showError("host", "Couldn't access the microphone. Check your browser's mic permission for this site and try again.");
+      });
+    }
   }
   $("mode-demo").addEventListener("click", function () { setMode("demo"); });
   $("mode-live").addEventListener("click", function () { setMode("live"); });

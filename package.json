@@ -4,6 +4,6 @@
   "version": "1.0.0",
   "description": "Live any-to-any Indian language translation between two people on one phone.",
   "engines": {
-    "node": "20.x"
+    "node": "24.x"
   }
 }

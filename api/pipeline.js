@@ -145,14 +145,21 @@ module.exports = async function handler(req, res) {
 // ---------------------------------------------------------------------
 async function speechToText({ apiKey, audioBase64, mimeType, sourceLangHint }) {
   const audioBuffer = Buffer.from(audioBase64, "base64");
-  const isMp4 = mimeType && mimeType.includes("mp4");
+
+  // Sarvam validates the file's Content-Type as an exact string against
+  // an allow-list of bare mime types (e.g. "audio/webm"). Browsers'
+  // MediaRecorder.mimeType always includes a codec parameter (e.g.
+  // "audio/webm;codecs=opus"), which isn't on that list and gets
+  // rejected outright -- strip everything from the first ";" on.
+  const baseMimeType = (mimeType || "audio/webm").split(";")[0].trim();
+  const isMp4 = baseMimeType.includes("mp4");
   const fileName = isMp4 ? "speech.mp4" : "speech.webm";
 
   // Vercel's Node.js runtime is on Node 18+, which has FormData/Blob
   // built in globally -- no extra npm package needed just to build
   // this request.
   const form = new FormData();
-  form.append("file", new Blob([audioBuffer], { type: mimeType || "audio/webm" }), fileName);
+  form.append("file", new Blob([audioBuffer], { type: baseMimeType }), fileName);
   form.append("model", "saaras:v3");
   form.append("mode", "transcribe"); // transcribe in the speaker's OWN language (not translate-to-English)
   form.append("language_code", sourceLangHint || "unknown"); // "unknown" = auto-detect
