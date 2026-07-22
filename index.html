@@ -232,9 +232,6 @@
     border-color: var(--vermillion);
   }
   .ptt.is-busy { opacity: 0.55; }
-  .ptt.is-next-in-demo {
-    box-shadow: 0 0 0 6px rgba(232,163,61,0.18);
-  }
   @media (prefers-reduced-motion: no-preference) {
     .ptt.is-recording { animation: pulse 1.1s ease-in-out infinite; }
     .bubble-original, .bubble-translated, .replay-btn { animation: bubbleIn 0.25s ease both; }
@@ -287,24 +284,6 @@
      history count stays visible so a growing session is still legible). */
   @media (max-width: 430px) {
     .strip-btn .btn-label { display: none; }
-  }
-
-  .mode-toggle {
-    display: flex;
-    background: var(--ink-soft);
-    border-radius: 999px;
-    padding: 2px;
-    font-size: 12px;
-    font-weight: 600;
-  }
-  .mode-toggle button {
-    padding: 5px 12px;
-    border-radius: 999px;
-    color: var(--chalk-dim);
-  }
-  .mode-toggle button[aria-pressed="true"] {
-    background: var(--marigold);
-    color: var(--ink);
   }
 
   /* ============== LANGUAGE PICKER POPOVER ============== */
@@ -458,7 +437,7 @@
 
   <!-- ============== GUEST HALF (upside-down on purpose) ============== -->
   <section class="half half--guest" id="half-guest" data-side="guest">
-    <p class="tip" id="tip-guest" hidden>Tap the mic to try the demo — no setup needed.</p>
+    <p class="tip" id="tip-guest" hidden>Hold the mic and speak, then let go.</p>
     <div class="lang-row">
       <button class="chip-btn" id="chip-guest" data-side="guest" aria-haspopup="listbox">
         <span class="dot"></span>
@@ -501,10 +480,6 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h2m3-4v8m4-11v14m4-11v8m4-6v4m3-2h.01"/></svg>
         <span class="btn-label">Open mic</span>
       </button>
-      <div class="mode-toggle" role="group" aria-label="Mode">
-        <button id="mode-demo" aria-pressed="true">Demo</button>
-        <button id="mode-live" aria-pressed="false">Live</button>
-      </div>
     </div>
   </div>
 
@@ -529,7 +504,7 @@
         <span class="label">Auto-detect</span>
       </button>
     </div>
-    <p class="tip" id="tip-host" hidden>Tap the mic to try the demo — no setup needed.</p>
+    <p class="tip" id="tip-host" hidden>Hold the mic and speak, then let go.</p>
   </section>
 
 </div>
@@ -590,11 +565,9 @@
   // side spoke. override always wins over detected.
   // -----------------------------------------------------------------
   var state = {
-    mode: "demo",              // "demo" | "live"
     host: { override: null, detected: null, lastBlob: null, lastMime: null },
     guest: { override: null, detected: null, lastBlob: null, lastMime: null },
     history: [],
-    demoIndex: 0,
     micStream: null,           // shared getUserMedia stream, requested once
     recorder: null,
     recordingSide: null,
@@ -885,31 +858,7 @@
   $("phrases-backdrop").addEventListener("click", closePhrases);
 
   // -----------------------------------------------------------------
-  // Mode toggle (Demo / Live)
-  // -----------------------------------------------------------------
-  function setMode(mode) {
-    state.mode = mode;
-    $("mode-demo").setAttribute("aria-pressed", mode === "demo" ? "true" : "false");
-    $("mode-live").setAttribute("aria-pressed", mode === "live" ? "true" : "false");
-    updateDemoHighlight();
-    // Ask for mic permission as soon as Live is chosen, not on the first
-    // push-to-talk hold. Requesting it mid-hold means answering the
-    // permission prompt lifts the finger that was supposed to be
-    // holding the button, so the tap that grants permission never
-    // actually records anything.
-    if (mode === "live") {
-      ensureMicStream().catch(function (err) {
-        console.error(err);
-        showError("host", "Couldn't access the microphone. Check your browser's mic permission for this site and try again.");
-      });
-    }
-  }
-  $("mode-demo").addEventListener("click", function () { setMode("demo"); });
-  $("mode-live").addEventListener("click", function () { setMode("live"); });
-
-  // -----------------------------------------------------------------
-  // Open-mic toggle: tap once to talk, auto-stops on silence. Only
-  // changes live-mode behaviour; demo taps are single taps already.
+  // Open-mic toggle: tap once to talk, auto-stops on silence.
   // -----------------------------------------------------------------
   $("btn-openmic").addEventListener("click", function () {
     state.openMic = !state.openMic;
@@ -925,68 +874,7 @@
   });
 
   // -----------------------------------------------------------------
-  // Demo mode: a scripted Hindi <-> Tamil price negotiation. Tapping
-  // the mic on the side whose turn it is plays the next line -- no
-  // microphone or network access needed.
-  // -----------------------------------------------------------------
-  var DEMO_SCRIPT = [
-    { speaker: "guest", speakerLang: "hi-IN", original: "यह कितने का है?", translated: "இது எவ்வளவு?" },
-    { speaker: "host",  speakerLang: "ta-IN", original: "இது 500 ரூபாய்.", translated: "यह 500 रुपये का है।" },
-    { speaker: "guest", speakerLang: "hi-IN", original: "बहुत ज़्यादा है। 300 में दे दो।", translated: "இது ரொம்ப அதிகம். 300க்கு கொடுங்கள்." },
-    { speaker: "host",  speakerLang: "ta-IN", original: "சரி, 400 கொடுங்கள், கடைசி விலை.", translated: "ठीक है, 400 दे दो, आख़िरी दाम।" },
-    { speaker: "guest", speakerLang: "hi-IN", original: "ठीक है, 400 में ले लेती हूँ। धन्यवाद!", translated: "சரி, 400க்கு எடுத்துக்கொள்கிறேன். நன்றி!" }
-  ];
-
-  function updateDemoHighlight() {
-    var pttHost = $("ptt-host"), pttGuest = $("ptt-guest");
-    pttHost.classList.remove("is-next-in-demo");
-    pttGuest.classList.remove("is-next-in-demo");
-    if (state.mode !== "demo" || state.demoIndex >= DEMO_SCRIPT.length) return;
-    var next = DEMO_SCRIPT[state.demoIndex];
-    $("ptt-" + next.speaker).classList.add("is-next-in-demo");
-  }
-
-  function runDemoStep(side) {
-    if (state.demoIndex >= DEMO_SCRIPT.length) {
-      setStatus(side, "Demo finished — restarting");
-      state.demoIndex = 0;
-      updateDemoHighlight();
-      setTimeout(function () { setStatus(side, ""); }, 1200);
-      return;
-    }
-    var step = DEMO_SCRIPT[state.demoIndex];
-    if (step.speaker !== side) {
-      setStatus(side, "It's the other side's turn in this demo");
-      setTimeout(function () { setStatus(side, ""); }, 1400);
-      return;
-    }
-
-    hideTip(side);
-    setStatus(side, "Listening…");
-    $("half-" + side).setAttribute("data-active-speaker", "true");
-    state[side].detected = step.speakerLang; // simulate the language-lock behaviour
-
-    setTimeout(function () {
-      setStatus(side, "Translating", true);
-      setTimeout(function () {
-        showExchange(side, step.original, step.translated);
-        setStatus(side, "");
-        $("half-" + side).removeAttribute("data-active-speaker");
-        renderLangChip(side);
-        addHistory({
-          speaker: side,
-          original: step.original,
-          translated: step.translated,
-          ts: Date.now()
-        });
-        state.demoIndex++;
-        updateDemoHighlight();
-      }, 500);
-    }, 450);
-  }
-
-  // -----------------------------------------------------------------
-  // Live mode: record with the microphone, send to the serverless
+  // Recording: record with the microphone, send to the serverless
   // function, show the result.
   // -----------------------------------------------------------------
   function pickMimeType() {
@@ -1058,6 +946,7 @@
 
   function startRecording(side) {
     var pttBtn = $("ptt-" + side);
+    hideTip(side);
     ensureMicStream().then(function (stream) {
       // Only one side can record at a time on a single phone's mic.
       if (state.recordingSide) return;
@@ -1167,7 +1056,7 @@
   }
 
   // -----------------------------------------------------------------
-  // Wiring: mic buttons route to demo or live handling depending on mode
+  // Wiring: mic buttons
   // -----------------------------------------------------------------
   function hideTip(side) {
     var tip = $("tip-" + side);
@@ -1179,9 +1068,7 @@
 
     ptt.addEventListener("pointerdown", function (e) {
       e.preventDefault();
-      if (state.mode === "demo") {
-        runDemoStep(side);
-      } else if (state.openMic && state.recordingSide === side) {
+      if (state.openMic && state.recordingSide === side) {
         stopRecording(side); // open mic: second tap = manual stop
       } else {
         startRecording(side);
@@ -1191,7 +1078,7 @@
       ptt.addEventListener(evt, function () {
         // In open-mic mode letting go doesn't stop the recording --
         // the silence watcher (or a second tap) does.
-        if (state.mode === "live" && !state.openMic) stopRecording(side);
+        if (!state.openMic) stopRecording(side);
       });
     });
 
@@ -1207,7 +1094,15 @@
     renderHistoryCount();
     $("tip-host").hidden = false;
     $("tip-guest").hidden = false;
-    updateDemoHighlight();
+
+    // Ask for mic permission up front rather than during the first
+    // push-to-talk hold: answering the permission prompt lifts the
+    // finger that was supposed to be holding the button, so the tap
+    // that grants permission would never record anything.
+    ensureMicStream().catch(function (err) {
+      console.error(err);
+      showError("host", "Couldn't access the microphone. Check your browser's mic permission for this site and try again.");
+    });
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {

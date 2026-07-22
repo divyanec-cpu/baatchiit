@@ -27,10 +27,6 @@ package.json            — pins the Node version Vercel runs the function on
 3. Add the API key once, from the same folder: `vercel env add SARVAM_API_KEY`, paste your key when asked.
 4. `vercel --prod` to ship it to your permanent URL.
 
-## Try it before wiring the API
-
-Tap **Demo** in the top bar — the app fakes a Hindi↔Tamil price negotiation with no API calls, so you can feel the full UI flow (including number chips) immediately.
-
 ## Phrase packs (works fully offline)
 
 **Phrases** in the control strip opens three packs — Greetings, Bargaining, Help — pre-translated into all 11 languages at build time (no API call, no network). Tapping a phrase shows it on *both* halves of the screen, each in that side's currently selected language, with the English gloss above it. The drawer previews each phrase in the guest's language. Useful exactly when the live pipeline can't be: dead zones, key trouble, or before the first deploy.
@@ -66,7 +62,7 @@ Model names and endpoints evolve. In `api/pipeline.js`, confirm:
 - **Hosting:** deployed on Vercel, not Netlify. The serverless function lives at `api/pipeline.js` (Vercel treats any file under `/api` as an endpoint automatically) and the browser calls it at `/api/pipeline`.
 - **Model versions:** Sarvam's docs now flag `saarika:v2.5` as being deprecated. `api/pipeline.js` uses `saaras:v3` with `mode: "transcribe"` for speech-to-text instead — same job (transcript in the speaker's own language + detected language code), current model. Translate (`mayura:v1`) and TTS (`bulbul:v3`, speaker `priya`) match the original plan.
 - **Language list:** the app's language picker is limited to the 11 languages that `mayura:v1` (translate) supports — Hindi, Bengali, Gujarati, Kannada, Malayalam, Marathi, Odia, Punjabi, Tamil, Telugu, English — since those are also the ones STT and TTS support in common, so every pairing works end to end.
-- **Everything else** (host/guest split screen, push-to-talk, language auto-detect + lock + override, subtitles with number chips, session-only history, Demo mode with a Hindi↔Tamil negotiation) is implemented as described below.
+- **Everything else** (host/guest split screen, push-to-talk, language auto-detect + lock + override, subtitles with number chips, session-only history) is implemented as described below. (An offline scripted Demo mode existed pre-launch; it was removed once the live pipeline was verified working on-device.)
 
 ## Known MVP limits (by design)
 

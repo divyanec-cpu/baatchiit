@@ -8,7 +8,7 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
 - One Vercel serverless function `api/pipeline.js`: Sarvam AI chain — STT `saaras:v3` (mode `transcribe`) → translate `mayura:v1` → TTS `bulbul:v3` (speaker `priya`). Key lives in Vercel env var `SARVAM_API_KEY`, never client-side.
 - 11 languages only (the set mayura:v1 supports; picker + server both enforce it).
 - Deploy: Vercel → then pwabuilder.com wraps the live URL into an Android APK.
-- Demo mode is fully offline/scripted (Hindi↔Tamil negotiation, guest speaks first) — use it to verify UI changes without an API key.
+- Demo mode was removed 2026-07-21 (user's call, after live mode was verified on-device). To check UI changes without an API key, use the phrase packs (fully offline) or a local static server; the live pipeline needs the deployed function.
 
 ## State as of 2026-07-20 (second session)
 
