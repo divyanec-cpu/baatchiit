@@ -3,3 +3,8 @@ node_modules/
 .DS_Store
 
 .vercel
+
+# Android package artifacts (keystore must never be committed)
+baatchiit-android.zip
+android-package/
+*.keystore
