@@ -105,6 +105,12 @@ async function verify(body, res) {
   if (!accessToken) {
     return res.status(400).json({ error: "Missing the OTP access token." });
   }
+  // Shape only (never the token): a real JWT is eyJ…, two dots, ~200+ chars.
+  console.log("verify token shape:", JSON.stringify({
+    length: accessToken.length,
+    dots: accessToken.split(".").length - 1,
+    looksJwt: accessToken.slice(0, 3) === "eyJ",
+  }));
 
   const phone = await verifyWidgetAccessToken(accessToken);
   if (!phone) {
@@ -217,7 +223,9 @@ async function verifyWidgetAccessToken(accessToken) {
     data = await response.json();
   } catch { /* treated as failure below */ }
   if (!response.ok || !data || data.type !== "success") {
-    console.log("msg91 verifyAccessToken rejected:", JSON.stringify({ status: response.status, type: data && data.type }));
+    // data.message is MSG91's reason ("Invalid authkey" etc.) -- it never
+    // contains the OTP or any credential, safe to log verbatim.
+    console.log("msg91 verifyAccessToken rejected:", JSON.stringify({ status: response.status, type: data && data.type, message: data && data.message }));
     return null;
   }
 
