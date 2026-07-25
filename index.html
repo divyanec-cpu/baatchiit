@@ -409,6 +409,58 @@
     color: var(--chalk-dim);
   }
 
+  /* ============== ACCOUNT DRAWER ============== */
+  .auth-body {
+    padding: 16px 16px 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 420px;
+    width: 100%;
+    margin: 0 auto;
+  }
+  .auth-copy { margin: 0; font-size: 14px; line-height: 1.5; }
+  .auth-copy--fine { font-size: 12px; color: var(--chalk-dim); }
+  .auth-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--ink);
+    border: 1px solid var(--hairline);
+    border-radius: 10px;
+    padding: 10px 12px;
+  }
+  .auth-prefix { color: var(--chalk-dim); font-size: 15px; }
+  .auth-row input {
+    flex: 1;
+    min-width: 0;
+    background: none;
+    border: none;
+    outline: none;
+    color: var(--chalk);
+    font-family: var(--font-mono);
+    font-size: 16px;          /* >=16px stops iOS from zooming the page on focus */
+    letter-spacing: 0.06em;
+  }
+  .auth-btn {
+    background: var(--marigold);
+    color: var(--ink);
+    font-weight: 600;
+    font-size: 14px;
+    padding: 11px;
+    border-radius: 10px;
+  }
+  .auth-btn:disabled { opacity: 0.55; }
+  .auth-btn--quiet {
+    background: var(--ink);
+    color: var(--chalk-dim);
+    border: 1px solid var(--hairline);
+  }
+  .auth-links { display: flex; justify-content: space-between; }
+  .auth-links .strip-btn:disabled { opacity: 0.45; }
+  .auth-error { margin: 0; min-height: 16px; font-size: 12px; color: var(--vermillion); }
+  .auth-plan { margin: 0; font-size: 13px; color: var(--chalk-dim); text-transform: capitalize; }
+
   /* ============== TOASTS / TIP ============== */
   .tip {
     position: absolute;
@@ -480,6 +532,10 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h2m3-4v8m4-11v14m4-11v8m4-6v4m3-2h.01"/></svg>
         <span class="btn-label">Open mic</span>
       </button>
+      <button class="strip-btn" id="btn-account">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        <span class="btn-label" id="account-label">Login</span>
+      </button>
     </div>
   </div>
 
@@ -531,6 +587,49 @@
   <div class="pack-tabs" id="pack-tabs" role="tablist"></div>
   <p class="phrase-hint">Tap a phrase — each side of the screen shows it in that side's language. Works offline.</p>
   <div class="drawer-list" id="phrases-list"></div>
+</div>
+
+<!-- Account drawer: optional phone-OTP login. The app works without
+     logging in; an account is the hook for synced history and paid
+     plans later. -->
+<div class="drawer-backdrop" id="account-backdrop"></div>
+<div class="drawer" id="account-drawer" role="dialog" aria-label="Account">
+  <div class="drawer-head">
+    <h2>Account</h2>
+    <button class="strip-btn" id="btn-close-account">Close</button>
+  </div>
+
+  <div class="auth-body" id="auth-step-phone">
+    <p class="auth-copy">Log in with your mobile number. You'll get a one-time password by SMS.</p>
+    <div class="auth-row">
+      <span class="auth-prefix">+91</span>
+      <input id="auth-phone" type="tel" inputmode="numeric" autocomplete="tel-national"
+             maxlength="10" placeholder="10-digit mobile number" />
+    </div>
+    <button class="auth-btn" id="btn-send-otp">Send OTP</button>
+    <p class="auth-error" id="auth-error-phone" aria-live="polite"></p>
+    <p class="auth-copy auth-copy--fine">Logging in is optional — translation works without it. An account is what paid plans will attach to later.</p>
+  </div>
+
+  <div class="auth-body" id="auth-step-otp" hidden>
+    <p class="auth-copy">OTP sent to <strong id="auth-otp-target"></strong>.</p>
+    <div class="auth-row">
+      <input id="auth-otp" type="text" inputmode="numeric" autocomplete="one-time-code"
+             maxlength="6" placeholder="6-digit OTP" />
+    </div>
+    <button class="auth-btn" id="btn-verify-otp">Verify &amp; log in</button>
+    <div class="auth-links">
+      <button class="strip-btn" id="btn-resend-otp" disabled>Resend OTP</button>
+      <button class="strip-btn" id="btn-change-phone">Change number</button>
+    </div>
+    <p class="auth-error" id="auth-error-otp" aria-live="polite"></p>
+  </div>
+
+  <div class="auth-body" id="auth-step-done" hidden>
+    <p class="auth-copy">Logged in as <strong id="auth-done-phone"></strong></p>
+    <p class="auth-plan">Plan: <span id="auth-done-plan">free</span></p>
+    <button class="auth-btn auth-btn--quiet" id="btn-logout">Log out</button>
+  </div>
 </div>
 
 <script>
@@ -858,6 +957,171 @@
   $("phrases-backdrop").addEventListener("click", closePhrases);
 
   // -----------------------------------------------------------------
+  // Account: optional phone-OTP login (MSG91 + Redis via /api/auth).
+  // The session token lives in localStorage; everything else stays
+  // server-side. Nothing in the translator depends on being logged
+  // in yet -- this is the attachment point for paid plans later.
+  // -----------------------------------------------------------------
+  var AUTH_TOKEN_KEY = "bc_session";
+  var auth = { phone: null, plan: null };   // current login, null = anonymous
+  var pendingPhone = null;                  // number an OTP was just sent to
+  var resendCountdown = null;
+
+  function authFetch(payload) {
+    return fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    }).then(function (res) {
+      return res.json().catch(function () {
+        // Non-JSON reply = the function isn't there (static preview,
+        // misdeploy) -- don't leak a parse error to the person.
+        return { error: "Login isn't available right now. Try again later." };
+      }).then(function (data) {
+        if (!res.ok) { var e = new Error(data.error || "Login service failed."); e.status = res.status; throw e; }
+        return data;
+      });
+    });
+  }
+
+  function showAuthStep(step) {
+    ["phone", "otp", "done"].forEach(function (s) {
+      $("auth-step-" + s).hidden = s !== step;
+    });
+  }
+
+  function renderAccount() {
+    $("account-label").textContent = auth.phone ? "+91 …" + auth.phone.slice(-4) : "Login";
+    if (auth.phone) {
+      $("auth-done-phone").textContent = "+91 " + auth.phone;
+      $("auth-done-plan").textContent = auth.plan || "free";
+    }
+  }
+
+  function authError(step, message) {
+    $("auth-error-" + step).textContent = message || "";
+  }
+
+  function startResendCountdown() {
+    var btn = $("btn-resend-otp");
+    var left = 30;
+    btn.disabled = true;
+    btn.textContent = "Resend OTP (" + left + ")";
+    clearInterval(resendCountdown);
+    resendCountdown = setInterval(function () {
+      left--;
+      if (left <= 0) {
+        clearInterval(resendCountdown);
+        btn.disabled = false;
+        btn.textContent = "Resend OTP";
+      } else {
+        btn.textContent = "Resend OTP (" + left + ")";
+      }
+    }, 1000);
+  }
+
+  function sendOtp(phone) {
+    var btn = $("btn-send-otp");
+    btn.disabled = true;
+    authError("phone", "");
+    authError("otp", "");
+    authFetch({ action: "send", phone: phone }).then(function () {
+      btn.disabled = false;
+      pendingPhone = phone;
+      $("auth-otp-target").textContent = "+91 " + phone;
+      $("auth-otp").value = "";
+      showAuthStep("otp");
+      $("auth-otp").focus();
+      startResendCountdown();
+    }).catch(function (err) {
+      btn.disabled = false;
+      // If the user is already on the OTP screen (resend), surface it there.
+      authError($("auth-step-otp").hidden ? "phone" : "otp", err.message);
+    });
+  }
+
+  $("btn-send-otp").addEventListener("click", function () {
+    var phone = $("auth-phone").value.replace(/\D/g, "");
+    if (!/^[6-9]\d{9}$/.test(phone)) {
+      authError("phone", "Enter a valid 10-digit Indian mobile number.");
+      return;
+    }
+    sendOtp(phone);
+  });
+
+  $("btn-resend-otp").addEventListener("click", function () {
+    if (pendingPhone) sendOtp(pendingPhone);
+  });
+
+  $("btn-change-phone").addEventListener("click", function () {
+    clearInterval(resendCountdown);
+    showAuthStep("phone");
+    $("auth-phone").focus();
+  });
+
+  $("btn-verify-otp").addEventListener("click", function () {
+    var otp = $("auth-otp").value.replace(/\D/g, "");
+    if (otp.length < 4) {
+      authError("otp", "Enter the OTP exactly as received.");
+      return;
+    }
+    var btn = $("btn-verify-otp");
+    btn.disabled = true;
+    authError("otp", "");
+    authFetch({ action: "verify", phone: pendingPhone, otp: otp }).then(function (data) {
+      btn.disabled = false;
+      clearInterval(resendCountdown);
+      localStorage.setItem(AUTH_TOKEN_KEY, data.token);
+      auth.phone = data.phone;
+      auth.plan = data.plan;
+      renderAccount();
+      showAuthStep("done");
+    }).catch(function (err) {
+      btn.disabled = false;
+      authError("otp", err.message);
+    });
+  });
+
+  $("btn-logout").addEventListener("click", function () {
+    var token = localStorage.getItem(AUTH_TOKEN_KEY);
+    localStorage.removeItem(AUTH_TOKEN_KEY);
+    auth.phone = null;
+    auth.plan = null;
+    renderAccount();
+    showAuthStep("phone");
+    if (token) authFetch({ action: "logout", token: token }).catch(function () { /* session dies with the token either way */ });
+  });
+
+  function restoreSession() {
+    var token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!token) return;
+    authFetch({ action: "me", token: token }).then(function (data) {
+      auth.phone = data.phone;
+      auth.plan = data.plan;
+      renderAccount();
+      showAuthStep("done");
+    }).catch(function (err) {
+      // Expired/invalid session: forget the token quietly. Network or
+      // server-config errors: keep it, so a transient failure doesn't
+      // log the user out.
+      if (err.status === 401) localStorage.removeItem(AUTH_TOKEN_KEY);
+    });
+  }
+
+  function openAccount() {
+    showAuthStep(auth.phone ? "done" : "phone");
+    $("account-drawer").classList.add("open");
+    $("account-backdrop").classList.add("open");
+  }
+  function closeAccount() {
+    $("account-drawer").classList.remove("open");
+    $("account-backdrop").classList.remove("open");
+  }
+  $("btn-account").addEventListener("click", openAccount);
+  $("btn-close-account").addEventListener("click", closeAccount);
+  $("account-backdrop").addEventListener("click", closeAccount);
+
+  // -----------------------------------------------------------------
   // Open-mic toggle: tap once to talk, auto-stops on silence.
   // -----------------------------------------------------------------
   $("btn-openmic").addEventListener("click", function () {
@@ -1092,6 +1356,8 @@
     renderLangChip("host");
     renderLangChip("guest");
     renderHistoryCount();
+    renderAccount();
+    restoreSession();
     $("tip-host").hidden = false;
     $("tip-guest").hidden = false;
 

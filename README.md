@@ -35,6 +35,27 @@ package.json            — pins the Node version Vercel runs the function on
 
 The **Open mic** toggle in the control strip switches live mode from hold-to-talk to tap-to-talk: tap once to start, and a WebAudio level watcher stops the recording automatically after ~1.5s of silence (tap again to stop manually; the 25-second hard cap still applies). If WebAudio isn't available the watcher simply doesn't run and the manual stop paths still work. Silence thresholds live in `startSilenceWatch()` in index.html — worth a real-world check in a noisy market before trusting them.
 
+## Accounts (optional phone-OTP login)
+
+**Login** in the control strip opens the Account drawer: enter a 10-digit Indian
+mobile → OTP by SMS → logged in for 90 days. Login is optional — translation
+works anonymously; an account is the attachment point for paid plans
+(see PAYMENTS.md). Server side is `api/auth.js`; MSG91 generates and verifies
+the OTP (this server never sees the code), Upstash Redis stores sessions and
+user records.
+
+One-time setup, both in the Vercel dashboard:
+
+1. **Upstash Redis**: project → Storage → Marketplace → add Upstash Redis
+   (free tier), connect it to this project. This injects
+   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` automatically.
+2. **MSG91**: add env vars `MSG91_AUTH_KEY` (msg91.com dashboard → authkey)
+   and `MSG91_TEMPLATE_ID` (an approved DLT OTP template — same account as
+   MissionFauj works). Redeploy after adding.
+
+Until both exist, the Login drawer shows a clear "isn't configured" error and
+the rest of the app is unaffected.
+
 ## Generate the APK
 
 1. With the Vercel deployment live, go to **pwabuilder.com**, paste your site URL.

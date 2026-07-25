@@ -10,22 +10,24 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
 - Deploy: Vercel → then pwabuilder.com wraps the live URL into an Android APK.
 - Demo mode was removed 2026-07-21 (user's call, after live mode was verified on-device). To check UI changes without an API key, use the phrase packs (fully offline) or a local static server; the live pipeline needs the deployed function.
 
-## State as of 2026-07-20 (second session)
+## State as of 2026-07-24 (fourth session)
 
-- Fixed earlier: `pipeline.js` moved from repo root into `api/` (Vercel only exposes functions under `/api`; the old layout 404'd `/api/pipeline`).
-- **Built this session** (all verified in browser via local http-server + demo mode):
-  - Phrase packs: 3 packs (Greetings/Bargaining/Help) × 14 phrases, hardcoded translations in all 11 languages in `PHRASE_PACKS` in index.html; drawer opens from strip, tap shows phrase on both halves in each side's language. Translations are Claude-authored — a native-speaker read-through wouldn't hurt, esp. Odia/Punjabi.
-  - Open-mic mode: strip toggle; live-mode tap-to-talk with WebAudio RMS silence auto-stop (~1.5s quiet, thresholds 0.035/0.02 in `startSilenceWatch`). NOT yet tested with a real microphone — needs an on-device check.
-  - Polish: bubble entrance animations, "Play again" replay button for received TTS, active-speaker half highlight, animated translating dots.
-  - Fixed broken icon `<link>` paths (`/icons/…` → `/…`), manifest colors aligned to dark theme, sw.js cache bumped to v2 with `/api/` guard (old guard checked a Netlify path).
-- Not yet deployed; no Vercel project linked. Vercel CLI installed globally. Remaining deploy steps are user-interactive: `vercel login`, `vercel`, `vercel env add SARVAM_API_KEY`, `vercel --prod`, then pwabuilder.com for the APK.
+- **Live in production**: https://baatchiit.vercel.app (project `divya-puro-projects/baatchiit`, deployed via `vercel --prod` from this folder). `SARVAM_API_KEY` set for Production+Preview. Live mode verified end-to-end on Divya's Android phone.
+- Two live-mode bugs were found on-device and fixed: Sarvam rejects mime types with codec params (server now strips `;codecs=…`), and the first-ever mic-permission prompt swallowed the push-to-talk hold (mic is now warmed up at page load).
+- Features shipped: phrase packs (3 packs × 14 phrases, hardcoded in `PHRASE_PACKS`, Claude-authored translations — native check still wise), open-mic silence auto-stop (thresholds 0.035/0.02 in `startSilenceWatch`, verified working on-device), TTS replay button, bubble animations. Demo mode removed (see Stack note).
+- **APK generated** via pwabuilder.com: `android-package/BaatChiit.ai.apk` (+ `.aab` for a future Play Store upload), package id `app.vercel.baatchiit.twa`. `/.well-known/assetlinks.json` is deployed and fingerprint-matched. `android-package/signing.keystore` is gitignored and exists ONLY on this PC — Divya was told to back it up; losing it breaks APK updates.
+- sw.js is network-first for navigations (cache `baatchiit-v3`), so deploys show up without cache-version bumps; `/api/` never cached.
+- **OTP login built this session** (Divya's picks: MSG91 SMS like MissionFauj, Upstash Redis via Vercel Marketplace, login optional-not-required): `api/auth.js` (send/verify/me/logout; MSG91 holds the OTP, Redis holds `session:<token>` 90-day TTL + `user:<phone>` with `plan` field) and an Account drawer in index.html (token in localStorage `bc_session`). UI verified locally; **the SMS round-trip is untested** — blocked on user-interactive setup: Upstash Marketplace install + `MSG91_AUTH_KEY`/`MSG91_TEMPLATE_ID` env vars, then redeploy. MSG91 API shapes in auth.js are from docs as of 2026-07 — re-verify if OTP calls fail.
+- **Payments: planned, not built** — see PAYMENTS.md (Razorpay; recommends one-time top-ups over subscriptions; usage metering in pipeline.js must come first; awaiting Divya's pricing/model decisions and Razorpay KYC).
 
 ## Remaining roadmap
 
-- **Accounts / payments** — blocked on a backend decision (nothing exists yet; user's MissionFauj project uses MSG91 OTP, ask before assuming that stack).
-- On-device testing of open-mic thresholds and iPhone audio/mp4 path.
+- User setup for login (Upstash + MSG91 vars), then test the OTP flow on the deployed site.
+- Payments per PAYMENTS.md, starting with usage metering.
+- Regenerate the APK after any manifest change (not needed for pure code deploys — the TWA wraps the live URL).
+- Still untested: iPhone audio/mp4 path.
 
 ## Context
 
 - The user is Divya (divyanec@gmail.com). Related but separate project: MissionFauj (`C:\Users\MOBIUS\Downloads\MissionFauj`) — React/Capacitor app with MSG91 OTP login; earlier sessions there fought OTP integration bugs.
-- Divya once described the desired stack as "same as dhruva" — no local project by that name was found; unresolved. Current stack was kept. Ask what "dhruva" is if stack questions come up.
+- Divya once described the desired stack as "same as dhruva" — no local project by that name; there IS a `dhruva-dev` project in their Vercel team (spotted in `vercel project ls`), never clarified. For auth/storage Divya explicitly chose MSG91 + Upstash (2026-07-24), so the question only matters if it resurfaces.
