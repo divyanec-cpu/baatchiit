@@ -47,8 +47,9 @@ user records.
 One-time setup, both in the Vercel dashboard:
 
 1. **Upstash Redis**: project → Storage → Marketplace → add Upstash Redis
-   (free tier), connect it to this project. This injects
-   `UPSTASH_REDIS_REST_URL` and `UPSTASH_REDIS_REST_TOKEN` automatically.
+   (free tier), connect it to this project. This injects the Redis env vars
+   automatically (`KV_REST_API_URL`/`KV_REST_API_TOKEN`; a direct Upstash
+   signup's `UPSTASH_REDIS_REST_*` names work too).
 2. **MSG91**: add env vars `MSG91_AUTH_KEY` (msg91.com dashboard → authkey)
    and `MSG91_TEMPLATE_ID` (an approved DLT OTP template — same account as
    MissionFauj works). Redeploy after adding.

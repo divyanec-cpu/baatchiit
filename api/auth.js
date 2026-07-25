@@ -39,12 +39,9 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "This endpoint only accepts POST requests." });
   }
 
-  const missing = [
-    "MSG91_AUTH_KEY",
-    "MSG91_TEMPLATE_ID",
-    "UPSTASH_REDIS_REST_URL",
-    "UPSTASH_REDIS_REST_TOKEN",
-  ].filter((k) => !process.env[k]);
+  const missing = ["MSG91_AUTH_KEY", "MSG91_TEMPLATE_ID"].filter((k) => !process.env[k]);
+  if (!redisUrl()) missing.push("KV_REST_API_URL (or UPSTASH_REDIS_REST_URL)");
+  if (!redisToken()) missing.push("KV_REST_API_TOKEN (or UPSTASH_REDIS_REST_TOKEN)");
   if (missing.length) {
     return res.status(500).json({
       error: `Login isn't configured on the server yet (missing: ${missing.join(", ")}). See README "Accounts" section.`,
@@ -182,13 +179,22 @@ function randomToken() {
   return Array.from(bytes, (b) => b.toString(16).padStart(2, "0")).join("");
 }
 
+// The Vercel Marketplace install injects KV_-prefixed names; a direct
+// Upstash signup uses UPSTASH_-prefixed ones. Same REST API either way.
+function redisUrl() {
+  return process.env.KV_REST_API_URL || process.env.UPSTASH_REDIS_REST_URL;
+}
+function redisToken() {
+  return process.env.KV_REST_API_TOKEN || process.env.UPSTASH_REDIS_REST_TOKEN;
+}
+
 // Single-command Upstash REST call: POST the command as a JSON array,
 // e.g. ["SETEX", "key", "300", "value"] -> { result: ... }
 async function redis(command) {
-  const res = await fetch(process.env.UPSTASH_REDIS_REST_URL, {
+  const res = await fetch(redisUrl(), {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.UPSTASH_REDIS_REST_TOKEN}`,
+      Authorization: `Bearer ${redisToken()}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify(command),
