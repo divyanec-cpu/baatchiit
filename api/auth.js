@@ -9,25 +9,27 @@
 //
 // Two external services, both configured only through env vars:
 //
-//   MSG91 (OTP delivery + verification -- the same provider the user's
-//   MissionFauj project uses):
-//     MSG91_AUTH_KEY     -- from msg91.com dashboard
-//     MSG91_TEMPLATE_ID  -- an approved DLT OTP template id
-//   MSG91's OTP API generates, sends, stores and verifies the OTP
-//   itself, so this server never sees or stores the code -- we only
-//   forward "send" and "verify" calls and trust its answer.
-//   NOTE: endpoint shapes current as of 2026-07; if OTP calls start
-//   failing, re-check docs.msg91.com (same caveat as Sarvam in
-//   pipeline.js).
+//   MSG91 (OTP delivery + verification -- same account as the user's
+//   MissionFauj project). MSG91 sells two OTP products with different
+//   APIs: "OTP (classic)" (authkey + template_id) and "OTP Widget"
+//   (widgetId + tokenAuth + a reqId that threads send->retry->verify).
+//   THIS ACCOUNT USES THE WIDGET PRODUCT -- the classic API accepts
+//   sends with type:"success" but never delivers (no DLT template
+//   behind it), which cost a debugging round on MissionFauj and again
+//   here. Integration below mirrors MissionFauj's proven one:
+//     MSG91_WIDGET_ID    -- msg91.com dashboard -> OTP widget
+//     MSG91_TOKEN_AUTH   -- the widget's auth token
+//   MSG91 generates and verifies the code itself; this server only
+//   forwards calls, so it never sees the OTP.
 //
 //   Upstash Redis (sessions + user records), via its REST API so there
-//   are no npm dependencies:
-//     UPSTASH_REDIS_REST_URL, UPSTASH_REDIS_REST_TOKEN
-//   Install from the Vercel dashboard: Storage -> Marketplace ->
-//   Upstash Redis (free tier). Vercel injects both vars automatically.
+//   are no npm dependencies. Install from the Vercel dashboard:
+//   Storage -> Marketplace -> Upstash Redis (free tier); the KV_* env
+//   vars are injected automatically.
 //
 // Keys used in Redis:
 //   otp_rl:<phone>    -- send-rate counter, expires hourly   (rate limit)
+//   otpreq:<phone>    -- MSG91 widget reqId, 5-min TTL       (send->verify thread)
 //   session:<token>   -- JSON {phone, createdAt}, 90-day TTL (login state)
 //   user:<phone>      -- JSON {phone, firstSeen, plan}       (permanent)
 
@@ -39,7 +41,7 @@ module.exports = async function handler(req, res) {
     return res.status(405).json({ error: "This endpoint only accepts POST requests." });
   }
 
-  const missing = ["MSG91_AUTH_KEY", "MSG91_TEMPLATE_ID"].filter((k) => !process.env[k]);
+  const missing = ["MSG91_WIDGET_ID", "MSG91_TOKEN_AUTH"].filter((k) => !process.env[k]);
   if (!redisUrl()) missing.push("KV_REST_API_URL (or UPSTASH_REDIS_REST_URL)");
   if (!redisToken()) missing.push("KV_REST_API_TOKEN (or UPSTASH_REDIS_REST_TOKEN)");
   if (missing.length) {
@@ -101,26 +103,26 @@ async function sendOtp(body, res) {
     return res.status(429).json({ error: "Too many OTP requests for this number. Try again in an hour." });
   }
 
-  let data = await msg91(
-    `https://control.msg91.com/api/v5/otp?template_id=${process.env.MSG91_TEMPLATE_ID}&mobile=91${phone}&otp_length=6&otp_expiry=5`,
-    "POST"
-  );
-  console.log("msg91 send:", JSON.stringify(data)); // never contains the OTP itself
-
-  // While a previous OTP for this number is still unexpired, MSG91
-  // rejects a fresh /otp call ("request already exists") -- the retry
-  // endpoint is the sanctioned way to resend in that window.
-  if (data.type !== "success" && /already/i.test(data.message || "")) {
-    data = await msg91(
-      `https://control.msg91.com/api/v5/otp/retry?mobile=91${phone}&retrytype=text`,
-      "POST"
-    );
-    console.log("msg91 retry:", JSON.stringify(data));
+  // If an OTP for this number is still in flight, resend it through the
+  // widget retry call (a fresh sendOtp within the window is rejected).
+  const inFlight = await redis(["GET", `otpreq:${phone}`]);
+  if (inFlight) {
+    const retry = await msg91("retryOtp", { reqId: inFlight, retryChannel: "text" });
+    console.log("msg91 retry:", JSON.stringify(retry)); // responses never contain the OTP
+    if (retry.type === "success") return res.status(200).json({ sent: true });
+    await redis(["DEL", `otpreq:${phone}`]); // stale reqId -- fall through to a fresh send
   }
 
+  const data = await msg91("sendOtp", { identifier: `91${phone}` });
+  console.log("msg91 send:", JSON.stringify(data));
   if (data.type !== "success") {
     throw new Error(data.message || "Couldn't send the OTP SMS. Try again in a minute.");
   }
+  // The reqId threads send -> retry -> verify. Live responses put it in
+  // `message` (the documented reqId field is usually absent).
+  const reqId = data.reqId || (data.data && data.data.reqId) || data.message;
+  if (!reqId) throw new Error("MSG91 accepted the send but returned no request id.");
+  await redis(["SETEX", `otpreq:${phone}`, "300", String(reqId)]);
   return res.status(200).json({ sent: true });
 }
 
@@ -131,14 +133,18 @@ async function verifyOtp(body, res) {
     return res.status(400).json({ error: "Enter the OTP exactly as received." });
   }
 
-  const data = await msg91(
-    `https://control.msg91.com/api/v5/otp/verify?otp=${otp}&mobile=91${phone}`,
-    "GET"
-  );
+  const reqId = await redis(["GET", `otpreq:${phone}`]);
+  if (!reqId) {
+    return res.status(401).json({ error: "That OTP expired. Tap Resend and try the new one." });
+  }
+
+  const data = await msg91("verifyOtp", { reqId, otp });
+  console.log("msg91 verify:", JSON.stringify({ type: data.type, message: data.message }));
   if (data.type !== "success") {
     // MSG91 replies with type "error" for a wrong or expired OTP.
     return res.status(401).json({ error: "That OTP didn't match (or expired). Check the SMS and try again." });
   }
+  await redis(["DEL", `otpreq:${phone}`]); // the reqId is single-use once verified
 
   // First login creates the user record; later logins keep it as-is.
   const userKey = `user:${phone}`;
@@ -219,15 +225,24 @@ async function redis(command) {
   return data.result;
 }
 
-async function msg91(url, method) {
-  const res = await fetch(url, {
-    method,
-    headers: { authkey: process.env.MSG91_AUTH_KEY, "Content-Type": "application/json" },
+// Widget-API call. Non-2xx responses still carry a JSON body with
+// type/message (e.g. a wrong OTP), so parse regardless of status and
+// let the caller decide -- mirrors the behaviour proven in MissionFauj.
+async function msg91(endpoint, payload) {
+  const res = await fetch(`https://control.msg91.com/api/v5/widget/${endpoint}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(
+      Object.assign(
+        { widgetId: process.env.MSG91_WIDGET_ID, tokenAuth: process.env.MSG91_TOKEN_AUTH },
+        payload
+      )
+    ),
   });
   const text = await res.text();
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error(`MSG91 returned something that wasn't JSON (status ${res.status}). Check MSG91_AUTH_KEY.`);
+    throw new Error(`MSG91 returned something that wasn't JSON (status ${res.status}). Check MSG91_WIDGET_ID/MSG91_TOKEN_AUTH.`);
   }
 }

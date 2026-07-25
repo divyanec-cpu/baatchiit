@@ -50,9 +50,11 @@ One-time setup, both in the Vercel dashboard:
    (free tier), connect it to this project. This injects the Redis env vars
    automatically (`KV_REST_API_URL`/`KV_REST_API_TOKEN`; a direct Upstash
    signup's `UPSTASH_REDIS_REST_*` names work too).
-2. **MSG91**: add env vars `MSG91_AUTH_KEY` (msg91.com dashboard → authkey)
-   and `MSG91_TEMPLATE_ID` (an approved DLT OTP template — same account as
-   MissionFauj works). Redeploy after adding.
+2. **MSG91**: add env vars `MSG91_WIDGET_ID` and `MSG91_TOKEN_AUTH` — the
+   *OTP Widget* product's credentials, the same pair MissionFauj uses (its
+   server env has the working values). Note: this account uses MSG91's
+   Widget API; the classic authkey+template OTP API accepts sends but never
+   delivers. Redeploy after adding.
 
 Until both exist, the Login drawer shows a clear "isn't configured" error and
 the rest of the app is unaffected.
