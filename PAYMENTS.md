@@ -1,7 +1,15 @@
-# Payments — plan (not built yet)
+# Payments — plan
 
-Written 2026-07-24, after OTP login shipped. This is the agreed direction for
-the payment page; nothing here is implemented.
+Written 2026-07-24; updated 2026-07-25 after the Claude Design redesign
+settled the open decisions. **Now implemented**: usage metering (1 deciminute
+per successful exchange, tracked in `user:<phone>.deciminutes` via
+`api/_lib.js`; 15 welcome minutes on signup), wallet + top-up + success
+screens, pack list (₹99/60 min, ₹249/180 min, ₹599/500 min), and a
+`paymentsEnabled` server flag — the Pay button stays disabled until
+`RAZORPAY_KEY_ID`/`RAZORPAY_KEY_SECRET` are set. **Still to build**:
+`api/payment.js` (create-order + verified webhook) and the checkout.js
+integration, per the architecture below. One-time top-ups won (option B),
+as recommended.
 
 ## Provider: Razorpay
 

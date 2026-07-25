@@ -3,41 +3,43 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
-<meta name="theme-color" content="#14181F" />
+<meta name="theme-color" content="#241C3D" />
 <title>BaatChiit.ai — Live Translator</title>
 <link rel="manifest" href="/manifest.json" />
 <link rel="apple-touch-icon" href="/icon-192.png" />
 <link rel="icon" href="/icon-192.png" />
 
-<!-- Fraunces = headings & language names (a printed-signboard feel).
-     Inter = interface labels/buttons.
-     IBM Plex Mono = ONLY the number chips, so digits get their own
-     typographic identity (this app cares a lot about getting numbers
-     right in a negotiation). -->
+<!-- Design system (from the Claude Design handoff):
+     Baloo 2 = display font (headings, buttons, big numbers)
+     Manrope = body/UI font
+     Transcript/translation text uses a system-first stack so the OS's
+     own Indic script fonts render each language properly. -->
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Baloo+2:wght@600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
 
 <style>
   :root {
-    /* ---- Color tokens ---- */
-    --ink: #14181F;          /* base background */
-    --ink-soft: #1B212C;     /* panels / bubbles */
-    --ink-softer: #232B38;   /* pressed / hover states */
-    --chalk: #F6F1E4;        /* primary light text, "paper" */
-    --chalk-dim: #A9ACB3;    /* secondary text */
-    --marigold: #E8A33D;     /* host accent */
-    --betel: #5B9279;        /* guest accent */
-    --vermillion: #C6432B;   /* recording / live indicator */
-    --hairline: rgba(246, 241, 228, 0.12);
+    /* ---- Palette (Claude Design handoff) ---- */
+    --cream: #FFF7EA;
+    --sand: #F4EBDA;
+    --card: #FFFFFF;
+    --ink: #211A14;
+    --muted: #9A8A79;
+    --saffron: #FF7A29;
+    --saffron-dk: #E85D0F;
+    --gold: #F2B705;
+    --indigo: #241C3D;
+    --indigo-lt: #3A2E5C;
+    --green: #2E9E63;
+    --danger: #B5461E;
+    --border: rgba(33, 26, 20, 0.1);
+    --border-strong: rgba(33, 26, 20, 0.12);
+    --cream-dim: rgba(255, 247, 234, 0.68);
+    --cream-faint: rgba(255, 247, 234, 0.45);
 
-    /* ---- Type tokens ---- */
-    --font-display: "Fraunces", Georgia, serif;
-    --font-ui: "Inter", -apple-system, "Segoe UI", sans-serif;
-    --font-mono: "IBM Plex Mono", ui-monospace, monospace;
-    /* Text the app doesn't control the language of (transcripts,
-       translations) gets a system-first stack, so the OS's own Indic
-       script fonts are used rather than forcing a Latin webfont. */
+    --font-display: "Baloo 2", "Manrope", sans-serif;
+    --font-ui: "Manrope", -apple-system, "Segoe UI", sans-serif;
     --font-script: -apple-system, "Segoe UI", "Noto Sans", Roboto, sans-serif;
   }
 
@@ -45,8 +47,8 @@
   html, body {
     margin: 0;
     height: 100%;
-    background: var(--ink);
-    color: var(--chalk);
+    background: var(--cream);
+    color: var(--ink);
     font-family: var(--font-ui);
     overscroll-behavior: none;
   }
@@ -58,578 +60,612 @@
     cursor: pointer;
     -webkit-tap-highlight-color: transparent;
   }
-  button:focus-visible, .chip-btn:focus-visible {
-    outline: 2px solid var(--chalk);
-    outline-offset: 2px;
-  }
+  button:focus-visible, input:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }
+  input { font-family: var(--font-ui); }
 
-  #app {
-    height: 100vh;
-    height: 100dvh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  #app { height: 100vh; height: 100dvh; overflow: hidden; position: relative; }
+  .screen { position: absolute; inset: 0; display: none; flex-direction: column; background: var(--cream); }
+  .screen.active { display: flex; }
 
-  /* ============== HALVES (host + guest) ============== */
-  .half {
-    flex: 1 1 0;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    gap: 10px;
-    padding: 18px 20px;
-    position: relative;
-  }
-  .half--guest {
-    transform: rotate(180deg);          /* upright for the person across the table */
-    border-bottom: 1px solid var(--hairline);
-    background: linear-gradient(to bottom, rgba(91,146,121,0.10), transparent 65%);
-  }
-  .half--host {
-    background: linear-gradient(to top, rgba(232,163,61,0.10), transparent 65%);
-  }
-  .half[data-active-speaker="true"] {
-    background-color: rgba(246,241,228,0.035);
-  }
+  @keyframes bcFade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+  @keyframes bcBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+  @keyframes bcPulse { 0%,100% { box-shadow: 0 0 0 0 rgba(232,93,15,0.35); } 50% { box-shadow: 0 0 0 14px rgba(232,93,15,0); } }
 
-  .lang-row {
-    display: flex;
-    justify-content: center;
+  /* ============== SHARED BITS ============== */
+  .h-display { font-family: var(--font-display); font-weight: 800; color: var(--ink); }
+  .btn-primary {
     width: 100%;
-  }
-  .chip-btn {
+    padding: 15px;
+    border-radius: 14px;
+    background: var(--saffron);
+    color: #fff;
     font-family: var(--font-display);
-    font-size: 15px;
-    letter-spacing: 0.02em;
-    padding: 7px 16px 6px;
+    font-weight: 700;
+    font-size: 16px;
+  }
+  .btn-primary:disabled { background: #E8DCC8; cursor: default; }
+  .link-btn {
+    display: inline-block;
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--saffron-dk);
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  .field-error { min-height: 18px; font-size: 12.5px; font-weight: 700; color: var(--danger); margin: 0; }
+  .icon-btn {
+    width: 32px; height: 32px;
     border-radius: 999px;
-    border: 1px solid var(--hairline);
-    background: var(--ink-soft);
-    display: inline-flex;
-    align-items: center;
-    gap: 7px;
+    background: var(--sand);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 14px; color: var(--ink);
   }
-  .half--host .chip-btn { border-color: rgba(232,163,61,0.45); }
-  .half--guest .chip-btn { border-color: rgba(91,146,121,0.5); }
-  .chip-btn .dot {
-    width: 6px; height: 6px; border-radius: 50%;
-    background: var(--chalk-dim);
-  }
-  .chip-btn[data-locked="true"] .dot { background: currentColor; }
-  .half--host .chip-btn[data-locked="true"] { color: var(--marigold); }
-  .half--guest .chip-btn[data-locked="true"] { color: var(--betel); }
 
-  /* ---- Subtitle / caption area ---- */
-  .stage {
+  /* ============== LOGIN + OTP ============== */
+  .auth-wrap {
     flex: 1;
-    width: 100%;
-    max-width: 480px;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    padding: 0 28px; gap: 18px;
+  }
+  .auth-wrap .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 26px; }
+  .auth-wrap .tagline { color: var(--muted); font-size: 14px; text-align: center; margin: 0 0 10px; }
+  .field-label { font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 6px; letter-spacing: 0.3px; }
+  .phone-row {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--card);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 14px 16px;
+  }
+  .phone-row .prefix { font-weight: 700; }
+  .phone-row input {
+    border: none; outline: none; background: transparent;
+    font-size: 17px; flex: 1; min-width: 0; color: var(--ink);
+  }
+  .otp-input {
+    width: 190px;
     text-align: center;
-    gap: 10px;
-    padding: 4px 6px;
-    overflow-y: auto;
+    letter-spacing: 14px;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--ink);
+    background: var(--card);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 14px;
+    padding: 14px 0 14px 14px;
+    font-family: var(--font-display);
   }
-  .stage .placeholder {
-    color: var(--chalk-dim);
-    font-size: 14px;
-    line-height: 1.5;
-  }
-  .bubble-original {
-    font-family: var(--font-script);
-    font-size: 14px;
-    color: var(--chalk-dim);
-  }
-  .bubble-translated {
-    font-family: var(--font-script);
-    font-size: 22px;
-    line-height: 1.4;
-    font-weight: 500;
-  }
-  .status-line {
-    min-height: 16px;
-    font-size: 12px;
-    letter-spacing: 0.03em;
-    text-transform: uppercase;
-    color: var(--chalk-dim);
-  }
-  /* Animated ellipsis while the pipeline is working */
-  .status-line.is-working::after {
-    content: "";
-    animation: workingDots 1.2s infinite;
-  }
-  @keyframes workingDots {
-    0% { content: ""; }
-    25% { content: "."; }
-    50% { content: ".."; }
-    75% { content: "..."; }
-  }
+  .otp-sub { color: var(--muted); font-size: 14px; text-align: center; margin: 0; }
+  .resend-btn { color: var(--saffron-dk); font-size: 13px; font-weight: 700; }
+  .resend-btn:disabled { color: var(--muted); cursor: default; }
 
-  /* Replay the spoken translation without asking the other person to repeat */
-  .replay-btn {
-    margin-top: 6px;
-    font-size: 12px;
-    color: var(--chalk-dim);
-    border: 1px solid var(--hairline);
+  /* ============== SETUP ("New conversation") ============== */
+  .setup-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 18px 20px 4px;
+  }
+  .setup-head .title { font-family: var(--font-display); font-weight: 800; font-size: 20px; }
+  .setup-sub { padding: 10px 20px 0; color: var(--muted); font-size: 13.5px; }
+  .setup-scroll { flex: 1; overflow-y: auto; min-height: 0; }
+  .detect-card {
+    margin: 16px 20px;
+    background: var(--indigo);
+    border-radius: 20px;
+    padding: 20px;
+    color: var(--cream);
+    display: flex; flex-direction: column; gap: 12px;
+  }
+  .detect-card .head { display: flex; align-items: center; gap: 9px; font-family: var(--font-display); font-weight: 700; font-size: 15px; }
+  .detect-card .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--gold); }
+  .detect-card .copy { font-size: 13px; color: var(--cream-dim); line-height: 1.5; }
+  .detect-card .badge {
+    align-self: flex-start;
+    font-size: 11.5px; font-weight: 800; color: var(--gold);
+    background: rgba(242, 183, 5, 0.14);
+    border: 1px solid rgba(242, 183, 5, 0.3);
+    padding: 4px 9px; border-radius: 999px;
+  }
+  .manual-wrap { padding: 14px 20px 0; display: flex; flex-direction: column; gap: 14px; }
+  .chip-group-label { font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.4px; }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .lang-chip {
+    padding: 8px 14px;
     border-radius: 999px;
-    padding: 5px 12px;
-    display: inline-flex;
-    align-items: center;
+    font-weight: 700;
+    font-size: 13.5px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--ink);
+  }
+  .lang-chip .native { font-family: var(--font-script); font-weight: 600; opacity: 0.75; font-size: 12px; margin-left: 5px; }
+  .chip-row[data-side="host"] .lang-chip[data-selected="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .chip-row[data-side="guest"] .lang-chip[data-selected="true"] { background: var(--saffron); color: #fff; border-color: var(--saffron); }
+  .setting-row {
+    margin: 16px 20px 0;
+    background: var(--card);
+    border: 1.5px solid var(--border);
+    border-radius: 14px;
+    padding: 13px 16px;
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  }
+  .setting-row .lbl { font-weight: 700; font-size: 14px; }
+  .setting-row .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+  .switch {
+    width: 46px; height: 26px; border-radius: 999px;
+    background: #E8DCC8; position: relative; transition: background 0.15s ease; flex-shrink: 0;
+  }
+  .switch::after {
+    content: ""; position: absolute; top: 3px; left: 3px;
+    width: 20px; height: 20px; border-radius: 50%; background: #fff;
+    transition: left 0.15s ease;
+    box-shadow: 0 1px 3px rgba(33,26,20,0.25);
+  }
+  .switch[aria-pressed="true"] { background: var(--green); }
+  .switch[aria-pressed="true"]::after { left: 23px; }
+  .setup-foot { padding: 20px; }
+
+  /* ============== MAIN (split conversation) ============== */
+  .half {
+    flex: 1; min-height: 0;
+    display: flex; flex-direction: column;
+    padding: 14px 16px;
+    gap: 10px;
+  }
+  .half--guest { background: var(--indigo); transform: rotate(180deg); }
+  .half--host { background: var(--cream); }
+  .side-head { display: flex; align-items: center; gap: 7px; }
+  .side-dot { width: 7px; height: 7px; border-radius: 999px; }
+  .side-dot[data-state="waiting"] { animation: bcBlink 1.1s ease-in-out infinite; }
+  .half--host .side-dot[data-state="waiting"] { background: var(--saffron); }
+  .half--guest .side-dot[data-state="waiting"] { background: var(--gold); }
+  .side-dot[data-state="locked"] { background: var(--green); }
+  .side-label { font-family: var(--font-display); font-weight: 700; font-size: 13px; }
+  .half--host .side-label { color: var(--muted); }
+  .half--guest .side-label { color: rgba(255, 247, 234, 0.55); }
+  .half--host .side-label[data-state="waiting"] { color: var(--saffron-dk); }
+  .half--guest .side-label[data-state="waiting"] { color: var(--gold); }
+
+  .feed { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; }
+  .feed > :first-child { margin-top: auto; } /* keep content pinned to the bottom, but scrollable */
+  .msg-row { display: flex; flex-direction: column; gap: 2px; animation: bcFade 0.25s ease; }
+  .msg-row[data-mine="true"] { align-items: flex-end; }
+  .msg-row[data-mine="false"] { align-items: flex-start; }
+  .bubble {
+    max-width: 78%;
+    padding: 10px 13px;
+    border-radius: 16px;
+    font-size: 14.5px;
+    font-family: var(--font-script);
+    line-height: 1.45;
+  }
+  .msg-row[data-mine="true"] .bubble { border-bottom-right-radius: 4px; }
+  .msg-row[data-mine="false"] .bubble { border-bottom-left-radius: 4px; }
+  .half--host .msg-row[data-mine="true"] .bubble { background: var(--saffron); color: #fff; }
+  .half--host .msg-row[data-mine="false"] .bubble { background: var(--card); color: var(--ink); border: 1.5px solid rgba(33, 26, 20, 0.08); }
+  .half--guest .msg-row[data-mine="true"] .bubble { background: var(--gold); color: var(--indigo); }
+  .half--guest .msg-row[data-mine="false"] .bubble { background: var(--indigo-lt); color: var(--cream); border: 1.5px solid rgba(255, 247, 234, 0.12); }
+  .bubble-secondary { font-size: 11.5px; padding: 0 4px; font-family: var(--font-script); }
+  .half--host .bubble-secondary { color: var(--muted); }
+  .half--guest .bubble-secondary { color: var(--cream-faint); }
+
+  /* number chips inside bubbles (per-surface contrast) */
+  .chip { font-weight: 800; padding: 1px 7px; border-radius: 7px; font-size: 0.94em; white-space: nowrap; }
+  .half--host .msg-row[data-mine="true"] .chip { background: rgba(0,0,0,0.16); color: #fff; }
+  .half--host .msg-row[data-mine="false"] .chip { background: rgba(33,26,20,0.08); color: var(--ink); }
+  .half--guest .msg-row[data-mine="true"] .chip { background: rgba(0,0,0,0.14); color: var(--indigo); }
+  .half--guest .msg-row[data-mine="false"] .chip { background: rgba(255,255,255,0.16); color: var(--cream); }
+
+  .phrase-msg {
+    align-self: center;
+    background: transparent;
+    border: 1.5px dashed var(--border-strong);
+    border-radius: 14px;
+    padding: 9px 14px;
+    text-align: center;
+    max-width: 85%;
+    animation: bcFade 0.25s ease;
+  }
+  .half--guest .phrase-msg { border-color: rgba(255, 247, 234, 0.25); }
+  .phrase-msg .main { font-family: var(--font-script); font-size: 14.5px; }
+  .half--guest .phrase-msg .main { color: var(--cream); }
+  .phrase-msg .gloss { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .half--guest .phrase-msg .gloss { color: var(--cream-faint); }
+
+  .mic-wrap { display: flex; justify-content: center; padding-top: 4px; }
+  .mic-btn {
+    width: 56px; height: 56px;
+    border-radius: 999px;
+    display: flex; align-items: center; justify-content: center;
+    touch-action: none;
+    transition: transform 0.12s ease;
+  }
+  .half--host .mic-btn { background: var(--saffron); box-shadow: 0 6px 18px rgba(255, 122, 41, 0.4); }
+  .half--guest .mic-btn { background: var(--gold); box-shadow: 0 6px 18px rgba(242, 183, 5, 0.35); }
+  .mic-btn.is-recording { transform: scale(1.12); animation: bcPulse 1.1s ease-in-out infinite; }
+  .mic-btn.is-busy { opacity: 0.55; }
+
+  .strip {
+    height: 52px; min-height: 52px;
+    background: var(--card);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 12px;
+    box-shadow: 0 0 0 1px rgba(33, 26, 20, 0.06);
+    z-index: 5;
     gap: 6px;
   }
-  .replay-btn:active { background: var(--ink-soft); }
-  .replay-btn svg { width: 13px; height: 13px; }
-
-  /* ---- Number chips: the signature detail. Styled like a little
-     price-tag stub punched out of a receipt. ---- */
-  .chip {
-    font-family: var(--font-mono);
-    font-weight: 600;
-    font-size: 0.82em;
-    background: var(--marigold);
-    color: var(--ink);
-    padding: 1px 7px 2px;
-    border-radius: 4px;
-    margin: 0 1px;
-    position: relative;
-    white-space: nowrap;
-  }
-  .chip::before {
-    content: "";
-    position: absolute;
-    left: -3px; top: 50%;
-    width: 5px; height: 5px;
-    background: var(--ink);
-    border-radius: 50%;
-    transform: translateY(-50%);
-  }
-  .half--guest .chip, .half--host .chip { background: var(--marigold); }
-
-  /* ---- Push-to-talk button ---- */
-  .ptt {
-    width: 84px; height: 84px;
-    border-radius: 50%;
-    background: var(--ink-soft);
-    border: 2px solid var(--hairline);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: transform 0.12s ease, background 0.12s ease, border-color 0.12s ease;
-    touch-action: none;
-  }
-  .half--host .ptt { border-color: rgba(232,163,61,0.55); }
-  .half--guest .ptt { border-color: rgba(91,146,121,0.6); }
-  .ptt svg { width: 30px; height: 30px; }
-  .ptt.is-recording {
-    transform: scale(1.08);
-    background: var(--vermillion);
-    border-color: var(--vermillion);
-  }
-  .ptt.is-busy { opacity: 0.55; }
-  @media (prefers-reduced-motion: no-preference) {
-    .ptt.is-recording { animation: pulse 1.1s ease-in-out infinite; }
-    .bubble-original, .bubble-translated, .replay-btn { animation: bubbleIn 0.25s ease both; }
-    .bubble-translated { animation-delay: 0.05s; }
-  }
-  @keyframes bubbleIn {
-    from { opacity: 0; transform: translateY(6px); }
-    to { opacity: 1; transform: none; }
-  }
-  @keyframes pulse {
-    0%, 100% { box-shadow: 0 0 0 0 rgba(198,67,43,0.45); }
-    50% { box-shadow: 0 0 0 12px rgba(198,67,43,0); }
-  }
-
-  /* ============== CONTROL STRIP ============== */
-  .strip {
-    flex: 0 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
-    padding: 8px 14px;
-    border-top: 1px solid var(--hairline);
-    border-bottom: 1px solid var(--hairline);
-    background: var(--ink);
-    z-index: 5;
-  }
-  .brand {
+  .strip-side { display: flex; gap: 6px; align-items: center; }
+  .pair-pill {
     font-family: var(--font-display);
-    font-size: 15px;
-    font-weight: 600;
-    letter-spacing: 0.01em;
+    font-weight: 700;
+    font-size: 12.5px;
+    background: var(--sand);
+    padding: 6px 12px;
+    border-radius: 999px;
+    color: var(--ink);
     white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  .strip-btn {
-    font-size: 12px;
-    font-weight: 500;
-    color: var(--chalk-dim);
-    padding: 6px 10px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    white-space: nowrap;
-  }
-  .strip-btn:active { background: var(--ink-soft); }
-  .strip-btn[aria-pressed="true"] { color: var(--marigold); }
-  .strip-group { display: flex; align-items: center; }
-  /* On narrow phones, strip buttons collapse to their icons (the
-     history count stays visible so a growing session is still legible). */
-  @media (max-width: 430px) {
-    .strip-btn .btn-label { display: none; }
-  }
+  .pair-pill[data-waiting="true"] { color: var(--saffron-dk); }
 
-  /* ============== LANGUAGE PICKER POPOVER ============== */
-  .lang-popover {
-    position: absolute;
-    top: calc(100% + 8px);
-    left: 50%;
-    transform: translateX(-50%);
-    background: var(--ink-softer);
-    border: 1px solid var(--hairline);
-    border-radius: 12px;
-    padding: 6px;
-    width: 230px;
-    max-height: 260px;
-    overflow-y: auto;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.45);
+  /* ============== SHEETS (history right, phrases bottom) ============== */
+  .sheet-backdrop {
+    position: fixed; inset: 0;
+    background: rgba(20, 14, 8, 0.45);
     z-index: 20;
-    display: grid;
-    gap: 2px;
+    display: none;
   }
-  .lang-popover button {
-    display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    padding: 8px 10px;
-    border-radius: 8px;
+  .sheet-backdrop.open { display: block; }
+  .history-sheet {
+    position: fixed; top: 0; right: 0; bottom: 0;
+    width: 82%; max-width: 360px;
+    background: var(--cream);
+    z-index: 21;
+    padding: 20px;
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+    animation: bcFade 0.2s ease;
+    overflow-y: auto;
+  }
+  .history-sheet.open { display: flex; }
+  .history-sheet h2 { font-family: var(--font-display); font-weight: 800; font-size: 18px; margin: 0; }
+  .hist-card {
+    background: var(--card);
+    border-radius: 14px;
+    padding: 12px 14px;
+    border: 1.5px solid rgba(33, 26, 20, 0.08);
+  }
+  .hist-card .place { font-weight: 700; font-size: 14.5px; font-family: var(--font-script); }
+  .hist-card .meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .hist-empty { color: var(--muted); font-size: 13.5px; }
+
+  .phrases-sheet {
+    position: fixed; left: 0; right: 0; bottom: 0;
+    max-height: 72vh;
+    background: var(--cream);
+    border-radius: 18px 18px 0 0;
+    z-index: 21;
+    display: none;
+    flex-direction: column;
+    animation: bcFade 0.2s ease;
+  }
+  .phrases-sheet.open { display: flex; }
+  .phrases-head {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 20px 8px;
+  }
+  .phrases-head h2 { font-family: var(--font-display); font-weight: 800; font-size: 18px; margin: 0; }
+  .pack-tabs { display: flex; gap: 6px; padding: 4px 20px 0; }
+  .pack-tabs button {
+    font-size: 12.5px; font-weight: 800;
+    padding: 7px 13px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--muted);
+  }
+  .pack-tabs button[aria-pressed="true"] { background: var(--saffron); border-color: var(--saffron); color: #fff; }
+  .phrase-hint { padding: 8px 20px 0; font-size: 12px; color: var(--muted); }
+  .phrases-list { overflow-y: auto; padding: 10px 20px 24px; display: flex; flex-direction: column; gap: 8px; }
+  .phrase-item {
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
+    background: var(--card);
+    border: 1.5px solid rgba(33, 26, 20, 0.08);
+    border-radius: 14px;
+    padding: 12px 14px;
     font-size: 14px;
     text-align: left;
   }
-  .lang-popover button:hover, .lang-popover button:active { background: rgba(246,241,228,0.06); }
-  .lang-popover button[data-selected="true"] { color: var(--marigold); }
-  .lang-popover .native {
-    font-family: var(--font-script);
-    color: var(--chalk-dim);
-    font-size: 13px;
-  }
-  .lang-popover hr { border: none; border-top: 1px solid var(--hairline); margin: 4px 2px; }
-
-  /* ============== HISTORY DRAWER ============== */
-  .drawer-backdrop {
-    position: fixed; inset: 0;
-    background: rgba(0,0,0,0.55);
-    z-index: 30;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-  .drawer-backdrop.open { opacity: 1; pointer-events: auto; }
-  .drawer {
-    position: fixed;
-    left: 0; right: 0; bottom: 0;
-    max-height: 72vh;
-    background: var(--ink-soft);
-    border-radius: 18px 18px 0 0;
-    border-top: 1px solid var(--hairline);
-    transform: translateY(100%);
-    transition: transform 0.25s ease;
-    z-index: 31;
-    display: flex;
-    flex-direction: column;
-  }
-  .drawer.open { transform: translateY(0); }
-  .drawer-head {
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 14px 16px 10px;
-    border-bottom: 1px solid var(--hairline);
-  }
-  .drawer-head h2 { font-family: var(--font-display); font-size: 17px; margin: 0; }
-  .drawer-list { overflow-y: auto; padding: 8px 16px 20px; }
-  .history-item { padding: 12px 0; border-bottom: 1px solid var(--hairline); }
-  .history-item:last-child { border-bottom: none; }
-  .history-meta {
-    display: flex; gap: 8px; align-items: center;
-    font-size: 11px; color: var(--chalk-dim); text-transform: uppercase; letter-spacing: 0.04em;
-    margin-bottom: 4px;
-  }
-  .history-meta .who-dot { width: 7px; height: 7px; border-radius: 50%; }
-  .history-item[data-speaker="host"] .who-dot { background: var(--marigold); }
-  .history-item[data-speaker="guest"] .who-dot { background: var(--betel); }
-  .history-original { font-family: var(--font-script); font-size: 13px; color: var(--chalk-dim); }
-  .history-translated { font-family: var(--font-script); font-size: 16px; margin-top: 2px; }
-  .drawer-empty { padding: 30px 16px; text-align: center; color: var(--chalk-dim); font-size: 14px; }
-
-  /* ============== PHRASES DRAWER ============== */
-  .pack-tabs {
-    display: flex; gap: 6px;
-    padding: 12px 16px 2px;
-  }
-  .pack-tabs button {
-    font-size: 12px; font-weight: 600;
-    padding: 6px 12px;
-    border-radius: 999px;
-    border: 1px solid var(--hairline);
-    background: var(--ink);
-    color: var(--chalk-dim);
-  }
-  .pack-tabs button[aria-pressed="true"] {
-    background: var(--marigold);
-    border-color: var(--marigold);
-    color: var(--ink);
-  }
-  .phrase-item {
-    display: flex; justify-content: space-between; align-items: center; gap: 12px;
-    width: 100%;
-    padding: 12px 2px;
-    border-bottom: 1px solid var(--hairline);
-    font-size: 15px;
-    text-align: left;
-  }
-  .phrase-item:last-child { border-bottom: none; }
-  .phrase-item:active { background: rgba(246,241,228,0.05); }
+  .phrase-item:active { background: var(--sand); }
   .phrase-item .native-preview {
     font-family: var(--font-script);
-    color: var(--chalk-dim);
+    color: var(--muted);
     font-size: 13px;
     flex-shrink: 0;
     max-width: 46%;
     overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
   }
-  .phrase-hint {
-    padding: 2px 16px 0;
-    font-size: 12px;
-    color: var(--chalk-dim);
-  }
 
-  /* ============== ACCOUNT DRAWER ============== */
-  .auth-body {
-    padding: 16px 16px 24px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    max-width: 420px;
+  /* ============== WALLET / PAYMENT / SUCCESS ============== */
+  .page-head { display: flex; align-items: center; gap: 10px; padding: 18px 20px 6px; }
+  .page-head .title { font-family: var(--font-display); font-weight: 800; font-size: 19px; }
+  .back-btn { font-weight: 800; font-size: 16px; padding: 4px 6px; }
+  .balance-card {
+    margin: 16px 20px;
+    background: var(--indigo);
+    border-radius: 20px;
+    padding: 22px 20px;
+    color: var(--cream);
+  }
+  .balance-card .lbl { font-size: 12.5px; color: rgba(255, 247, 234, 0.6); font-weight: 700; letter-spacing: 0.4px; }
+  .balance-card .amount { font-family: var(--font-display); font-weight: 800; font-size: 38px; margin-top: 4px; }
+  .balance-card .low { font-size: 12.5px; color: var(--gold); margin-top: 6px; font-weight: 700; }
+  .info-card {
+    margin: 4px 20px;
+    padding: 14px 16px;
+    background: var(--card);
+    border-radius: 14px;
+    border: 1.5px solid rgba(33, 26, 20, 0.08);
+    font-size: 13.5px;
+    color: var(--muted);
+    line-height: 1.5;
+  }
+  .quiet-btn { align-self: center; margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
+
+  .packs-scroll { flex: 1; overflow-y: auto; padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; }
+  .pack-card {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 16px 18px;
+    border-radius: 16px;
+    border: 2px solid var(--border);
+    background: var(--card);
     width: 100%;
-    margin: 0 auto;
+    text-align: left;
   }
-  .auth-copy { margin: 0; font-size: 14px; line-height: 1.5; }
-  .auth-copy--fine { font-size: 12px; color: var(--chalk-dim); }
-  .auth-row {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    background: var(--ink);
-    border: 1px solid var(--hairline);
-    border-radius: 10px;
-    padding: 10px 12px;
+  .pack-card[data-selected="true"] { border-color: var(--saffron); background: rgba(255, 122, 41, 0.06); }
+  .pack-card .mins { font-family: var(--font-display); font-weight: 800; font-size: 16px; }
+  .pack-card .tag {
+    background: var(--saffron); color: #fff;
+    font-size: 10.5px; font-weight: 800;
+    padding: 2px 8px; border-radius: 999px; margin-left: 8px;
+    vertical-align: 2px;
   }
-  .auth-prefix { color: var(--chalk-dim); font-size: 15px; }
-  .auth-row input {
+  .pack-card .sub { font-size: 12.5px; color: var(--muted); margin-top: 2px; }
+  .pack-card .price { font-family: var(--font-display); font-weight: 800; font-size: 17px; }
+  .method-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+  .method-chips button {
+    padding: 8px 14px; border-radius: 999px;
+    font-weight: 700; font-size: 13.5px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card); color: var(--ink);
+  }
+  .method-chips button[aria-pressed="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .pay-foot { padding: 20px; display: flex; flex-direction: column; gap: 8px; }
+  .secure-note { text-align: center; font-size: 11.5px; color: var(--muted); }
+
+  .success-wrap {
     flex: 1;
-    min-width: 0;
-    background: none;
-    border: none;
-    outline: none;
-    color: var(--chalk);
-    font-family: var(--font-mono);
-    font-size: 16px;          /* >=16px stops iOS from zooming the page on focus */
-    letter-spacing: 0.06em;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    gap: 16px; padding: 0 28px;
   }
-  .auth-btn {
-    background: var(--marigold);
-    color: var(--ink);
+  .success-tick {
+    width: 72px; height: 72px; border-radius: 999px;
+    background: var(--green);
+    display: flex; align-items: center; justify-content: center;
+    animation: bcFade 0.3s ease;
+  }
+
+  /* per-half transient notice (inherits the half's rotation) */
+  .notice {
+    align-self: center;
+    background: rgba(33, 26, 20, 0.85);
+    color: var(--cream);
+    font-size: 12.5px;
     font-weight: 600;
-    font-size: 14px;
-    padding: 11px;
-    border-radius: 10px;
-  }
-  .auth-btn:disabled { opacity: 0.55; }
-  .auth-btn--quiet {
-    background: var(--ink);
-    color: var(--chalk-dim);
-    border: 1px solid var(--hairline);
-  }
-  .auth-links { display: flex; justify-content: space-between; }
-  .auth-links .strip-btn:disabled { opacity: 0.45; }
-  .auth-error { margin: 0; min-height: 16px; font-size: 12px; color: var(--vermillion); }
-  .auth-plan { margin: 0; font-size: 13px; color: var(--chalk-dim); text-transform: capitalize; }
-
-  /* ============== TOASTS / TIP ============== */
-  .tip {
-    position: absolute;
-    top: 8px; left: 50%; transform: translateX(-50%) rotate(180deg);
-    background: var(--ink-softer);
-    border: 1px solid var(--hairline);
-    border-radius: 10px;
-    padding: 8px 12px;
-    font-size: 12px;
-    color: var(--chalk-dim);
-    max-width: 88%;
+    padding: 7px 13px;
+    border-radius: 999px;
+    animation: bcFade 0.2s ease;
+    max-width: 90%;
     text-align: center;
-    z-index: 4;
   }
-  .half--host .tip { transform: translateX(-50%); }
-
-  .visually-hidden {
-    position: absolute; width: 1px; height: 1px;
-    overflow: hidden; clip: rect(0,0,0,0);
-  }
+  .half--guest .notice { background: rgba(255, 247, 234, 0.92); color: var(--ink); }
 </style>
 </head>
 <body>
 
 <div id="app">
 
-  <!-- ============== GUEST HALF (upside-down on purpose) ============== -->
-  <section class="half half--guest" id="half-guest" data-side="guest">
-    <p class="tip" id="tip-guest" hidden>Hold the mic and speak, then let go.</p>
-    <div class="lang-row">
-      <button class="chip-btn" id="chip-guest" data-side="guest" aria-haspopup="listbox">
-        <span class="dot"></span>
-        <span class="label">Auto-detect</span>
-      </button>
+  <!-- ============== SCREEN: PHONE (sign in) ============== -->
+  <section class="screen active" id="screen-phone">
+    <div class="auth-wrap">
+      <svg width="56" height="56" viewBox="0 0 32 32"><path d="M2 8a6 6 0 016-6h10a6 6 0 016 6v4a6 6 0 01-6 6h-8l-5 4v-4a6 6 0 01-3-5.2V8z" fill="#241C3D"/><path d="M10 18a6 6 0 016-6h6a6 6 0 016 6v3a6 6 0 01-4.2 5.7v4.1l-4.6-4.1H16a6 6 0 01-6-6v-2.7z" fill="#FF7A29"/></svg>
+      <div class="brand-name">BaatChiit</div>
+      <p class="tagline">Bol ke dekho, samajh sabko aayega. Talk to anyone, in any Indian language.</p>
+      <div style="width:100%;">
+        <div class="field-label">MOBILE NUMBER</div>
+        <div class="phone-row">
+          <span class="prefix">+91</span>
+          <input id="phone-input" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="98765 43210" />
+        </div>
+      </div>
+      <button class="btn-primary" id="btn-send-otp" disabled>Send OTP</button>
+      <p class="field-error" id="phone-error" aria-live="polite"></p>
     </div>
-
-    <div class="stage" id="stage-guest">
-      <p class="placeholder">Guest's words will appear here, translated for the Host.</p>
-    </div>
-
-    <div class="status-line" id="status-guest" aria-live="polite"></div>
-    <button class="ptt" id="ptt-guest" data-side="guest" aria-label="Hold to speak as Guest">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z"/>
-        <path d="M19 11a7 7 0 0 1-14 0"/>
-        <path d="M12 18v3"/>
-      </svg>
-    </button>
   </section>
 
-  <!-- ============== CONTROL STRIP ============== -->
-  <div class="strip">
-    <div class="strip-group">
-      <button class="strip-btn" id="btn-history">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/></svg>
-        <span class="btn-label">History</span><span id="history-count"></span>
-      </button>
-      <button class="strip-btn" id="btn-phrases">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.9-.9L3 20l1-4.9a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
-        <span class="btn-label">Phrases</span>
-      </button>
+  <!-- ============== SCREEN: OTP ============== -->
+  <section class="screen" id="screen-otp">
+    <div class="auth-wrap">
+      <div class="h-display" style="font-size:22px;">Enter OTP</div>
+      <p class="otp-sub">Sent to <strong id="otp-target"></strong></p>
+      <input id="otp-input" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••" />
+      <button class="btn-primary" id="btn-verify-otp" style="margin-top:8px;">Verify &amp; Continue</button>
+      <button class="resend-btn" id="btn-resend-otp" disabled>Didn't get it? Resend</button>
+      <button class="link-btn" id="btn-change-phone">Change number</button>
+      <p class="field-error" id="otp-error" aria-live="polite"></p>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN: SETUP ("New conversation") ============== -->
+  <section class="screen" id="screen-setup">
+    <div class="setup-head">
+      <div class="title">New conversation</div>
+      <button class="icon-btn" id="btn-wallet-1" style="color:var(--saffron);" aria-label="Wallet">₹</button>
+    </div>
+    <div class="setup-sub">Two people, one phone. Just start talking — no setup.</div>
+
+    <div class="setup-scroll">
+      <div class="detect-card">
+        <div class="head"><span class="dot"></span>Auto-detect is on</div>
+        <div class="copy">Bolna shuru karo — BaatChiit sunta hai, language khud pehchaan leta hai. Both sides get set the moment each person speaks.</div>
+        <span class="badge">All languages supported</span>
+      </div>
+
+      <div style="padding:0 20px;">
+        <button class="link-btn" id="btn-toggle-manual">Set languages manually</button>
+      </div>
+
+      <div class="manual-wrap" id="manual-wrap" hidden>
+        <div>
+          <div class="chip-group-label">YOU SPEAK — POPULAR PICKS</div>
+          <div class="chip-row" data-side="host" id="host-chips"></div>
+        </div>
+        <div>
+          <div class="chip-group-label">THEY SPEAK — POPULAR PICKS</div>
+          <div class="chip-row" data-side="guest" id="guest-chips"></div>
+        </div>
+        <p class="field-error" id="same-lang-error"></p>
+      </div>
+
+      <div class="setting-row">
+        <div>
+          <div class="lbl">Open mic (hands-free)</div>
+          <div class="sub">Tap once to talk — recording stops by itself when you pause.</div>
+        </div>
+        <button class="switch" id="openmic-switch" role="switch" aria-pressed="false" aria-label="Open mic"></button>
+      </div>
     </div>
 
-    <span class="brand">BaatChiit</span>
-
-    <div class="strip-group">
-      <button class="strip-btn" id="btn-openmic" aria-pressed="false"
-              title="Open mic: tap once to talk, recording stops by itself when you go quiet">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 12h2m3-4v8m4-11v14m4-11v8m4-6v4m3-2h.01"/></svg>
-        <span class="btn-label">Open mic</span>
-      </button>
-      <button class="strip-btn" id="btn-account">
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
-        <span class="btn-label" id="account-label">Login</span>
-      </button>
+    <div class="setup-foot">
+      <button class="btn-primary" id="btn-start" style="padding:16px;">Start listening →</button>
     </div>
-  </div>
+  </section>
 
-  <!-- ============== HOST HALF ============== -->
-  <section class="half half--host" id="half-host" data-side="host">
-    <button class="ptt" id="ptt-host" data-side="host" aria-label="Hold to speak as Host">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-        <path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 1 0-6 0v6a3 3 0 0 0 3 3Z"/>
-        <path d="M19 11a7 7 0 0 1-14 0"/>
-        <path d="M12 18v3"/>
-      </svg>
-    </button>
-    <div class="status-line" id="status-host" aria-live="polite"></div>
-
-    <div class="stage" id="stage-host">
-      <p class="placeholder">Host's words will appear here, translated for the Guest.</p>
+  <!-- ============== SCREEN: MAIN (split conversation) ============== -->
+  <section class="screen" id="screen-main">
+    <div class="half half--guest" id="half-guest">
+      <div class="side-head">
+        <span class="side-dot" id="guest-dot" data-state="waiting"></span>
+        <span class="side-label" id="guest-label" data-state="waiting">Listening — detecting language…</span>
+      </div>
+      <div class="feed" id="feed-guest"></div>
+      <div class="mic-wrap">
+        <button class="mic-btn" id="mic-guest" aria-label="Guest: speak">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#241C3D"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#241C3D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+      </div>
     </div>
 
-    <div class="lang-row">
-      <button class="chip-btn" id="chip-host" data-side="host" aria-haspopup="listbox">
-        <span class="dot"></span>
-        <span class="label">Auto-detect</span>
-      </button>
+    <div class="strip">
+      <div class="strip-side">
+        <button class="icon-btn back-btn" id="btn-back-setup" aria-label="Back">←</button>
+        <button class="icon-btn" id="btn-phrases" aria-label="Phrases">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.9-.9L3 20l1-4.9a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
+        </button>
+      </div>
+      <div class="pair-pill" id="pair-pill" data-waiting="true">Auto-detecting…</div>
+      <div class="strip-side">
+        <button class="icon-btn" id="btn-wallet-2" style="color:var(--saffron-dk);" aria-label="Wallet">₹</button>
+        <button class="icon-btn" id="btn-history" aria-label="History">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/><path d="M12 8v4l3 2"/></svg>
+        </button>
+      </div>
     </div>
-    <p class="tip" id="tip-host" hidden>Hold the mic and speak, then let go.</p>
+
+    <div class="half half--host" id="half-host">
+      <div class="side-head">
+        <span class="side-dot" id="host-dot" data-state="waiting"></span>
+        <span class="side-label" id="host-label" data-state="waiting">Listening — detecting language…</span>
+      </div>
+      <div class="feed" id="feed-host"></div>
+      <div class="mic-wrap">
+        <button class="mic-btn" id="mic-host" aria-label="Host: speak">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+        </button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN: WALLET ============== -->
+  <section class="screen" id="screen-wallet">
+    <div class="page-head">
+      <button class="back-btn" id="btn-wallet-back" aria-label="Back">←</button>
+      <div class="title">Wallet</div>
+    </div>
+    <div class="balance-card">
+      <div class="lbl">MINUTES REMAINING</div>
+      <div class="amount"><span id="wallet-balance">–</span> min</div>
+      <div class="low" id="wallet-low" hidden>Running low — top up before your next chat</div>
+    </div>
+    <div class="info-card">Live translation uses ~1 minute per 10 exchanges. Buy a pack any time — minutes never expire.</div>
+    <div style="flex:1;"></div>
+    <div style="padding:20px;display:flex;flex-direction:column;">
+      <button class="btn-primary" id="btn-topup" style="padding:16px;">Buy more minutes</button>
+      <button class="quiet-btn" id="btn-logout">Log out</button>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN: PAYMENT ============== -->
+  <section class="screen" id="screen-payment">
+    <div class="page-head">
+      <button class="back-btn" id="btn-payment-back" aria-label="Back">←</button>
+      <div class="title">Top up minutes</div>
+    </div>
+    <div class="packs-scroll">
+      <div id="pack-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+      <div style="margin-top:10px;">
+        <div class="chip-group-label">PAY WITH</div>
+        <div class="method-chips" id="method-chips"></div>
+      </div>
+    </div>
+    <div class="pay-foot">
+      <div class="secure-note">🔒 Secured checkout via Razorpay</div>
+      <div class="secure-note" id="payments-soon" hidden>Payments are launching soon — packs shown are a preview.</div>
+      <button class="btn-primary" id="btn-pay" style="padding:16px;">Pay ₹<span id="pay-price">249</span></button>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN: SUCCESS ============== -->
+  <section class="screen" id="screen-success">
+    <div class="success-wrap">
+      <div class="success-tick">
+        <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div class="h-display" style="font-size:20px;">Payment successful</div>
+      <p class="otp-sub" id="success-detail"></p>
+      <button class="btn-primary" id="btn-success-back" style="margin-top:8px;">Back to conversation</button>
+    </div>
   </section>
 
 </div>
 
-<!-- History drawer -->
-<div class="drawer-backdrop" id="drawer-backdrop"></div>
-<div class="drawer" id="drawer" role="dialog" aria-label="Session history">
-  <div class="drawer-head">
-    <h2>This session</h2>
-    <button class="strip-btn" id="btn-clear-history">Clear</button>
-  </div>
-  <div class="drawer-list" id="drawer-list">
-    <p class="drawer-empty">Nothing yet — history clears when the page refreshes.</p>
-  </div>
+<!-- Overlays (host-oriented, outside the rotated halves) -->
+<div class="sheet-backdrop" id="sheet-backdrop"></div>
+
+<div class="history-sheet" id="history-sheet" role="dialog" aria-label="History">
+  <h2>History</h2>
+  <div id="history-list"></div>
 </div>
 
-<!-- Phrases drawer: canned essentials that work fully offline -->
-<div class="drawer-backdrop" id="phrases-backdrop"></div>
-<div class="drawer" id="phrases-drawer" role="dialog" aria-label="Phrase packs">
-  <div class="drawer-head">
+<div class="phrases-sheet" id="phrases-sheet" role="dialog" aria-label="Phrase packs">
+  <div class="phrases-head">
     <h2>Phrases</h2>
-    <button class="strip-btn" id="btn-close-phrases">Close</button>
+    <button class="link-btn" id="btn-close-phrases">Close</button>
   </div>
   <div class="pack-tabs" id="pack-tabs" role="tablist"></div>
   <p class="phrase-hint">Tap a phrase — each side of the screen shows it in that side's language. Works offline.</p>
-  <div class="drawer-list" id="phrases-list"></div>
-</div>
-
-<!-- Account drawer: optional phone-OTP login. The app works without
-     logging in; an account is the hook for synced history and paid
-     plans later. -->
-<div class="drawer-backdrop" id="account-backdrop"></div>
-<div class="drawer" id="account-drawer" role="dialog" aria-label="Account">
-  <div class="drawer-head">
-    <h2>Account</h2>
-    <button class="strip-btn" id="btn-close-account">Close</button>
-  </div>
-
-  <div class="auth-body" id="auth-step-phone">
-    <p class="auth-copy">Log in with your mobile number. You'll get a one-time password by SMS.</p>
-    <div class="auth-row">
-      <span class="auth-prefix">+91</span>
-      <input id="auth-phone" type="tel" inputmode="numeric" autocomplete="tel-national"
-             maxlength="10" placeholder="10-digit mobile number" />
-    </div>
-    <button class="auth-btn" id="btn-send-otp">Send OTP</button>
-    <p class="auth-error" id="auth-error-phone" aria-live="polite"></p>
-    <p class="auth-copy auth-copy--fine">Logging in is optional — translation works without it. An account is what paid plans will attach to later.</p>
-  </div>
-
-  <div class="auth-body" id="auth-step-otp" hidden>
-    <p class="auth-copy">OTP sent to <strong id="auth-otp-target"></strong>.</p>
-    <div class="auth-row">
-      <input id="auth-otp" type="text" inputmode="numeric" autocomplete="one-time-code"
-             maxlength="6" placeholder="6-digit OTP" />
-    </div>
-    <button class="auth-btn" id="btn-verify-otp">Verify &amp; log in</button>
-    <div class="auth-links">
-      <button class="strip-btn" id="btn-resend-otp" disabled>Resend OTP</button>
-      <button class="strip-btn" id="btn-change-phone">Change number</button>
-    </div>
-    <p class="auth-error" id="auth-error-otp" aria-live="polite"></p>
-  </div>
-
-  <div class="auth-body" id="auth-step-done" hidden>
-    <p class="auth-copy">Logged in as <strong id="auth-done-phone"></strong></p>
-    <p class="auth-plan">Plan: <span id="auth-done-plan">free</span></p>
-    <button class="auth-btn auth-btn--quiet" id="btn-logout">Log out</button>
-  </div>
+  <div class="phrases-list" id="phrases-list"></div>
 </div>
 
 <script>
@@ -638,240 +674,35 @@
 
   // -----------------------------------------------------------------
   // Language reference data. Kept in sync with the 11 codes the
-  // serverless function accepts (api/pipeline.js).
+  // serverless function accepts (api/pipeline.js). Order follows the
+  // design's "popular picks".
   // -----------------------------------------------------------------
   var LANGUAGES = [
     { code: "hi-IN", name: "Hindi",     native: "हिन्दी" },
     { code: "bn-IN", name: "Bengali",   native: "বাংলা" },
-    { code: "gu-IN", name: "Gujarati",  native: "ગુજરાતી" },
+    { code: "ta-IN", name: "Tamil",     native: "தமிழ்" },
+    { code: "te-IN", name: "Telugu",    native: "తెలుగు" },
     { code: "kn-IN", name: "Kannada",   native: "ಕನ್ನಡ" },
     { code: "ml-IN", name: "Malayalam", native: "മലയാളം" },
     { code: "mr-IN", name: "Marathi",   native: "मराठी" },
-    { code: "od-IN", name: "Odia",      native: "ଓଡ଼ିଆ" },
+    { code: "gu-IN", name: "Gujarati",  native: "ગુજરાતી" },
     { code: "pa-IN", name: "Punjabi",   native: "ਪੰਜਾਬੀ" },
-    { code: "ta-IN", name: "Tamil",     native: "தமிழ்" },
-    { code: "te-IN", name: "Telugu",    native: "తెలుగు" },
-    { code: "en-IN", name: "English",  native: "English" }
+    { code: "od-IN", name: "Odia",      native: "ଓଡ଼ିଆ" },
+    { code: "en-IN", name: "English",   native: "English" }
   ];
   function langByCode(code) {
     for (var i = 0; i < LANGUAGES.length; i++) if (LANGUAGES[i].code === code) return LANGUAGES[i];
     return null;
   }
-
-  // -----------------------------------------------------------------
-  // App state. "override" = the person explicitly picked this language.
-  // "detected" = Sarvam auto-detected this language the first time this
-  // side spoke. override always wins over detected.
-  // -----------------------------------------------------------------
-  var state = {
-    host: { override: null, detected: null, lastBlob: null, lastMime: null },
-    guest: { override: null, detected: null, lastBlob: null, lastMime: null },
-    history: [],
-    micStream: null,           // shared getUserMedia stream, requested once
-    recorder: null,
-    recordingSide: null,
-    recordStartedAt: 0,
-    openMic: false,            // tap-to-talk with silence auto-stop (vs hold-to-talk)
-    audioCtx: null,            // WebAudio bits for the open-mic silence watcher
-    analyser: null,
-    silenceWatch: null
-  };
-
-  function currentLang(side) {
-    var s = state[side];
-    return s.override || s.detected || null;
-  }
-  function otherSide(side) { return side === "host" ? "guest" : "host"; }
-
-  // -----------------------------------------------------------------
-  // Small DOM + text helpers
-  // -----------------------------------------------------------------
-  function $(id) { return document.getElementById(id); }
-  function escapeHtml(str) {
-    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  }
-  // Wraps every number in the text in a styled "chip" span -- this is
-  // the app's signature detail, so prices/phone numbers/quantities
-  // spoken during a negotiation stand out and are easy to double-check.
-  function withNumberChips(str) {
-    var escaped = escapeHtml(str);
-    return escaped.replace(/\d+(?:[.,]\d+)?/g, function (m) {
-      return '<span class="chip">' + m + "</span>";
-    });
+  function langName(code) {
+    var l = langByCode(code);
+    return l ? l.name : code;
   }
 
   // -----------------------------------------------------------------
-  // Rendering: language chips
-  // -----------------------------------------------------------------
-  function renderLangChip(side) {
-    var chip = $("chip-" + side);
-    var code = currentLang(side);
-    var label = chip.querySelector(".label");
-    if (code) {
-      label.textContent = langByCode(code).name;
-      chip.dataset.locked = "true";
-    } else {
-      label.textContent = "Auto-detect";
-      chip.dataset.locked = "false";
-    }
-  }
-
-  function closeLangPopover() {
-    var existing = document.querySelector(".lang-popover");
-    if (existing) existing.remove();
-  }
-
-  function openLangPicker(side) {
-    closeLangPopover();
-    var chip = $("chip-" + side);
-    var pop = document.createElement("div");
-    pop.className = "lang-popover";
-    pop.setAttribute("role", "listbox");
-
-    var autoBtn = document.createElement("button");
-    autoBtn.textContent = "Auto-detect";
-    autoBtn.dataset.selected = currentLang(side) ? "false" : "true";
-    autoBtn.addEventListener("click", function () { setLanguage(side, null); closeLangPopover(); });
-    pop.appendChild(autoBtn);
-
-    var hr = document.createElement("hr");
-    pop.appendChild(hr);
-
-    LANGUAGES.forEach(function (lang) {
-      var b = document.createElement("button");
-      b.dataset.selected = currentLang(side) === lang.code ? "true" : "false";
-      var nameSpan = document.createElement("span");
-      nameSpan.textContent = lang.name;
-      var nativeSpan = document.createElement("span");
-      nativeSpan.className = "native";
-      nativeSpan.textContent = lang.native;
-      b.appendChild(nameSpan);
-      b.appendChild(nativeSpan);
-      b.addEventListener("click", function () { setLanguage(side, lang.code); closeLangPopover(); });
-      pop.appendChild(b);
-    });
-
-    // Appending inside the chip's own half means the popover inherits
-    // that half's 180deg rotation for the guest side, so it still
-    // reads right-side-up to whoever is actually tapping it.
-    chip.parentElement.style.position = "relative";
-    chip.parentElement.appendChild(pop);
-
-    setTimeout(function () {
-      document.addEventListener("click", onOutsideClick, { once: true, capture: true });
-    }, 0);
-    function onOutsideClick(e) {
-      if (!pop.contains(e.target) && e.target !== chip) closeLangPopover();
-      else document.addEventListener("click", onOutsideClick, { once: true, capture: true });
-    }
-  }
-
-  function setLanguage(side, code) {
-    state[side].override = code;
-    if (code) state[side].detected = null;
-    renderLangChip(side);
-  }
-
-  // -----------------------------------------------------------------
-  // Rendering: subtitle "stage" areas + status lines
-  // -----------------------------------------------------------------
-  function setStatus(side, text, working) {
-    var el = $("status-" + side);
-    el.textContent = text || "";
-    el.classList.toggle("is-working", !!working);
-  }
-
-  function playTts(audioBase64) {
-    try {
-      new Audio("data:audio/wav;base64," + audioBase64).play().catch(function () {
-        /* Autoplay can be blocked until the user has interacted with the page once -- silent no-op is fine here. */
-      });
-    } catch (e) { /* ignore playback errors, the caption is still shown */ }
-  }
-
-  function showExchange(speakerSide, original, translated, ttsAudioBase64) {
-    var listenerSide = otherSide(speakerSide);
-
-    var speakerStage = $("stage-" + speakerSide);
-    speakerStage.innerHTML =
-      '<p class="bubble-original">You said</p>' +
-      '<p class="bubble-translated">' + withNumberChips(original) + "</p>";
-
-    var listenerStage = $("stage-" + listenerSide);
-    listenerStage.innerHTML =
-      '<p class="bubble-original">Translated for you</p>' +
-      '<p class="bubble-translated">' + withNumberChips(translated) + "</p>" +
-      (ttsAudioBase64
-        ? '<button class="replay-btn">' +
-          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5 6 9H2v6h4l5 4V5Zm5 3a5 5 0 0 1 0 8m3-11a9 9 0 0 1 0 14"/></svg>' +
-          "Play again</button>"
-        : "");
-    if (ttsAudioBase64) {
-      listenerStage.querySelector(".replay-btn").addEventListener("click", function () {
-        playTts(ttsAudioBase64);
-      });
-    }
-  }
-
-  function showError(side, message) {
-    setStatus(side, "");
-    var stage = $("stage-" + side);
-    stage.innerHTML = '<p class="placeholder">' + escapeHtml(message) + "</p>";
-  }
-
-  // -----------------------------------------------------------------
-  // History drawer
-  // -----------------------------------------------------------------
-  function addHistory(entry) {
-    state.history.unshift(entry); // newest first
-    renderHistoryCount();
-    renderHistoryList();
-  }
-  function renderHistoryCount() {
-    var el = $("history-count");
-    el.textContent = state.history.length ? " (" + state.history.length + ")" : "";
-  }
-  function renderHistoryList() {
-    var list = $("drawer-list");
-    if (!state.history.length) {
-      list.innerHTML = '<p class="drawer-empty">Nothing yet — history clears when the page refreshes.</p>';
-      return;
-    }
-    list.innerHTML = state.history.map(function (h) {
-      var time = new Date(h.ts).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
-      return (
-        '<div class="history-item" data-speaker="' + h.speaker + '">' +
-          '<div class="history-meta"><span class="who-dot"></span>' +
-            (h.speaker === "host" ? "Host" : "Guest") + " · " + time +
-          "</div>" +
-          '<p class="history-original">' + withNumberChips(h.original) + "</p>" +
-          '<p class="history-translated">' + withNumberChips(h.translated) + "</p>" +
-        "</div>"
-      );
-    }).join("");
-  }
-
-  $("btn-history").addEventListener("click", function () {
-    $("drawer").classList.add("open");
-    $("drawer-backdrop").classList.add("open");
-  });
-  function closeDrawer() {
-    $("drawer").classList.remove("open");
-    $("drawer-backdrop").classList.remove("open");
-  }
-  $("drawer-backdrop").addEventListener("click", closeDrawer);
-  $("btn-clear-history").addEventListener("click", function () {
-    state.history = [];
-    renderHistoryCount();
-    renderHistoryList();
-  });
-
-  // -----------------------------------------------------------------
-  // Phrase packs. Pre-translated at build time in all 11 supported
-  // languages, so they work with no network and no API key — useful
-  // exactly when the live pipeline can't be (dead zone, key trouble,
-  // or before the first deploy). Tapping a phrase shows it on BOTH
-  // halves, each in that side's currently selected language.
+  // Phrase packs: pre-translated at build time in all 11 languages, so
+  // they work with no network. Tapping one shows it on BOTH halves,
+  // each in that side's current language.
   // -----------------------------------------------------------------
   var PHRASE_PACKS = [
     { name: "Greetings", phrases: [
@@ -895,78 +726,91 @@
       { "en-IN": "Please speak slowly", "hi-IN": "कृपया धीरे बोलिए।", "bn-IN": "দয়া করে আস্তে বলুন।", "gu-IN": "મહેરબાની કરીને ધીમે બોલો.", "kn-IN": "ದಯವಿಟ್ಟು ನಿಧಾನವಾಗಿ ಮಾತನಾಡಿ.", "ml-IN": "ദയവായി പതുക്കെ പറയൂ.", "mr-IN": "कृपया हळू बोला.", "od-IN": "ଦୟାକରି ଧୀରେ କୁହନ୍ତୁ।", "pa-IN": "ਕਿਰਪਾ ਕਰਕੇ ਹੌਲੀ ਬੋਲੋ।", "ta-IN": "தயவுசெய்து மெதுவாக பேசுங்கள்.", "te-IN": "దయచేసి నెమ్మదిగా మాట్లాడండి." }
     ]}
   ];
-  var activePack = 0;
 
-  function renderPhrasePacks() {
-    var tabs = $("pack-tabs");
-    tabs.innerHTML = "";
-    PHRASE_PACKS.forEach(function (pack, i) {
-      var b = document.createElement("button");
-      b.textContent = pack.name;
-      b.setAttribute("role", "tab");
-      b.setAttribute("aria-pressed", i === activePack ? "true" : "false");
-      b.addEventListener("click", function () { activePack = i; renderPhrasePacks(); });
-      tabs.appendChild(b);
-    });
+  var PACKS = [
+    { id: "starter", price: 99, minutes: 60, label: "Starter" },
+    { id: "popular", price: 249, minutes: 180, label: "Most popular", popular: true },
+    { id: "value", price: 599, minutes: 500, label: "Best value" }
+  ];
+  var METHODS = [
+    { id: "upi", label: "UPI" },
+    { id: "card", label: "Card" },
+    { id: "netbanking", label: "Netbanking" }
+  ];
 
-    var list = $("phrases-list");
-    list.innerHTML = "";
-    PHRASE_PACKS[activePack].phrases.forEach(function (phrase) {
-      var b = document.createElement("button");
-      b.className = "phrase-item";
-      var label = document.createElement("span");
-      label.textContent = phrase["en-IN"];
-      // Preview in the guest's language (the person the host is most
-      // likely showing the phrase to); falls back to Hindi before any
-      // language has locked.
-      var previewCode = currentLang("guest") || "hi-IN";
-      var preview = document.createElement("span");
-      preview.className = "native-preview";
-      preview.textContent = phrase[previewCode];
-      b.appendChild(label);
-      b.appendChild(preview);
-      b.addEventListener("click", function () { showPhrase(phrase); });
-      list.appendChild(b);
-    });
-  }
-
-  function showPhrase(phrase) {
-    ["host", "guest"].forEach(function (side) {
-      hideTip(side);
-      var code = currentLang(side) || "en-IN";
-      var text = phrase[code] || phrase["en-IN"];
-      var gloss = code === "en-IN" ? "Phrase" : phrase["en-IN"];
-      $("stage-" + side).innerHTML =
-        '<p class="bubble-original">' + escapeHtml(gloss) + "</p>" +
-        '<p class="bubble-translated">' + withNumberChips(text) + "</p>";
-    });
-    closePhrases();
-  }
-
-  function openPhrases() {
-    renderPhrasePacks(); // re-render so previews follow the current languages
-    $("phrases-drawer").classList.add("open");
-    $("phrases-backdrop").classList.add("open");
-  }
-  function closePhrases() {
-    $("phrases-drawer").classList.remove("open");
-    $("phrases-backdrop").classList.remove("open");
-  }
-  $("btn-phrases").addEventListener("click", openPhrases);
-  $("btn-close-phrases").addEventListener("click", closePhrases);
-  $("phrases-backdrop").addEventListener("click", closePhrases);
-
-  // -----------------------------------------------------------------
-  // Account: optional phone-OTP login (MSG91 + Redis via /api/auth).
-  // The session token lives in localStorage; everything else stays
-  // server-side. Nothing in the translator depends on being logged
-  // in yet -- this is the attachment point for paid plans later.
-  // -----------------------------------------------------------------
   var AUTH_TOKEN_KEY = "bc_session";
-  var auth = { phone: null, plan: null };   // current login, null = anonymous
-  var pendingPhone = null;                  // number an OTP was just sent to
-  var resendCountdown = null;
+  var HISTORY_KEY = "bc_history";
+  var OPENMIC_KEY = "bc_openmic";
 
+  // -----------------------------------------------------------------
+  // App state
+  // -----------------------------------------------------------------
+  var state = {
+    screen: "phone",
+    account: null,              // {phone, plan, minutes, paymentsEnabled}
+    pendingPhone: null,
+    walletFrom: "setup",        // which screen the wallet was opened from
+
+    autoDetect: true,
+    manualOpen: false,
+    hostSel: "hi-IN",           // manual-picker selections
+    guestSel: "en-IN",
+    host: { lang: null, manual: false },
+    guest: { lang: null, manual: false },
+
+    messages: [],
+    sessionRec: null,           // current entry in the localStorage history
+
+    openMic: localStorage.getItem(OPENMIC_KEY) === "1",
+    micStream: null,
+    recorder: null,
+    recordingSide: null,
+    recordStartedAt: 0,
+    autoStopTimer: null,
+    audioCtx: null,
+    analyser: null,
+    silenceWatch: null,
+
+    activePack: 0,
+    selectedPack: "popular",
+    selectedMethod: "upi",
+    resendCountdown: null
+  };
+
+  function $(id) { return document.getElementById(id); }
+  function escapeHtml(str) {
+    return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
+  // The signature detail: prices/numbers get chip treatment so they're
+  // easy to double-check mid-negotiation. ₹-prefixed amounts included.
+  function withNumberChips(str) {
+    var escaped = escapeHtml(str);
+    return escaped.replace(/(?:₹\s?)?\d+(?:[.,]\d+)?/g, function (m) {
+      return '<span class="chip">' + m + "</span>";
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Screens
+  // -----------------------------------------------------------------
+  function showScreen(name) {
+    state.screen = name;
+    var screens = document.querySelectorAll(".screen");
+    for (var i = 0; i < screens.length; i++) {
+      screens[i].classList.toggle("active", screens[i].id === "screen-" + name);
+    }
+  }
+
+  // -----------------------------------------------------------------
+  // Auth: phone -> OTP -> session, via MSG91's OTP Widget running
+  // HEADLESS IN THE BROWSER (the pattern proven in production by the
+  // Dhruva app). The widget script handles send/retry/verify + its own
+  // anti-abuse; our server only confirms the resulting access token
+  // (api/auth.js) and never sees the OTP. Widget creds come from the
+  // server's "config" action so they live in env vars, not this file.
+  // NOTE: the widget refuses localhost -- login only works on the
+  // deployed HTTPS site.
+  // -----------------------------------------------------------------
   function authFetch(payload) {
     return fetch("/api/auth", {
       method: "POST",
@@ -974,8 +818,6 @@
       body: JSON.stringify(payload)
     }).then(function (res) {
       return res.json().catch(function () {
-        // Non-JSON reply = the function isn't there (static preview,
-        // misdeploy) -- don't leak a parse error to the person.
         return { error: "Login isn't available right now. Try again later." };
       }).then(function (data) {
         if (!res.ok) { var e = new Error(data.error || "Login service failed."); e.status = res.status; throw e; }
@@ -984,169 +826,505 @@
     });
   }
 
-  function showAuthStep(step) {
-    ["phone", "otp", "done"].forEach(function (s) {
-      $("auth-step-" + s).hidden = s !== step;
+  var widgetLoadPromise = null;
+  // The widget initializes asynchronously AFTER its script's onload --
+  // calling window.sendOtp in that gap silently does nothing (Dhruva
+  // found this live: the first production send hung forever). Resolve
+  // only once the exposed methods actually exist.
+  function loadMsg91Widget() {
+    if (widgetLoadPromise) return widgetLoadPromise;
+    widgetLoadPromise = authFetch({ action: "config" }).then(function (cfg) {
+      return new Promise(function (resolve, reject) {
+        var script = document.createElement("script");
+        script.src = "https://verify.msg91.com/otp-provider.js";
+        script.async = true;
+        script.onload = function () {
+          if (typeof window.initSendOTP !== "function") {
+            widgetLoadPromise = null;
+            reject(new Error("OTP service did not initialize. Try again."));
+            return;
+          }
+          window.initSendOTP({
+            widgetId: cfg.widgetId,
+            tokenAuth: cfg.tokenAuth,
+            exposeMethods: true, // headless: our screens stay, we drive the window methods
+            success: function () {},
+            failure: function () {}
+          });
+          var startedAt = Date.now();
+          var timer = setInterval(function () {
+            if (typeof window.sendOtp === "function" && typeof window.verifyOtp === "function") {
+              clearInterval(timer);
+              resolve();
+            } else if (Date.now() - startedAt > 12000) {
+              clearInterval(timer);
+              widgetLoadPromise = null; // allow a retry on the next attempt
+              reject(new Error("OTP service did not initialize. Try again."));
+            }
+          }, 100);
+        };
+        script.onerror = function () {
+          widgetLoadPromise = null;
+          reject(new Error("Couldn't load the OTP service. Check your connection."));
+        };
+        document.head.appendChild(script);
+      });
     });
+    return widgetLoadPromise;
   }
 
-  function renderAccount() {
-    $("account-label").textContent = auth.phone ? "+91 …" + auth.phone.slice(-4) : "Login";
-    if (auth.phone) {
-      $("auth-done-phone").textContent = "+91 " + auth.phone;
-      $("auth-done-plan").textContent = auth.plan || "free";
-    }
+  // Widget callbacks receive {message, type} or a bare string.
+  function widgetMessage(data) {
+    if (typeof data === "string") return data;
+    if (data && typeof data === "object" && typeof data.message === "string") return data.message;
+    return null;
+  }
+  function widgetError(data, fallback) {
+    return new Error(widgetMessage(data) || fallback);
   }
 
-  function authError(step, message) {
-    $("auth-error-" + step).textContent = message || "";
+  function setAccount(data) {
+    state.account = { phone: data.phone, plan: data.plan, minutes: data.minutes, paymentsEnabled: data.paymentsEnabled };
+    renderWallet();
   }
 
   function startResendCountdown() {
     var btn = $("btn-resend-otp");
     var left = 30;
     btn.disabled = true;
-    btn.textContent = "Resend OTP (" + left + ")";
-    clearInterval(resendCountdown);
-    resendCountdown = setInterval(function () {
+    btn.textContent = "Resend in " + left + "s";
+    clearInterval(state.resendCountdown);
+    state.resendCountdown = setInterval(function () {
       left--;
       if (left <= 0) {
-        clearInterval(resendCountdown);
+        clearInterval(state.resendCountdown);
         btn.disabled = false;
-        btn.textContent = "Resend OTP";
+        btn.textContent = "Didn't get it? Resend";
       } else {
-        btn.textContent = "Resend OTP (" + left + ")";
+        btn.textContent = "Resend in " + left + "s";
       }
     }, 1000);
   }
 
-  function sendOtp(phone) {
-    var btn = $("btn-send-otp");
-    btn.disabled = true;
-    authError("phone", "");
-    authError("otp", "");
-    authFetch({ action: "send", phone: phone }).then(function () {
-      btn.disabled = false;
-      pendingPhone = phone;
-      $("auth-otp-target").textContent = "+91 " + phone;
-      $("auth-otp").value = "";
-      showAuthStep("otp");
-      $("auth-otp").focus();
+  // First send goes through window.sendOtp; resends use window.retryOtp
+  // (channel "11" = SMS) because the widget rejects a second sendOtp for
+  // the same in-flight request.
+  function sendOtp(phone, errorEl, isResend) {
+    $("btn-send-otp").disabled = true;
+    errorEl.textContent = "";
+    loadMsg91Widget().then(function () {
+      return new Promise(function (resolve, reject) {
+        var ok = function () { resolve(); };
+        var fail = function (data) { reject(widgetError(data, "Couldn't send the OTP. Try again in a minute.")); };
+        if (isResend && typeof window.retryOtp === "function") window.retryOtp("11", ok, fail);
+        else window.sendOtp("91" + phone, ok, fail);
+      });
+    }).then(function () {
+      $("btn-send-otp").disabled = false;
+      state.pendingPhone = phone;
+      $("otp-target").textContent = "+91 " + phone;
+      $("otp-input").value = "";
+      $("otp-error").textContent = "";
+      showScreen("otp");
+      $("otp-input").focus();
       startResendCountdown();
     }).catch(function (err) {
-      btn.disabled = false;
-      // If the user is already on the OTP screen (resend), surface it there.
-      authError($("auth-step-otp").hidden ? "phone" : "otp", err.message);
+      $("btn-send-otp").disabled = false;
+      errorEl.textContent = err.message;
     });
   }
 
+  $("phone-input").addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, 10);
+    $("btn-send-otp").disabled = this.value.length < 10;
+  });
   $("btn-send-otp").addEventListener("click", function () {
-    var phone = $("auth-phone").value.replace(/\D/g, "");
+    var phone = $("phone-input").value;
     if (!/^[6-9]\d{9}$/.test(phone)) {
-      authError("phone", "Enter a valid 10-digit Indian mobile number.");
+      $("phone-error").textContent = "Enter a valid 10-digit Indian mobile number.";
       return;
     }
-    sendOtp(phone);
+    sendOtp(phone, $("phone-error"));
   });
-
   $("btn-resend-otp").addEventListener("click", function () {
-    if (pendingPhone) sendOtp(pendingPhone);
+    if (state.pendingPhone) sendOtp(state.pendingPhone, $("otp-error"), true);
   });
-
   $("btn-change-phone").addEventListener("click", function () {
-    clearInterval(resendCountdown);
-    showAuthStep("phone");
-    $("auth-phone").focus();
+    clearInterval(state.resendCountdown);
+    showScreen("phone");
+    $("phone-input").focus();
   });
-
+  $("otp-input").addEventListener("input", function () {
+    this.value = this.value.replace(/\D/g, "").slice(0, 6);
+  });
   $("btn-verify-otp").addEventListener("click", function () {
-    var otp = $("auth-otp").value.replace(/\D/g, "");
+    var otp = $("otp-input").value;
     if (otp.length < 4) {
-      authError("otp", "Enter the OTP exactly as received.");
+      $("otp-error").textContent = "Enter the OTP from the SMS.";
       return;
     }
     var btn = $("btn-verify-otp");
     btn.disabled = true;
-    authError("otp", "");
-    authFetch({ action: "verify", phone: pendingPhone, otp: otp }).then(function (data) {
+    $("otp-error").textContent = "";
+    // Widget verifies the OTP in the browser and returns a JWT access
+    // token; the server then confirms that token with MSG91 and mints
+    // our own session.
+    loadMsg91Widget().then(function () {
+      return new Promise(function (resolve, reject) {
+        window.verifyOtp(otp, function (data) {
+          var accessToken = widgetMessage(data);
+          if (accessToken) resolve(accessToken);
+          else reject(new Error("OTP verification returned nothing usable. Try again."));
+        }, function (data) {
+          reject(widgetError(data, "That OTP didn't match (or expired). Check the SMS and try again."));
+        });
+      });
+    }).then(function (accessToken) {
+      return authFetch({ action: "verify", accessToken: accessToken });
+    }).then(function (data) {
       btn.disabled = false;
-      clearInterval(resendCountdown);
+      clearInterval(state.resendCountdown);
       localStorage.setItem(AUTH_TOKEN_KEY, data.token);
-      auth.phone = data.phone;
-      auth.plan = data.plan;
-      renderAccount();
-      showAuthStep("done");
+      setAccount(data);
+      showScreen("setup");
     }).catch(function (err) {
       btn.disabled = false;
-      authError("otp", err.message);
+      $("otp-error").textContent = err.message;
     });
   });
 
-  $("btn-logout").addEventListener("click", function () {
+  function logout() {
     var token = localStorage.getItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_TOKEN_KEY);
-    auth.phone = null;
-    auth.plan = null;
-    renderAccount();
-    showAuthStep("phone");
+    state.account = null;
+    showScreen("phone");
     if (token) authFetch({ action: "logout", token: token }).catch(function () { /* session dies with the token either way */ });
-  });
+  }
+  $("btn-logout").addEventListener("click", logout);
 
   function restoreSession() {
     var token = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (!token) return;
+    if (!token) { showScreen("phone"); return; }
     authFetch({ action: "me", token: token }).then(function (data) {
-      auth.phone = data.phone;
-      auth.plan = data.plan;
-      renderAccount();
-      showAuthStep("done");
+      setAccount(data);
+      showScreen("setup");
     }).catch(function (err) {
-      // Expired/invalid session: forget the token quietly. Network or
-      // server-config errors: keep it, so a transient failure doesn't
-      // log the user out.
       if (err.status === 401) localStorage.removeItem(AUTH_TOKEN_KEY);
+      showScreen("phone");
     });
   }
 
-  function openAccount() {
-    showAuthStep(auth.phone ? "done" : "phone");
-    $("account-drawer").classList.add("open");
-    $("account-backdrop").classList.add("open");
+  // -----------------------------------------------------------------
+  // Setup screen (auto-detect vs manual languages, open mic)
+  // -----------------------------------------------------------------
+  function renderLangChips() {
+    ["host", "guest"].forEach(function (side) {
+      var wrap = $(side + "-chips");
+      wrap.innerHTML = "";
+      LANGUAGES.forEach(function (lang) {
+        var b = document.createElement("button");
+        b.className = "lang-chip";
+        b.dataset.selected = state[side + "Sel"] === lang.code ? "true" : "false";
+        b.innerHTML = escapeHtml(lang.name) + (lang.code === "en-IN" ? "" : '<span class="native">' + escapeHtml(lang.native) + "</span>");
+        b.addEventListener("click", function () {
+          state[side + "Sel"] = lang.code;
+          renderLangChips();
+          renderSetupValidation();
+        });
+        wrap.appendChild(b);
+      });
+    });
   }
-  function closeAccount() {
-    $("account-drawer").classList.remove("open");
-    $("account-backdrop").classList.remove("open");
+
+  function renderSetupValidation() {
+    var same = state.manualOpen && state.hostSel === state.guestSel;
+    $("same-lang-error").textContent = same ? "Pick two different languages" : "";
+    $("btn-start").disabled = same;
   }
-  $("btn-account").addEventListener("click", openAccount);
-  $("btn-close-account").addEventListener("click", closeAccount);
-  $("account-backdrop").addEventListener("click", closeAccount);
+
+  $("btn-toggle-manual").addEventListener("click", function () {
+    state.manualOpen = !state.manualOpen;
+    state.autoDetect = !state.manualOpen;
+    $("manual-wrap").hidden = !state.manualOpen;
+    this.textContent = state.manualOpen ? "Use auto-detect instead" : "Set languages manually";
+    $("btn-start").textContent = state.autoDetect ? "Start listening →" : "Start conversation →";
+    renderSetupValidation();
+  });
+
+  function renderOpenMic() {
+    $("openmic-switch").setAttribute("aria-pressed", state.openMic ? "true" : "false");
+  }
+  $("openmic-switch").addEventListener("click", function () {
+    state.openMic = !state.openMic;
+    localStorage.setItem(OPENMIC_KEY, state.openMic ? "1" : "0");
+    renderOpenMic();
+  });
+
+  $("btn-start").addEventListener("click", function () {
+    state.host = { lang: state.autoDetect ? null : state.hostSel, manual: !state.autoDetect };
+    state.guest = { lang: state.autoDetect ? null : state.guestSel, manual: !state.autoDetect };
+    state.messages = [];
+    state.sessionRec = null;
+    renderFeeds();
+    renderSideHeads();
+    showScreen("main");
+    // Warm the mic up now (a full tap, nothing being held): the
+    // permission prompt must never race the first push-to-talk hold.
+    ensureMicStream().catch(function (err) {
+      console.error(err);
+      notice("host", "Couldn't access the microphone. Check the site's mic permission.");
+    });
+  });
+
+  $("btn-back-setup").addEventListener("click", function () { showScreen("setup"); });
 
   // -----------------------------------------------------------------
-  // Open-mic toggle: tap once to talk, auto-stops on silence.
+  // Main screen rendering
   // -----------------------------------------------------------------
-  $("btn-openmic").addEventListener("click", function () {
-    state.openMic = !state.openMic;
-    this.setAttribute("aria-pressed", state.openMic ? "true" : "false");
-    var hint = state.openMic
-      ? "Open mic on — tap once to talk, it stops when you pause"
-      : "Open mic off — hold the button while you talk";
-    setStatus("host", hint);
-    setTimeout(function () {
-      // Don't wipe a status some other flow has since written.
-      if ($("status-host").textContent === hint) setStatus("host", "");
-    }, 2200);
+  function otherSide(side) { return side === "host" ? "guest" : "host"; }
+
+  function renderSideHeads() {
+    ["host", "guest"].forEach(function (side) {
+      var locked = !!state[side].lang;
+      var dot = $(side + "-dot");
+      var label = $(side + "-label");
+      dot.dataset.state = locked ? "locked" : "waiting";
+      label.dataset.state = locked ? "locked" : "waiting";
+      label.textContent = locked ? langName(state[side].lang) : "Listening — detecting language…";
+    });
+    var pill = $("pair-pill");
+    if (state.host.lang && state.guest.lang) {
+      pill.dataset.waiting = "false";
+      pill.textContent = langName(state.host.lang) + " ⇄ " + langName(state.guest.lang);
+    } else {
+      pill.dataset.waiting = "true";
+      pill.textContent = "Auto-detecting…";
+    }
+  }
+
+  // A message is {speaker, original, translated, tts} or {type:"phrase", phrase}.
+  // Each half renders the feed in ITS OWN language: my bubbles show what
+  // I said, their bubbles show the translation made for me.
+  function renderFeeds() {
+    ["host", "guest"].forEach(function (side) {
+      var feed = $("feed-" + side);
+      var html = "";
+      state.messages.forEach(function (m, idx) {
+        if (m.type === "phrase") {
+          var code = state[side].lang || state[side + "Sel"] || "en-IN";
+          var text = m.phrase[code] || m.phrase["en-IN"];
+          html +=
+            '<div class="phrase-msg"><div class="main">' + withNumberChips(text) + "</div>" +
+            (code === "en-IN" ? "" : '<div class="gloss">' + escapeHtml(m.phrase["en-IN"]) + "</div>") +
+            "</div>";
+          return;
+        }
+        var mine = m.speaker === side;
+        var primary = mine ? m.original : m.translated;
+        var secondary = mine ? m.translated : m.original;
+        html +=
+          '<div class="msg-row" data-mine="' + mine + '" data-idx="' + idx + '">' +
+            '<div class="bubble">' + withNumberChips(primary) + "</div>" +
+            (secondary ? '<div class="bubble-secondary">' + withNumberChips(secondary) + "</div>" : "") +
+          "</div>";
+      });
+      feed.innerHTML = html;
+      feed.scrollTop = feed.scrollHeight;
+    });
+    // Tapping a received bubble replays its spoken translation.
+    document.querySelectorAll('.msg-row[data-mine="false"]').forEach(function (row) {
+      row.addEventListener("click", function () {
+        var m = state.messages[Number(row.dataset.idx)];
+        if (m && m.tts) playTts(m.tts);
+      });
+    });
+  }
+
+  function notice(side, text, ms) {
+    var feed = $("feed-" + side);
+    var el = document.createElement("div");
+    el.className = "notice";
+    el.textContent = text;
+    feed.appendChild(el);
+    feed.scrollTop = feed.scrollHeight;
+    setTimeout(function () { el.remove(); }, ms || 2600);
+  }
+
+  function playTts(audioBase64) {
+    try {
+      new Audio("data:audio/wav;base64," + audioBase64).play().catch(function () {
+        /* Autoplay can be blocked before first interaction -- fine, captions are shown. */
+      });
+    } catch (e) { /* ignore playback errors */ }
+  }
+
+  // -----------------------------------------------------------------
+  // History: local, auto-named. One record per conversation, updated
+  // as exchanges happen. Stored newest-first, capped at 30.
+  // -----------------------------------------------------------------
+  function loadHistory() {
+    try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
+    catch (e) { return []; }
+  }
+  function recordExchange(firstOriginal) {
+    var list = loadHistory();
+    if (!state.sessionRec) {
+      state.sessionRec = { id: Date.now(), startedAt: Date.now(), count: 0, preview: firstOriginal || "" };
+      list.unshift(state.sessionRec);
+    } else {
+      // replace the stored copy with the live one (match by id)
+      for (var i = 0; i < list.length; i++) if (list[i].id === state.sessionRec.id) { list[i] = state.sessionRec; break; }
+    }
+    state.sessionRec.count++;
+    state.sessionRec.hostLang = state.host.lang;
+    state.sessionRec.guestLang = state.guest.lang;
+    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
+  }
+  function whenLabel(ts) {
+    var d = new Date(ts), now = new Date();
+    var sameDay = d.toDateString() === now.toDateString();
+    var yesterday = new Date(now.getTime() - 86400000).toDateString() === d.toDateString();
+    if (sameDay) return "Today, " + d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+    if (yesterday) return "Yesterday";
+    return d.toLocaleDateString([], { month: "short", day: "numeric" });
+  }
+  function renderHistory() {
+    var list = loadHistory();
+    var wrap = $("history-list");
+    if (!list.length) {
+      wrap.innerHTML = '<p class="hist-empty">No conversations yet. They\'re saved on this phone only.</p>';
+      return;
+    }
+    wrap.innerHTML = list.map(function (h) {
+      var pair = (h.hostLang ? langName(h.hostLang) : "Auto") + " ⇄ " + (h.guestLang ? langName(h.guestLang) : "Auto");
+      var title = h.preview ? h.preview : "Conversation";
+      if (title.length > 42) title = title.slice(0, 42) + "…";
+      return (
+        '<div class="hist-card">' +
+          '<div class="place">' + escapeHtml(title) + "</div>" +
+          '<div class="meta">' + escapeHtml(pair + " · " + whenLabel(h.startedAt) + " · " + h.count + " exchanges") + "</div>" +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  function openSheet(which) {
+    $("sheet-backdrop").classList.add("open");
+    $(which + "-sheet").classList.add("open");
+    if (which === "history") renderHistory();
+    if (which === "phrases") renderPhrasePacks();
+  }
+  function closeSheets() {
+    $("sheet-backdrop").classList.remove("open");
+    $("history-sheet").classList.remove("open");
+    $("phrases-sheet").classList.remove("open");
+  }
+  $("btn-history").addEventListener("click", function () { openSheet("history"); });
+  $("btn-phrases").addEventListener("click", function () { openSheet("phrases"); });
+  $("btn-close-phrases").addEventListener("click", closeSheets);
+  $("sheet-backdrop").addEventListener("click", closeSheets);
+
+  // -----------------------------------------------------------------
+  // Phrases sheet
+  // -----------------------------------------------------------------
+  function renderPhrasePacks() {
+    var tabs = $("pack-tabs");
+    tabs.innerHTML = "";
+    PHRASE_PACKS.forEach(function (pack, i) {
+      var b = document.createElement("button");
+      b.textContent = pack.name;
+      b.setAttribute("role", "tab");
+      b.setAttribute("aria-pressed", i === state.activePack ? "true" : "false");
+      b.addEventListener("click", function () { state.activePack = i; renderPhrasePacks(); });
+      tabs.appendChild(b);
+    });
+    var list = $("phrases-list");
+    list.innerHTML = "";
+    PHRASE_PACKS[state.activePack].phrases.forEach(function (phrase) {
+      var b = document.createElement("button");
+      b.className = "phrase-item";
+      var previewCode = state.guest.lang || state.guestSel || "hi-IN";
+      b.innerHTML =
+        "<span>" + escapeHtml(phrase["en-IN"]) + "</span>" +
+        '<span class="native-preview">' + escapeHtml(phrase[previewCode] || "") + "</span>";
+      b.addEventListener("click", function () {
+        state.messages.push({ type: "phrase", phrase: phrase });
+        renderFeeds();
+        closeSheets();
+      });
+      list.appendChild(b);
+    });
+  }
+
+  // -----------------------------------------------------------------
+  // Wallet / payment
+  // -----------------------------------------------------------------
+  function renderWallet() {
+    var minutes = state.account ? state.account.minutes : null;
+    $("wallet-balance").textContent = minutes === null ? "–" : minutes;
+    $("wallet-low").hidden = !(minutes !== null && minutes < 15);
+  }
+  function openWallet(from) {
+    state.walletFrom = from;
+    renderWallet();
+    showScreen("wallet");
+  }
+  $("btn-wallet-1").addEventListener("click", function () { openWallet("setup"); });
+  $("btn-wallet-2").addEventListener("click", function () { openWallet("main"); });
+  $("btn-wallet-back").addEventListener("click", function () { showScreen(state.walletFrom); });
+  $("btn-topup").addEventListener("click", function () { renderPayment(); showScreen("payment"); });
+  $("btn-payment-back").addEventListener("click", function () { showScreen("wallet"); });
+  $("btn-success-back").addEventListener("click", function () { showScreen(state.walletFrom); });
+
+  function renderPayment() {
+    var wrap = $("pack-list");
+    wrap.innerHTML = "";
+    PACKS.forEach(function (p) {
+      var b = document.createElement("button");
+      b.className = "pack-card";
+      b.dataset.selected = state.selectedPack === p.id ? "true" : "false";
+      b.innerHTML =
+        "<div><div>" +
+          '<span class="mins">' + p.minutes + " min</span>" +
+          (p.popular ? '<span class="tag">POPULAR</span>' : "") +
+        "</div>" +
+        '<div class="sub">' + escapeHtml(p.label) + "</div></div>" +
+        '<div class="price">₹' + p.price + "</div>";
+      b.addEventListener("click", function () { state.selectedPack = p.id; renderPayment(); });
+      wrap.appendChild(b);
+    });
+
+    var methods = $("method-chips");
+    methods.innerHTML = "";
+    METHODS.forEach(function (m) {
+      var b = document.createElement("button");
+      b.textContent = m.label;
+      b.setAttribute("aria-pressed", state.selectedMethod === m.id ? "true" : "false");
+      b.addEventListener("click", function () { state.selectedMethod = m.id; renderPayment(); });
+      methods.appendChild(b);
+    });
+
+    var pack = PACKS.filter(function (p) { return p.id === state.selectedPack; })[0];
+    $("pay-price").textContent = pack.price;
+    var enabled = state.account && state.account.paymentsEnabled;
+    $("btn-pay").disabled = !enabled;
+    $("payments-soon").hidden = !!enabled;
+  }
+  $("btn-pay").addEventListener("click", function () {
+    // Real Razorpay checkout lands with api/payment.js (see PAYMENTS.md).
+    // The button is disabled until the server reports paymentsEnabled.
   });
 
   // -----------------------------------------------------------------
-  // Recording: record with the microphone, send to the serverless
-  // function, show the result.
+  // Recording + pipeline (machinery unchanged from the pre-redesign
+  // app: hold-to-talk, or open-mic tap with silence auto-stop).
   // -----------------------------------------------------------------
   function pickMimeType() {
     var candidates = ["audio/webm;codecs=opus", "audio/webm", "audio/mp4"];
     for (var i = 0; i < candidates.length; i++) {
       if (window.MediaRecorder && MediaRecorder.isTypeSupported(candidates[i])) return candidates[i];
     }
-    return ""; // let the browser pick
+    return "";
   }
 
   function ensureMicStream() {
@@ -1157,10 +1335,6 @@
     });
   }
 
-  // Open-mic silence watcher: samples the mic level ~8x a second and
-  // stops the recording once the speaker has said something and then
-  // gone quiet for 1.5s. Thresholds are RMS of the raw waveform --
-  // speech normally sits well above 0.035, room hum well below 0.02.
   function startSilenceWatch(side) {
     try {
       if (!state.audioCtx) state.audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -1183,37 +1357,28 @@
         }
         var rms = Math.sqrt(sum / data.length);
         var now = Date.now();
-        if (rms > 0.035) {                    // clearly speaking
-          spoke = true;
-          silentSince = 0;
-        } else if (rms < 0.02) {              // clearly quiet
+        if (rms > 0.035) { spoke = true; silentSince = 0; }
+        else if (rms < 0.02) {
           if (spoke) {
             if (!silentSince) silentSince = now;
             else if (now - silentSince > 1500) stopRecording(side);
           }
-        } else {                              // in-between: not silence yet
+        } else {
           silentSince = 0;
         }
       }, 120);
     } catch (e) {
-      // If WebAudio isn't available the watcher just doesn't run --
-      // the tap-again-to-stop path and the 25s cap still work.
       console.warn("Silence detection unavailable:", e);
     }
   }
   function stopSilenceWatch() {
-    if (state.silenceWatch) {
-      clearInterval(state.silenceWatch);
-      state.silenceWatch = null;
-    }
+    if (state.silenceWatch) { clearInterval(state.silenceWatch); state.silenceWatch = null; }
   }
 
   function startRecording(side) {
-    var pttBtn = $("ptt-" + side);
-    hideTip(side);
+    var micBtn = $("mic-" + side);
     ensureMicStream().then(function (stream) {
-      // Only one side can record at a time on a single phone's mic.
-      if (state.recordingSide) return;
+      if (state.recordingSide) return; // one mic, one recording at a time
       var mimeType = pickMimeType();
       var recorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
       var chunks = [];
@@ -1222,34 +1387,28 @@
         clearTimeout(state.autoStopTimer);
         stopSilenceWatch();
         var heldMs = Date.now() - state.recordStartedAt;
-        pttBtn.classList.remove("is-recording");
-        $("half-" + side).removeAttribute("data-active-speaker");
+        micBtn.classList.remove("is-recording");
         state.recordingSide = null;
-        if (heldMs < 300) { // too short to be real speech -- likely an accidental tap
-          setStatus(side, "Hold a little longer");
-          setTimeout(function () { setStatus(side, ""); }, 1200);
+        renderSideHeads();
+        if (heldMs < 300) {
+          notice(side, "Hold the mic while you speak");
           return;
         }
         var blob = new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/webm" });
-        state[side].lastBlob = blob;
-        state[side].lastMime = blob.type;
         sendToPipeline(side, blob, blob.type);
       };
       state.recorder = recorder;
       state.recordingSide = side;
       state.recordStartedAt = Date.now();
       recorder.start();
-      pttBtn.classList.add("is-recording");
-      $("half-" + side).setAttribute("data-active-speaker", "true");
-      setStatus(side, state.openMic ? "Listening — tap again to stop" : "Listening…");
+      micBtn.classList.add("is-recording");
+      $(side + "-label").textContent = state.openMic ? "Listening — tap again to stop" : "Listening…";
       if (state.openMic) startSilenceWatch(side);
-      // Safety net: Sarvam's synchronous speech-to-text endpoint only
-      // accepts clips under 30 seconds, so auto-stop a little before
-      // that if someone holds the button down for a very long time.
+      // Sarvam's sync STT takes clips under 30s -- stop a bit before.
       state.autoStopTimer = setTimeout(function () { stopRecording(side); }, 25000);
     }).catch(function (err) {
       console.error(err);
-      showError(side, "Couldn't access the microphone. Check your browser's mic permission for this site and try again.");
+      notice(side, "Couldn't access the microphone. Check the site's mic permission.");
     });
   }
 
@@ -1263,7 +1422,6 @@
     return new Promise(function (resolve, reject) {
       var reader = new FileReader();
       reader.onload = function () {
-        // reader.result looks like "data:audio/webm;base64,AAAA..." -- keep only the part after the comma.
         var commaIndex = reader.result.indexOf(",");
         resolve(reader.result.slice(commaIndex + 1));
       };
@@ -1273,10 +1431,10 @@
   }
 
   function sendToPipeline(side, blob, mimeType) {
-    var listenerSide = otherSide(side);
-    var pttBtn = $("ptt-" + side);
-    pttBtn.classList.add("is-busy");
-    setStatus(side, "Translating", true);
+    var listener = otherSide(side);
+    var micBtn = $("mic-" + side);
+    micBtn.classList.add("is-busy");
+    $(side + "-label").textContent = "Translating…";
 
     blobToBase64(blob).then(function (audioBase64) {
       return fetch("/api/pipeline", {
@@ -1285,90 +1443,88 @@
         body: JSON.stringify({
           audioBase64: audioBase64,
           mimeType: mimeType,
-          sourceLangHint: currentLang(side) || "unknown",
-          targetLangCode: currentLang(listenerSide) || "en-IN" // fall back to English until the listener's language is known
+          sourceLangHint: state[side].lang || "unknown",
+          targetLangCode: state[listener].lang || "en-IN",
+          token: localStorage.getItem(AUTH_TOKEN_KEY)
         })
       });
     }).then(function (res) {
       return res.json().then(function (data) {
-        if (!res.ok) throw new Error(data.error || "Translation failed.");
+        if (!res.ok) { var e = new Error(data.error || "Translation failed."); e.status = res.status; e.code = data.code; throw e; }
         return data;
       });
     }).then(function (data) {
-      pttBtn.classList.remove("is-busy");
-      setStatus(side, "");
+      micBtn.classList.remove("is-busy");
+      renderSideHeads();
 
       if (!data.transcript) {
-        showError(side, data.note || "Didn't catch that — try holding the button a bit longer while you speak.");
+        notice(side, data.note || "Didn't catch that — try again, a little longer.");
         return;
       }
 
-      if (data.detectedLanguage && langByCode(data.detectedLanguage)) {
-        state[side].detected = data.detectedLanguage;
-        renderLangChip(side);
+      // Language lock: auto-detect fills a side's language the first
+      // time that side speaks (manual picks always win).
+      if (!state[side].manual && data.detectedLanguage && langByCode(data.detectedLanguage)) {
+        state[side].lang = data.detectedLanguage;
       }
+      renderSideHeads();
 
-      showExchange(side, data.transcript, data.translatedText, data.ttsAudioBase64);
-      addHistory({ speaker: side, original: data.transcript, translated: data.translatedText, ts: Date.now() });
-
+      state.messages.push({
+        speaker: side,
+        original: data.transcript,
+        translated: data.translatedText,
+        tts: data.ttsAudioBase64 || null
+      });
+      renderFeeds();
+      recordExchange(data.transcript);
       if (data.ttsAudioBase64) playTts(data.ttsAudioBase64);
+
+      if (typeof data.minutesLeft === "number" && state.account) {
+        state.account.minutes = data.minutesLeft;
+        renderWallet();
+        if (data.minutesLeft <= 2) notice(side, "Only " + data.minutesLeft + " min left — top up in the wallet (₹)");
+      }
     }).catch(function (err) {
-      pttBtn.classList.remove("is-busy");
+      micBtn.classList.remove("is-busy");
+      renderSideHeads();
       console.error(err);
-      showError(side, err.message || "Translation failed. Tap the mic to try again.");
+      if (err.code === "LOGIN_REQUIRED" || err.status === 401) {
+        logout();
+      } else if (err.code === "NO_MINUTES" || err.status === 402) {
+        openWallet("main");
+      } else {
+        notice(side, err.message || "Translation failed. Try again.");
+      }
     });
   }
 
-  // -----------------------------------------------------------------
-  // Wiring: mic buttons
-  // -----------------------------------------------------------------
-  function hideTip(side) {
-    var tip = $("tip-" + side);
-    if (tip) tip.hidden = true;
-  }
-
+  // Mic button wiring: hold-to-talk, or open-mic tap (stop on silence
+  // or a second tap).
   ["host", "guest"].forEach(function (side) {
-    var ptt = $("ptt-" + side);
-
-    ptt.addEventListener("pointerdown", function (e) {
+    var mic = $("mic-" + side);
+    mic.addEventListener("pointerdown", function (e) {
       e.preventDefault();
       if (state.openMic && state.recordingSide === side) {
-        stopRecording(side); // open mic: second tap = manual stop
+        stopRecording(side);
       } else {
         startRecording(side);
       }
     });
     ["pointerup", "pointercancel", "pointerleave"].forEach(function (evt) {
-      ptt.addEventListener(evt, function () {
-        // In open-mic mode letting go doesn't stop the recording --
-        // the silence watcher (or a second tap) does.
+      mic.addEventListener(evt, function () {
         if (!state.openMic) stopRecording(side);
       });
     });
-
-    $("chip-" + side).addEventListener("click", function () { openLangPicker(side); });
   });
 
   // -----------------------------------------------------------------
   // Init
   // -----------------------------------------------------------------
   function init() {
-    renderLangChip("host");
-    renderLangChip("guest");
-    renderHistoryCount();
-    renderAccount();
+    renderLangChips();
+    renderSetupValidation();
+    renderOpenMic();
     restoreSession();
-    $("tip-host").hidden = false;
-    $("tip-guest").hidden = false;
-
-    // Ask for mic permission up front rather than during the first
-    // push-to-talk hold: answering the permission prompt lifts the
-    // finger that was supposed to be holding the button, so the tap
-    // that grants permission would never record anything.
-    ensureMicStream().catch(function (err) {
-      console.error(err);
-      showError("host", "Couldn't access the microphone. Check your browser's mic permission for this site and try again.");
-    });
 
     if ("serviceWorker" in navigator) {
       window.addEventListener("load", function () {

@@ -35,6 +35,8 @@
 
 const SARVAM_BASE = "https://api.sarvam.ai";
 
+const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser } = require("./_lib.js");
+
 // These 11 codes are the ones Sarvam's translation model (mayura:v1)
 // supports today, and every one of them also works with the
 // speech-to-text and text-to-speech models used below -- so the app's
@@ -79,7 +81,24 @@ module.exports = async function handler(req, res) {
   }
   body = body || {};
 
-  const { audioBase64, mimeType, sourceLangHint, targetLangCode } = body;
+  const { audioBase64, mimeType, sourceLangHint, targetLangCode, token } = body;
+
+  // ---------- Metering gate (login-first + minutes wallet) ----------
+  // Every successful exchange costs 1 deciminute ("~1 minute per 10
+  // exchanges", as the wallet screen says). If Redis isn't configured
+  // (fresh clone, no Marketplace install yet) translation still works,
+  // unmetered -- the pipeline shouldn't be dead in that state.
+  let user = null;
+  if (redisConfigured()) {
+    const session = await getSession(token).catch(() => null);
+    if (!session) {
+      return res.status(401).json({ error: "Please log in to translate.", code: "LOGIN_REQUIRED" });
+    }
+    user = await getUser(session.phone);
+    if (!user || (user.deciminutes || 0) < DECIMINUTES_PER_EXCHANGE) {
+      return res.status(402).json({ error: "You're out of minutes. Top up to keep translating.", code: "NO_MINUTES" });
+    }
+  }
 
   if (!audioBase64) {
     return res.status(400).json({ error: "Missing audioBase64 (the recorded clip, base64-encoded)." });
@@ -128,11 +147,20 @@ module.exports = async function handler(req, res) {
       targetLangCode,
     });
 
+    // Charge only for exchanges that actually produced a translation.
+    let minutesLeft = null;
+    if (user) {
+      user.deciminutes = Math.max(0, (user.deciminutes || 0) - DECIMINUTES_PER_EXCHANGE);
+      await saveUser(user);
+      minutesLeft = Math.floor(user.deciminutes / 10);
+    }
+
     return res.status(200).json({
       transcript: stt.transcript,
       detectedLanguage: translation.sourceLangCode || detectedLang,
       translatedText: translation.translatedText,
       ttsAudioBase64,
+      minutesLeft,
     });
   } catch (err) {
     console.error("pipeline error:", err);

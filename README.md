@@ -1,16 +1,25 @@
 # BaatChiit.ai — MVP
 
 Live any-to-any Indian language translation between two people on one phone.
-Host/Guest split screen · push-to-talk · auto language detect · subtitles with number chips · session history.
+Phone-OTP login → conversation setup (auto-detect or manual languages) →
+Host/Guest split-screen chat feed (guest half upside-down) · push-to-talk or
+open-mic · number chips · minutes wallet · local history.
+
+The UI follows the Claude Design handoff in
+`..\baatchiit-ai-translator-prototype\` (cream/saffron/indigo, Baloo 2 +
+Manrope, seven screens).
 
 ## What's in this folder
 
 ```
 index.html            — the complete app (UI + logic, single file)
 manifest.json, sw.js, icons — PWA installability (needed for the APK step)
-api/pipeline.js        — serverless function: Saaras STT → Mayura translate → Bulbul TTS
+api/pipeline.js        — serverless: Saaras STT → Mayura translate → Bulbul TTS, metered
+api/auth.js            — serverless: phone-OTP login (MSG91 widget + Upstash Redis)
+api/_lib.js            — shared Redis/session helpers (not an endpoint)
 vercel.json             — Vercel config (function timeout)
 package.json            — pins the Node version Vercel runs the function on
+PAYMENTS.md             — Razorpay plan; metering + wallet UI are live, checkout isn't
 ```
 
 ## Deploy (10 minutes)
@@ -29,20 +38,25 @@ package.json            — pins the Node version Vercel runs the function on
 
 ## Phrase packs (works fully offline)
 
-**Phrases** in the control strip opens three packs — Greetings, Bargaining, Help — pre-translated into all 11 languages at build time (no API call, no network). Tapping a phrase shows it on *both* halves of the screen, each in that side's currently selected language, with the English gloss above it. The drawer previews each phrase in the guest's language. Useful exactly when the live pipeline can't be: dead zones, key trouble, or before the first deploy.
+The 💬 icon in the conversation strip opens three packs — Greetings, Bargaining, Help — pre-translated into all 11 languages at build time (no API call, no minutes). Tapping a phrase drops it into *both* halves of the conversation feed, each in that side's current language with the English gloss beneath. The sheet previews each phrase in the guest's language.
 
 ## Open-mic mode
 
-The **Open mic** toggle in the control strip switches live mode from hold-to-talk to tap-to-talk: tap once to start, and a WebAudio level watcher stops the recording automatically after ~1.5s of silence (tap again to stop manually; the 25-second hard cap still applies). If WebAudio isn't available the watcher simply doesn't run and the manual stop paths still work. Silence thresholds live in `startSilenceWatch()` in index.html — worth a real-world check in a noisy market before trusting them.
+The **Open mic (hands-free)** switch on the "New conversation" screen changes hold-to-talk into tap-to-talk: tap once, and a WebAudio level watcher stops the recording after ~1.5s of silence (tap again to stop manually; the 25-second hard cap still applies). If WebAudio isn't available the watcher simply doesn't run and the manual stop paths still work. Silence thresholds live in `startSilenceWatch()` in index.html — worth a real-world check in a noisy market.
 
-## Accounts (optional phone-OTP login)
+## History (on-device only)
 
-**Login** in the control strip opens the Account drawer: enter a 10-digit Indian
-mobile → OTP by SMS → logged in for 90 days. Login is optional — translation
-works anonymously; an account is the attachment point for paid plans
-(see PAYMENTS.md). Server side is `api/auth.js`; MSG91 generates and verifies
-the OTP (this server never sees the code), Upstash Redis stores sessions and
-user records.
+The 🕐 icon opens past conversations — auto-named from the first thing said, with the language pair, date, and exchange count. Stored in this phone's localStorage (newest 30); nothing goes to a server.
+
+## Accounts (phone-OTP login — required)
+
+The app is login-first: 10-digit Indian mobile → 4-digit OTP by SMS → logged
+in for 90 days. New accounts get 15 free minutes; each successful exchange
+costs a tenth of a minute ("~1 minute per 10 exchanges"), and the wallet (₹
+icon) shows the balance and top-up packs (payment itself launches later —
+see PAYMENTS.md). Server side is `api/auth.js`; MSG91 generates and verifies
+the OTP (this server never sees the code), Upstash Redis stores sessions,
+user records, and minute balances.
 
 One-time setup, both in the Vercel dashboard:
 
@@ -50,11 +64,18 @@ One-time setup, both in the Vercel dashboard:
    (free tier), connect it to this project. This injects the Redis env vars
    automatically (`KV_REST_API_URL`/`KV_REST_API_TOKEN`; a direct Upstash
    signup's `UPSTASH_REDIS_REST_*` names work too).
-2. **MSG91**: add env vars `MSG91_WIDGET_ID` and `MSG91_TOKEN_AUTH` — the
-   *OTP Widget* product's credentials, the same pair MissionFauj uses (its
-   server env has the working values). Note: this account uses MSG91's
-   Widget API; the classic authkey+template OTP API accepts sends but never
-   delivers. Redeploy after adding.
+2. **MSG91** (three env vars): `MSG91_AUTH_KEY` (account authkey — used
+   server-side to confirm access tokens), plus `MSG91_WIDGET_ID` and
+   `MSG91_TOKEN_AUTH` (the OTP widget's credentials, served to the browser).
+   The login flow is the one proven in production by Dhruva
+   (`C:\1 PROJECTS\Dhruva\app`): the widget runs headless in the BROWSER
+   (send/retry/verify + anti-abuse), and the server only verifies the
+   resulting access token, deriving the phone from the validated token.
+   Working widget values live in Dhruva's Vercel env or MissionFauj's
+   `.env` (`VITE_MSG91_*`). Two gotchas inherited from Dhruva: hCaptcha
+   must be disabled for exposeMethods mode in the MSG91 dashboard (already
+   done if reusing the same widget), and the widget refuses localhost —
+   test login on the deployed site only. Redeploy after adding vars.
 
 Until both exist, the Login drawer shows a clear "isn't configured" error and
 the rest of the app is unaffected.
