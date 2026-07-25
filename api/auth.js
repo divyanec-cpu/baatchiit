@@ -101,10 +101,23 @@ async function sendOtp(body, res) {
     return res.status(429).json({ error: "Too many OTP requests for this number. Try again in an hour." });
   }
 
-  const data = await msg91(
+  let data = await msg91(
     `https://control.msg91.com/api/v5/otp?template_id=${process.env.MSG91_TEMPLATE_ID}&mobile=91${phone}&otp_length=6&otp_expiry=5`,
     "POST"
   );
+  console.log("msg91 send:", JSON.stringify(data)); // never contains the OTP itself
+
+  // While a previous OTP for this number is still unexpired, MSG91
+  // rejects a fresh /otp call ("request already exists") -- the retry
+  // endpoint is the sanctioned way to resend in that window.
+  if (data.type !== "success" && /already/i.test(data.message || "")) {
+    data = await msg91(
+      `https://control.msg91.com/api/v5/otp/retry?mobile=91${phone}&retrytype=text`,
+      "POST"
+    );
+    console.log("msg91 retry:", JSON.stringify(data));
+  }
+
   if (data.type !== "success") {
     throw new Error(data.message || "Couldn't send the OTP SMS. Try again in a minute.");
   }
