@@ -110,6 +110,20 @@
   .auth-wrap .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 26px; }
   .auth-wrap .tagline { color: var(--muted); font-size: 14px; text-align: center; margin: 0 0 10px; }
   .field-label { font-size: 13px; color: var(--muted); font-weight: 700; margin-bottom: 6px; letter-spacing: 0.3px; }
+  /* App-language picker on the welcome screen: native script only, so
+     it reads for someone who can't read the English UI yet. */
+  .ui-lang-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+  .ui-lang-chip {
+    padding: 6px 11px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    font-family: var(--font-script);
+  }
+  .ui-lang-chip[aria-pressed="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
   .phone-row {
     display: flex; align-items: center; gap: 8px;
     background: var(--card);
@@ -272,7 +286,18 @@
   .phrase-msg .gloss { font-size: 11px; color: var(--muted); margin-top: 2px; }
   .half--guest .phrase-msg .gloss { color: var(--cream-faint); }
 
-  .mic-wrap { display: flex; justify-content: center; padding-top: 4px; }
+  .mic-wrap { display: flex; flex-direction: column; align-items: center; gap: 5px; padding-top: 4px; }
+  /* Sits under the mic with an arrow pointing back up at it. Rotates
+     with the guest half, so it reads upright for whoever it belongs to. */
+  .mic-hint {
+    font-size: 12px;
+    font-weight: 700;
+    text-align: center;
+    line-height: 1.2;
+  }
+  .half--host .mic-hint { color: var(--muted); }
+  .half--guest .mic-hint { color: var(--cream-faint); }
+  .mic-btn.is-recording ~ .mic-hint { opacity: 0.35; }
   .mic-btn {
     width: 56px; height: 56px;
     border-radius: 999px;
@@ -539,9 +564,15 @@
     <div class="auth-wrap">
       <svg width="56" height="56" viewBox="0 0 32 32"><path d="M2 8a6 6 0 016-6h10a6 6 0 016 6v4a6 6 0 01-6 6h-8l-5 4v-4a6 6 0 01-3-5.2V8z" fill="#241C3D"/><path d="M10 18a6 6 0 016-6h6a6 6 0 016 6v3a6 6 0 01-4.2 5.7v4.1l-4.6-4.1H16a6 6 0 01-6-6v-2.7z" fill="#FF7A29"/></svg>
       <div class="brand-name">BaatChiit</div>
-      <p class="tagline">Bol ke dekho, samajh sabko aayega. Talk to anyone, in any Indian language.</p>
+      <p class="tagline" id="t-tagline">Bol ke dekho, samajh sabko aayega. Talk to anyone, in any Indian language.</p>
+
       <div style="width:100%;">
-        <div class="field-label">MOBILE NUMBER</div>
+        <div class="field-label" id="t-lang-label">APP LANGUAGE</div>
+        <div class="ui-lang-grid" id="ui-lang-grid" role="group" aria-label="App language"></div>
+      </div>
+
+      <div style="width:100%;">
+        <div class="field-label" id="t-mobile-label">MOBILE NUMBER</div>
         <div class="phone-row">
           <span class="prefix">+91</span>
           <input id="phone-input" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="98765 43210" />
@@ -555,8 +586,8 @@
   <!-- ============== SCREEN: OTP ============== -->
   <section class="screen" id="screen-otp">
     <div class="auth-wrap">
-      <div class="h-display" style="font-size:22px;">Enter OTP</div>
-      <p class="otp-sub">Sent to <strong id="otp-target"></strong></p>
+      <div class="h-display" id="t-otp-title" style="font-size:22px;">Enter OTP</div>
+      <p class="otp-sub"><span id="t-sent-to">Sent to</span> <strong id="otp-target"></strong></p>
       <input id="otp-input" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" />
       <button class="btn-primary" id="btn-verify-otp" style="margin-top:8px;">Verify &amp; Continue</button>
       <button class="resend-btn" id="btn-resend-otp" disabled>Didn't get it? Resend</button>
@@ -625,6 +656,7 @@
         <button class="mic-btn" id="mic-guest" aria-label="Guest: speak">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#241C3D"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#241C3D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
         </button>
+        <div class="mic-hint" id="mic-hint-guest"></div>
       </div>
     </div>
 
@@ -655,6 +687,7 @@
         <button class="mic-btn" id="mic-host" aria-label="Host: speak">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
         </button>
+        <div class="mic-hint" id="mic-hint-host"></div>
       </div>
     </div>
   </section>
@@ -723,7 +756,7 @@
 <!-- Help sheet: same explanations as the first-run tour, always reachable -->
 <div class="phrases-sheet" id="help-sheet" role="dialog" aria-label="How BaatChiit works">
   <div class="phrases-head">
-    <h2>Kaise chalta hai?</h2>
+    <h2 id="t-help-title">How it works</h2>
     <button class="link-btn" id="btn-close-help">Close</button>
   </div>
   <div class="phrases-list" id="help-list"></div>
@@ -812,6 +845,247 @@
     ]}
   ];
 
+  // -----------------------------------------------------------------
+  // UI copy for the welcome + OTP screens and the tour/help content,
+  // in every language the translator supports. The rest of the app is
+  // English for now (Divya's call). Claude-authored translations — a
+  // native read-through is still worth doing, same as PHRASE_PACKS.
+  // `help` entries are [title, body] pairs; icons live in HELP_ICONS.
+  // -----------------------------------------------------------------
+  var UI_STRINGS = {
+    "en-IN": {
+      tagline: "Talk to anyone, in any Indian language.",
+      langLabel: "APP LANGUAGE", mobileLabel: "MOBILE NUMBER", sendOtp: "Send OTP",
+      phoneError: "Enter a valid 10-digit mobile number.",
+      otpTitle: "Enter OTP", sentTo: "Sent to", verify: "Verify & Continue",
+      resend: "Didn't get it? Resend", resendIn: "Resend in", changeNumber: "Change number",
+      otpError: "Enter the 6-digit OTP from the SMS.",
+      helpTitle: "How it works", close: "Close",
+      micHold: "Press and speak", micTap: "Tap to speak",
+      tourNext: "Next", tourStart: "Start", tourSkip: "Not now",
+      help: [
+        ["Two people, one phone", "The screen is split in two. The top half is upside down on purpose — put the phone between you and both sides read straight."],
+        ["Press the mic and speak", "Hold the round mic on your side, speak, then let go. The other side sees and hears the translation."],
+        ["Want your hands free?", "Turn on Open mic on the New conversation screen — one tap starts recording and it stops when you pause."],
+        ["Ready-made phrases", "Tap 💬 for common lines for bargaining, help and greetings. They work without internet too."],
+        ["Hear it again", "Tap the other person's bubble and the sound plays again."],
+        ["Language is detected", "Each side's language is set the moment that person speaks. You can also pick it yourself."],
+        ["Your minutes", "Tap ₹ to see your balance. About 10 exchanges use 1 minute; new accounts get 15 free."],
+        ["Past conversations", "Tap 🕐 for earlier chats. They stay on this phone only, never on a server."]
+      ]
+    },
+    "hi-IN": {
+      tagline: "किसी से भी बात करें, किसी भी भारतीय भाषा में।",
+      langLabel: "ऐप की भाषा", mobileLabel: "मोबाइल नंबर", sendOtp: "OTP भेजें",
+      phoneError: "सही 10 अंकों का मोबाइल नंबर डालें।",
+      otpTitle: "OTP डालें", sentTo: "भेजा गया", verify: "जाँचें और आगे बढ़ें",
+      resend: "नहीं मिला? दोबारा भेजें", resendIn: "दोबारा भेजें", changeNumber: "नंबर बदलें",
+      otpError: "SMS में आया 6 अंकों का OTP डालें।",
+      helpTitle: "कैसे चलता है?", close: "बंद करें",
+      micHold: "दबाकर बोलें", micTap: "एक बार दबाएँ",
+      tourNext: "आगे", tourStart: "शुरू करें", tourSkip: "अभी नहीं",
+      help: [
+        ["दो लोग, एक फ़ोन", "स्क्रीन दो हिस्सों में है। ऊपर वाला हिस्सा जानबूझकर उल्टा है — फ़ोन बीच में रखें, दोनों को सीधा दिखेगा।"],
+        ["माइक दबाएँ और बोलें", "अपनी तरफ़ का गोल माइक दबाए रखें, बोलें, फिर छोड़ दें। दूसरी तरफ़ अनुवाद दिखेगा और सुनाई देगा।"],
+        ["हाथ खाली चाहिए?", "New conversation स्क्रीन पर Open mic चालू करें — एक टैप से रिकॉर्डिंग शुरू, रुकते ही अपने आप बंद।"],
+        ["तैयार वाक्य", "💬 दबाएँ — मोल-भाव, मदद और नमस्ते के आम वाक्य, बिना इंटरनेट के भी चलते हैं।"],
+        ["दोबारा सुनें", "सामने वाले के बबल पर टैप करें, आवाज़ फिर से बजेगी।"],
+        ["भाषा अपने आप", "हर तरफ़ की भाषा पहली बार बोलते ही सेट हो जाती है। चाहें तो खुद भी चुन सकते हैं।"],
+        ["मिनट का हिसाब", "₹ पर बैलेंस देखें। लगभग 10 बातों पर 1 मिनट लगता है; नए खाते को 15 मिनट मुफ़्त।"],
+        ["पुरानी बातचीत", "🕐 में पिछली बातें इसी फ़ोन में सुरक्षित रहती हैं, किसी सर्वर पर नहीं।"]
+      ]
+    },
+    "bn-IN": {
+      tagline: "যেকোনো ভারতীয় ভাষায়, যে কারও সঙ্গে কথা বলুন।",
+      langLabel: "অ্যাপের ভাষা", mobileLabel: "মোবাইল নম্বর", sendOtp: "OTP পাঠান",
+      phoneError: "সঠিক ১০ সংখ্যার মোবাইল নম্বর দিন।",
+      otpTitle: "OTP দিন", sentTo: "পাঠানো হয়েছে", verify: "যাচাই করে এগিয়ে যান",
+      resend: "পাননি? আবার পাঠান", resendIn: "আবার পাঠান", changeNumber: "নম্বর বদলান",
+      otpError: "SMS-এ আসা ৬ সংখ্যার OTP দিন।",
+      helpTitle: "কীভাবে কাজ করে?", close: "বন্ধ করুন",
+      micHold: "চেপে ধরে বলুন", micTap: "একবার চাপুন",
+      tourNext: "পরবর্তী", tourStart: "শুরু করুন", tourSkip: "এখন নয়",
+      help: [
+        ["দুজন, একটি ফোন", "স্ক্রিন দুই ভাগে ভাগ করা। উপরের অংশ ইচ্ছে করেই উল্টো — ফোনটি মাঝখানে রাখুন, দুজনেই সোজা দেখতে পাবেন।"],
+        ["মাইক চেপে বলুন", "নিজের দিকের গোল মাইক চেপে ধরে বলুন, তারপর ছেড়ে দিন। অন্য দিকে অনুবাদ দেখা ও শোনা যাবে।"],
+        ["হাত ফাঁকা রাখতে চান?", "New conversation স্ক্রিনে Open mic চালু করুন — এক ট্যাপে রেকর্ডিং শুরু, থামলেই নিজে থেকে বন্ধ।"],
+        ["তৈরি বাক্য", "💬 চাপুন — দরদাম, সাহায্য ও অভিবাদনের চেনা বাক্য, ইন্টারনেট ছাড়াও চলে।"],
+        ["আবার শুনবেন?", "অন্যজনের বাবলে ট্যাপ করুন, শব্দটি আবার বাজবে।"],
+        ["ভাষা নিজেই বোঝে", "প্রথমবার বলার সঙ্গে সঙ্গেই দুই দিকের ভাষা ঠিক হয়ে যায়। চাইলে নিজেও বেছে নিতে পারেন।"],
+        ["মিনিটের হিসাব", "₹ চেপে ব্যালেন্স দেখুন। প্রায় ১০টি কথায় ১ মিনিট খরচ; নতুন অ্যাকাউন্টে ১৫ মিনিট বিনামূল্যে।"],
+        ["পুরোনো কথা", "🕐 তে আগের কথাগুলো এই ফোনেই থাকে, কোনো সার্ভারে যায় না।"]
+      ]
+    },
+    "gu-IN": {
+      tagline: "કોઈપણ ભારતીય ભાષામાં, કોઈની પણ સાથે વાત કરો.",
+      langLabel: "એપની ભાષા", mobileLabel: "મોબાઇલ નંબર", sendOtp: "OTP મોકલો",
+      phoneError: "સાચો 10 અંકનો મોબાઇલ નંબર નાખો.",
+      otpTitle: "OTP નાખો", sentTo: "મોકલ્યો", verify: "ચકાસો અને આગળ વધો",
+      resend: "ન મળ્યો? ફરી મોકલો", resendIn: "ફરી મોકલો", changeNumber: "નંબર બદલો",
+      otpError: "SMS માં આવેલો 6 અંકનો OTP નાખો.",
+      helpTitle: "કેવી રીતે ચાલે છે?", close: "બંધ કરો",
+      micHold: "દબાવીને બોલો", micTap: "એક વાર દબાવો",
+      tourNext: "આગળ", tourStart: "શરૂ કરો", tourSkip: "હમણાં નહીં",
+      help: [
+        ["બે વ્યક્તિ, એક ફોન", "સ્ક્રીન બે ભાગમાં છે. ઉપરનો ભાગ જાણી જોઈને ઊંધો છે — ફોન વચ્ચે મૂકો, બંનેને સીધું દેખાશે."],
+        ["માઇક દબાવીને બોલો", "તમારી બાજુનું ગોળ માઇક દબાવી રાખો, બોલો, પછી છોડી દો. સામેની બાજુ અનુવાદ દેખાશે અને સંભળાશે."],
+        ["હાથ ફ્રી જોઈએ?", "New conversation સ્ક્રીન પર Open mic ચાલુ કરો — એક ટૅપથી રેકોર્ડિંગ શરૂ, અટકતાં જ આપોઆપ બંધ."],
+        ["તૈયાર વાક્યો", "💬 દબાવો — ભાવતાલ, મદદ અને નમસ્તેનાં સામાન્ય વાક્યો, ઇન્ટરનેટ વગર પણ ચાલે."],
+        ["ફરી સાંભળવું છે?", "સામેવાળાના બબલ પર ટૅપ કરો, અવાજ ફરી વાગશે."],
+        ["ભાષા આપોઆપ", "દરેક બાજુની ભાષા પહેલી વાર બોલતાં જ સેટ થઈ જાય છે. જાતે પણ પસંદ કરી શકો."],
+        ["મિનિટનો હિસાબ", "₹ પર બેલેન્સ જુઓ. આશરે 10 વાતોમાં 1 મિનિટ; નવા ખાતાને 15 મિનિટ મફત."],
+        ["જૂની વાતચીત", "🕐 માં પહેલાંની વાતો આ ફોનમાં જ સચવાય છે, કોઈ સર્વર પર નહીં."]
+      ]
+    },
+    "kn-IN": {
+      tagline: "ಯಾವುದೇ ಭಾರತೀಯ ಭಾಷೆಯಲ್ಲಿ, ಯಾರೊಂದಿಗೂ ಮಾತನಾಡಿ.",
+      langLabel: "ಅಪ್ಲಿಕೇಶನ್ ಭಾಷೆ", mobileLabel: "ಮೊಬೈಲ್ ಸಂಖ್ಯೆ", sendOtp: "OTP ಕಳುಹಿಸಿ",
+      phoneError: "ಸರಿಯಾದ 10 ಅಂಕಿಯ ಮೊಬೈಲ್ ಸಂಖ್ಯೆ ನಮೂದಿಸಿ.",
+      otpTitle: "OTP ನಮೂದಿಸಿ", sentTo: "ಕಳುಹಿಸಲಾಗಿದೆ", verify: "ಪರಿಶೀಲಿಸಿ ಮುಂದುವರಿಯಿರಿ",
+      resend: "ಬಂದಿಲ್ಲವೇ? ಮತ್ತೆ ಕಳುಹಿಸಿ", resendIn: "ಮತ್ತೆ ಕಳುಹಿಸಿ", changeNumber: "ಸಂಖ್ಯೆ ಬದಲಾಯಿಸಿ",
+      otpError: "SMS ನಲ್ಲಿ ಬಂದ 6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ.",
+      helpTitle: "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", close: "ಮುಚ್ಚಿ",
+      micHold: "ಒತ್ತಿ ಮಾತನಾಡಿ", micTap: "ಒಮ್ಮೆ ಒತ್ತಿ",
+      tourNext: "ಮುಂದೆ", tourStart: "ಪ್ರಾರಂಭಿಸಿ", tourSkip: "ಈಗ ಬೇಡ",
+      help: [
+        ["ಇಬ್ಬರು, ಒಂದು ಫೋನ್", "ಪರದೆ ಎರಡು ಭಾಗಗಳಲ್ಲಿದೆ. ಮೇಲಿನ ಭಾಗ ಉದ್ದೇಶಪೂರ್ವಕವಾಗಿ ತಲೆಕೆಳಗಾಗಿದೆ — ಫೋನನ್ನು ನಡುವೆ ಇಡಿ, ಇಬ್ಬರಿಗೂ ನೇರವಾಗಿ ಕಾಣುತ್ತದೆ."],
+        ["ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ", "ನಿಮ್ಮ ಕಡೆಯ ದುಂಡಗಿನ ಮೈಕ್ ಒತ್ತಿ ಹಿಡಿದು ಮಾತನಾಡಿ, ನಂತರ ಬಿಡಿ. ಇನ್ನೊಂದು ಕಡೆ ಅನುವಾದ ಕಾಣುತ್ತದೆ ಮತ್ತು ಕೇಳುತ್ತದೆ."],
+        ["ಕೈ ಬಿಡುವಾಗಿರಬೇಕೇ?", "New conversation ಪರದೆಯಲ್ಲಿ Open mic ಆನ್ ಮಾಡಿ — ಒಂದು ಟ್ಯಾಪ್‌ಗೆ ರೆಕಾರ್ಡಿಂಗ್ ಶುರು, ನಿಲ್ಲಿಸಿದ ತಕ್ಷಣ ತಾನಾಗಿ ನಿಲ್ಲುತ್ತದೆ."],
+        ["ಸಿದ್ಧ ವಾಕ್ಯಗಳು", "💬 ಒತ್ತಿ — ಚೌಕಾಸಿ, ಸಹಾಯ ಮತ್ತು ನಮಸ್ಕಾರದ ಸಾಮಾನ್ಯ ವಾಕ್ಯಗಳು; ಇಂಟರ್ನೆಟ್ ಇಲ್ಲದೆಯೂ ಕೆಲಸ ಮಾಡುತ್ತವೆ."],
+        ["ಮತ್ತೆ ಕೇಳಬೇಕೇ?", "ಎದುರಿನವರ ಬಬಲ್ ಮೇಲೆ ಟ್ಯಾಪ್ ಮಾಡಿ, ಧ್ವನಿ ಮತ್ತೆ ಕೇಳುತ್ತದೆ."],
+        ["ಭಾಷೆ ತಾನಾಗಿ ತಿಳಿಯುತ್ತದೆ", "ಮೊದಲ ಬಾರಿ ಮಾತನಾಡಿದ ತಕ್ಷಣ ಎರಡೂ ಕಡೆಯ ಭಾಷೆ ಸೆಟ್ ಆಗುತ್ತದೆ. ಬೇಕಿದ್ದರೆ ನೀವೇ ಆಯ್ಕೆ ಮಾಡಬಹುದು."],
+        ["ನಿಮಿಷಗಳ ಲೆಕ್ಕ", "₹ ಒತ್ತಿ ಬ್ಯಾಲೆನ್ಸ್ ನೋಡಿ. ಸುಮಾರು 10 ಮಾತುಗಳಿಗೆ 1 ನಿಮಿಷ; ಹೊಸ ಖಾತೆಗೆ 15 ನಿಮಿಷ ಉಚಿತ."],
+        ["ಹಳೆಯ ಸಂಭಾಷಣೆ", "🕐 ನಲ್ಲಿ ಹಿಂದಿನ ಮಾತುಗಳು ಈ ಫೋನಿನಲ್ಲೇ ಉಳಿಯುತ್ತವೆ, ಯಾವುದೇ ಸರ್ವರ್‌ಗೆ ಹೋಗುವುದಿಲ್ಲ."]
+      ]
+    },
+    "ml-IN": {
+      tagline: "ഏത് ഇന്ത്യൻ ഭാഷയിലും ആരോടും സംസാരിക്കൂ.",
+      langLabel: "ആപ്പിന്റെ ഭാഷ", mobileLabel: "മൊബൈൽ നമ്പർ", sendOtp: "OTP അയയ്ക്കൂ",
+      phoneError: "ശരിയായ 10 അക്ക മൊബൈൽ നമ്പർ നൽകൂ.",
+      otpTitle: "OTP നൽകൂ", sentTo: "അയച്ചത്", verify: "പരിശോധിച്ച് തുടരൂ",
+      resend: "കിട്ടിയില്ലേ? വീണ്ടും അയയ്ക്കൂ", resendIn: "വീണ്ടും അയയ്ക്കൂ", changeNumber: "നമ്പർ മാറ്റൂ",
+      otpError: "SMS-ൽ വന്ന 6 അക്ക OTP നൽകൂ.",
+      helpTitle: "എങ്ങനെ പ്രവർത്തിക്കുന്നു?", close: "അടയ്ക്കൂ",
+      micHold: "അമർത്തി സംസാരിക്കൂ", micTap: "ഒരിക്കൽ അമർത്തൂ",
+      tourNext: "അടുത്തത്", tourStart: "തുടങ്ങാം", tourSkip: "ഇപ്പോൾ വേണ്ട",
+      help: [
+        ["രണ്ടു പേർ, ഒരു ഫോൺ", "സ്ക്രീൻ രണ്ടായി പകുത്തിരിക്കുന്നു. മുകൾഭാഗം മനഃപൂർവം തലകീഴായാണ് — ഫോൺ നടുവിൽ വെക്കൂ, രണ്ടു പേർക്കും നേരെ കാണാം."],
+        ["മൈക്ക് അമർത്തി സംസാരിക്കൂ", "നിങ്ങളുടെ ഭാഗത്തെ വൃത്താകൃതിയിലുള്ള മൈക്ക് അമർത്തിപ്പിടിച്ച് സംസാരിക്കൂ, പിന്നെ വിടൂ. മറുഭാഗത്ത് പരിഭാഷ കാണുകയും കേൾക്കുകയും ചെയ്യും."],
+        ["കൈ സ്വതന്ത്രമാക്കണോ?", "New conversation സ്ക്രീനിൽ Open mic ഓണാക്കൂ — ഒരു ടാപ്പിൽ റെക്കോർഡിംഗ് തുടങ്ങും, നിർത്തുമ്പോൾ തനിയെ നിൽക്കും."],
+        ["തയ്യാറായ വാക്യങ്ങൾ", "💬 അമർത്തൂ — വിലപേശൽ, സഹായം, അഭിവാദ്യം എന്നിവയുടെ സാധാരണ വാക്യങ്ങൾ; ഇന്റർനെറ്റ് ഇല്ലാതെയും പ്രവർത്തിക്കും."],
+        ["വീണ്ടും കേൾക്കണോ?", "മറ്റേയാളുടെ ബബിളിൽ ടാപ്പ് ചെയ്യൂ, ശബ്ദം വീണ്ടും കേൾക്കാം."],
+        ["ഭാഷ തനിയെ തിരിച്ചറിയും", "ആദ്യം സംസാരിക്കുമ്പോൾ തന്നെ ഇരുഭാഗത്തെയും ഭാഷ സെറ്റ് ആകും. വേണമെങ്കിൽ സ്വയം തിരഞ്ഞെടുക്കാം."],
+        ["മിനിറ്റുകളുടെ കണക്ക്", "₹ അമർത്തി ബാലൻസ് നോക്കൂ. ഏകദേശം 10 സംഭാഷണങ്ങൾക്ക് 1 മിനിറ്റ്; പുതിയ അക്കൗണ്ടിന് 15 മിനിറ്റ് സൗജന്യം."],
+        ["പഴയ സംഭാഷണങ്ങൾ", "🕐 ൽ പഴയ സംഭാഷണങ്ങൾ ഈ ഫോണിൽ മാത്രം സൂക്ഷിക്കും, ഒരു സെർവറിലേക്കും പോകില്ല."]
+      ]
+    },
+    "mr-IN": {
+      tagline: "कोणत्याही भारतीय भाषेत, कोणाशीही बोला.",
+      langLabel: "अ‍ॅपची भाषा", mobileLabel: "मोबाइल नंबर", sendOtp: "OTP पाठवा",
+      phoneError: "योग्य 10 अंकी मोबाइल नंबर टाका.",
+      otpTitle: "OTP टाका", sentTo: "पाठवला", verify: "तपासा आणि पुढे जा",
+      resend: "मिळाला नाही? पुन्हा पाठवा", resendIn: "पुन्हा पाठवा", changeNumber: "नंबर बदला",
+      otpError: "SMS मध्ये आलेला 6 अंकी OTP टाका.",
+      helpTitle: "कसे चालते?", close: "बंद करा",
+      micHold: "दाबून बोला", micTap: "एकदा दाबा",
+      tourNext: "पुढे", tourStart: "सुरू करा", tourSkip: "आत्ता नको",
+      help: [
+        ["दोन माणसं, एक फोन", "स्क्रीन दोन भागांत आहे. वरचा भाग मुद्दाम उलटा आहे — फोन मध्ये ठेवा, दोघांना सरळ दिसेल."],
+        ["माइक दाबा आणि बोला", "तुमच्या बाजूचा गोल माइक दाबून धरा, बोला, मग सोडा. दुसऱ्या बाजूला भाषांतर दिसेल आणि ऐकू येईल."],
+        ["हात मोकळे हवेत?", "New conversation स्क्रीनवर Open mic चालू करा — एका टॅपने रेकॉर्डिंग सुरू, थांबताच आपोआप बंद."],
+        ["तयार वाक्यं", "💬 दाबा — घासाघीस, मदत आणि नमस्कारची नेहमीची वाक्यं, इंटरनेटशिवायही चालतात."],
+        ["पुन्हा ऐकायचंय?", "समोरच्याच्या बबलवर टॅप करा, आवाज पुन्हा वाजेल."],
+        ["भाषा आपोआप ओळखते", "पहिल्यांदा बोलताच दोन्ही बाजूंची भाषा सेट होते. हवं तर स्वतःही निवडू शकता."],
+        ["मिनिटांचा हिशेब", "₹ वर बॅलन्स पाहा. साधारण 10 वाक्यांना 1 मिनिट; नव्या खात्याला 15 मिनिटं मोफत."],
+        ["जुनी बातचीत", "🕐 मध्ये आधीच्या गप्पा याच फोनमध्ये राहतात, कुठल्याही सर्व्हरवर जात नाहीत."]
+      ]
+    },
+    "od-IN": {
+      tagline: "ଯେକୌଣସି ଭାରତୀୟ ଭାଷାରେ, ଯେକୌଣସି ବ୍ୟକ୍ତିଙ୍କ ସହ କଥା ହୁଅନ୍ତୁ।",
+      langLabel: "ଆପ୍‌ର ଭାଷା", mobileLabel: "ମୋବାଇଲ ନମ୍ବର", sendOtp: "OTP ପଠାନ୍ତୁ",
+      phoneError: "ସଠିକ୍ 10 ଅଙ୍କର ମୋବାଇଲ ନମ୍ବର ଦିଅନ୍ତୁ।",
+      otpTitle: "OTP ଦିଅନ୍ତୁ", sentTo: "ପଠାଯାଇଛି", verify: "ଯାଞ୍ଚ କରି ଆଗକୁ ଯାଆନ୍ତୁ",
+      resend: "ମିଳିଲା ନାହିଁ? ପୁଣି ପଠାନ୍ତୁ", resendIn: "ପୁଣି ପଠାନ୍ତୁ", changeNumber: "ନମ୍ବର ବଦଳାନ୍ତୁ",
+      otpError: "SMS ରେ ଆସିଥିବା 6 ଅଙ୍କର OTP ଦିଅନ୍ତୁ।",
+      helpTitle: "କିପରି କାମ କରେ?", close: "ବନ୍ଦ କରନ୍ତୁ",
+      micHold: "ଦବାଇ କୁହନ୍ତୁ", micTap: "ଥରେ ଦବାନ୍ତୁ",
+      tourNext: "ଆଗକୁ", tourStart: "ଆରମ୍ଭ କରନ୍ତୁ", tourSkip: "ବର୍ତ୍ତମାନ ନୁହେଁ",
+      help: [
+        ["ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍", "ସ୍କ୍ରିନ ଦୁଇ ଭାଗରେ ବିଭକ୍ତ। ଉପର ଭାଗ ଜାଣିଶୁଣି ଓଲଟା — ଫୋନକୁ ମଝିରେ ରଖନ୍ତୁ, ଦୁହେଁ ସିଧା ଦେଖିପାରିବେ।"],
+        ["ମାଇକ୍ ଦବାଇ କୁହନ୍ତୁ", "ନିଜ ପାଖର ଗୋଲ ମାଇକ୍ ଦବାଇ ଧରି କୁହନ୍ତୁ, ପରେ ଛାଡ଼ନ୍ତୁ। ଅନ୍ୟ ପାଖରେ ଅନୁବାଦ ଦେଖାଯିବ ଓ ଶୁଣାଯିବ।"],
+        ["ହାତ ଖାଲି ଦରକାର?", "New conversation ସ୍କ୍ରିନରେ Open mic ଚାଲୁ କରନ୍ତୁ — ଗୋଟିଏ ଟ୍ୟାପରେ ରେକର୍ଡିଂ ଆରମ୍ଭ, ଅଟକିଲେ ନିଜେ ବନ୍ଦ ହୋଇଯିବ।"],
+        ["ପ୍ରସ୍ତୁତ ବାକ୍ୟ", "💬 ଦବାନ୍ତୁ — ଦରଦାମ, ସାହାଯ୍ୟ ଓ ନମସ୍କାରର ସାଧାରଣ ବାକ୍ୟ, ଇଣ୍ଟରନେଟ୍ ନଥିଲେ ମଧ୍ୟ ଚାଲେ।"],
+        ["ପୁଣି ଶୁଣିବେ?", "ଅନ୍ୟ ଜଣଙ୍କ ବବଲ୍ ଉପରେ ଟ୍ୟାପ୍ କରନ୍ତୁ, ସ୍ୱର ପୁଣି ବାଜିବ।"],
+        ["ଭାଷା ନିଜେ ଚିହ୍ନେ", "ପ୍ରଥମ ଥର କହିବା ମାତ୍ରେ ଦୁଇ ପାଖର ଭାଷା ସେଟ୍ ହୋଇଯାଏ। ଚାହିଁଲେ ନିଜେ ମଧ୍ୟ ବାଛିପାରିବେ।"],
+        ["ମିନିଟ୍ ହିସାବ", "₹ ଦବାଇ ବାଲାନ୍ସ ଦେଖନ୍ତୁ। ପ୍ରାୟ 10 କଥାରେ 1 ମିନିଟ୍; ନୂଆ ଖାତାକୁ 15 ମିନିଟ୍ ମାଗଣା।"],
+        ["ପୁରୁଣା କଥାବାର୍ତ୍ତା", "🕐 ରେ ପୂର୍ବ କଥାଗୁଡ଼ିକ ଏହି ଫୋନରେ ହିଁ ରହେ, କୌଣସି ସର୍ଭରକୁ ଯାଏ ନାହିଁ।"]
+      ]
+    },
+    "pa-IN": {
+      tagline: "ਕਿਸੇ ਵੀ ਭਾਰਤੀ ਭਾਸ਼ਾ ਵਿੱਚ, ਕਿਸੇ ਨਾਲ ਵੀ ਗੱਲ ਕਰੋ।",
+      langLabel: "ਐਪ ਦੀ ਭਾਸ਼ਾ", mobileLabel: "ਮੋਬਾਈਲ ਨੰਬਰ", sendOtp: "OTP ਭੇਜੋ",
+      phoneError: "ਸਹੀ 10 ਅੰਕਾਂ ਦਾ ਮੋਬਾਈਲ ਨੰਬਰ ਭਰੋ।",
+      otpTitle: "OTP ਭਰੋ", sentTo: "ਭੇਜਿਆ", verify: "ਜਾਂਚੋ ਅਤੇ ਅੱਗੇ ਵਧੋ",
+      resend: "ਨਹੀਂ ਮਿਲਿਆ? ਦੁਬਾਰਾ ਭੇਜੋ", resendIn: "ਦੁਬਾਰਾ ਭੇਜੋ", changeNumber: "ਨੰਬਰ ਬਦਲੋ",
+      otpError: "SMS ਵਿੱਚ ਆਇਆ 6 ਅੰਕਾਂ ਦਾ OTP ਭਰੋ।",
+      helpTitle: "ਕਿਵੇਂ ਚੱਲਦਾ ਹੈ?", close: "ਬੰਦ ਕਰੋ",
+      micHold: "ਦਬਾ ਕੇ ਬੋਲੋ", micTap: "ਇੱਕ ਵਾਰ ਦਬਾਓ",
+      tourNext: "ਅੱਗੇ", tourStart: "ਸ਼ੁਰੂ ਕਰੋ", tourSkip: "ਹੁਣੇ ਨਹੀਂ",
+      help: [
+        ["ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ", "ਸਕਰੀਨ ਦੋ ਹਿੱਸਿਆਂ ਵਿੱਚ ਹੈ। ਉੱਪਰਲਾ ਹਿੱਸਾ ਜਾਣ-ਬੁੱਝ ਕੇ ਉਲਟਾ ਹੈ — ਫੋਨ ਵਿਚਕਾਰ ਰੱਖੋ, ਦੋਹਾਂ ਨੂੰ ਸਿੱਧਾ ਦਿਸੇਗਾ।"],
+        ["ਮਾਈਕ ਦਬਾ ਕੇ ਬੋਲੋ", "ਆਪਣੇ ਪਾਸੇ ਦਾ ਗੋਲ ਮਾਈਕ ਦਬਾ ਕੇ ਰੱਖੋ, ਬੋਲੋ, ਫਿਰ ਛੱਡ ਦਿਓ। ਦੂਜੇ ਪਾਸੇ ਅਨੁਵਾਦ ਦਿਸੇਗਾ ਤੇ ਸੁਣਾਈ ਦੇਵੇਗਾ।"],
+        ["ਹੱਥ ਖਾਲੀ ਚਾਹੀਦੇ?", "New conversation ਸਕਰੀਨ ਉੱਤੇ Open mic ਚਾਲੂ ਕਰੋ — ਇੱਕ ਟੈਪ ਨਾਲ ਰਿਕਾਰਡਿੰਗ ਸ਼ੁਰੂ, ਰੁਕਦੇ ਹੀ ਆਪੇ ਬੰਦ।"],
+        ["ਤਿਆਰ ਵਾਕ", "💬 ਦਬਾਓ — ਮੁੱਲ-ਭਾਅ, ਮਦਦ ਅਤੇ ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ ਦੇ ਆਮ ਵਾਕ, ਇੰਟਰਨੈੱਟ ਤੋਂ ਬਿਨਾਂ ਵੀ ਚੱਲਦੇ ਹਨ।"],
+        ["ਦੁਬਾਰਾ ਸੁਣਨਾ ਹੈ?", "ਸਾਹਮਣੇ ਵਾਲੇ ਦੇ ਬਬਲ ਉੱਤੇ ਟੈਪ ਕਰੋ, ਆਵਾਜ਼ ਫਿਰ ਵੱਜੇਗੀ।"],
+        ["ਭਾਸ਼ਾ ਆਪੇ ਪਛਾਣਦਾ ਹੈ", "ਪਹਿਲੀ ਵਾਰ ਬੋਲਦੇ ਹੀ ਦੋਹਾਂ ਪਾਸਿਆਂ ਦੀ ਭਾਸ਼ਾ ਸੈੱਟ ਹੋ ਜਾਂਦੀ ਹੈ। ਚਾਹੋ ਤਾਂ ਆਪ ਵੀ ਚੁਣ ਸਕਦੇ ਹੋ।"],
+        ["ਮਿੰਟਾਂ ਦਾ ਹਿਸਾਬ", "₹ ਉੱਤੇ ਬਕਾਇਆ ਦੇਖੋ। ਲਗਭਗ 10 ਗੱਲਾਂ ਉੱਤੇ 1 ਮਿੰਟ; ਨਵੇਂ ਖਾਤੇ ਨੂੰ 15 ਮਿੰਟ ਮੁਫ਼ਤ।"],
+        ["ਪੁਰਾਣੀ ਗੱਲਬਾਤ", "🕐 ਵਿੱਚ ਪਿਛਲੀਆਂ ਗੱਲਾਂ ਇਸੇ ਫੋਨ ਵਿੱਚ ਰਹਿੰਦੀਆਂ ਹਨ, ਕਿਸੇ ਸਰਵਰ ਉੱਤੇ ਨਹੀਂ ਜਾਂਦੀਆਂ।"]
+      ]
+    },
+    "ta-IN": {
+      tagline: "எந்த இந்திய மொழியிலும், யாருடனும் பேசுங்கள்.",
+      langLabel: "ஆப்பின் மொழி", mobileLabel: "மொபைல் எண்", sendOtp: "OTP அனுப்பு",
+      phoneError: "சரியான 10 இலக்க மொபைல் எண்ணை உள்ளிடுங்கள்.",
+      otpTitle: "OTP உள்ளிடுங்கள்", sentTo: "அனுப்பப்பட்டது", verify: "சரிபார்த்து தொடரவும்",
+      resend: "வரவில்லையா? மீண்டும் அனுப்பு", resendIn: "மீண்டும் அனுப்பு", changeNumber: "எண்ணை மாற்று",
+      otpError: "SMS-ல் வந்த 6 இலக்க OTP-யை உள்ளிடுங்கள்.",
+      helpTitle: "எப்படி வேலை செய்கிறது?", close: "மூடு",
+      micHold: "அழுத்திப் பேசுங்கள்", micTap: "ஒரு முறை தட்டவும்",
+      tourNext: "அடுத்து", tourStart: "தொடங்கு", tourSkip: "இப்போது வேண்டாம்",
+      help: [
+        ["இருவர், ஒரு ஃபோன்", "திரை இரண்டு பகுதிகளாக உள்ளது. மேல் பகுதி வேண்டுமென்றே தலைகீழாக உள்ளது — ஃபோனை நடுவில் வையுங்கள், இருவருக்கும் நேராகத் தெரியும்."],
+        ["மைக்கை அழுத்திப் பேசுங்கள்", "உங்கள் பக்கத்தில் உள்ள வட்ட மைக்கை அழுத்திப் பிடித்துப் பேசி, பிறகு விடுங்கள். மறுபக்கம் மொழிபெயர்ப்பு தெரியும், கேட்கும்."],
+        ["கை சுதந்திரம் வேண்டுமா?", "New conversation திரையில் Open mic-ஐ இயக்குங்கள் — ஒரு தட்டலில் பதிவு தொடங்கும், நிறுத்தியவுடன் தானாக நிற்கும்."],
+        ["தயார் வாக்கியங்கள்", "💬 அழுத்துங்கள் — பேரம், உதவி, வணக்கம் போன்ற வழக்கமான வாக்கியங்கள்; இணையம் இல்லாமலும் வேலை செய்யும்."],
+        ["மீண்டும் கேட்க வேண்டுமா?", "மற்றவரின் குமிழியைத் தட்டுங்கள், ஒலி மீண்டும் ஒலிக்கும்."],
+        ["மொழி தானாகவே தெரியும்", "முதல் முறை பேசியவுடன் இரு பக்கத்தின் மொழியும் அமைந்துவிடும். விரும்பினால் நீங்களே தேர்வு செய்யலாம்."],
+        ["நிமிடக் கணக்கு", "₹ அழுத்தி இருப்பைப் பாருங்கள். சுமார் 10 உரையாடல்களுக்கு 1 நிமிடம்; புதிய கணக்குக்கு 15 நிமிடம் இலவசம்."],
+        ["பழைய உரையாடல்கள்", "🕐 இல் முந்தைய உரையாடல்கள் இந்த ஃபோனிலேயே இருக்கும், எந்த சர்வருக்கும் செல்லாது."]
+      ]
+    },
+    "te-IN": {
+      tagline: "ఏ భారతీయ భాషలోనైనా, ఎవరితోనైనా మాట్లాడండి.",
+      langLabel: "యాప్ భాష", mobileLabel: "మొబైల్ నంబర్", sendOtp: "OTP పంపండి",
+      phoneError: "సరైన 10 అంకెల మొబైల్ నంబర్ ఇవ్వండి.",
+      otpTitle: "OTP ఇవ్వండి", sentTo: "పంపబడింది", verify: "పరిశీలించి కొనసాగండి",
+      resend: "రాలేదా? మళ్ళీ పంపండి", resendIn: "మళ్ళీ పంపండి", changeNumber: "నంబర్ మార్చండి",
+      otpError: "SMS లో వచ్చిన 6 అంకెల OTP ఇవ్వండి.",
+      helpTitle: "ఎలా పనిచేస్తుంది?", close: "మూసివేయండి",
+      micHold: "నొక్కి మాట్లాడండి", micTap: "ఒకసారి నొక్కండి",
+      tourNext: "తర్వాత", tourStart: "ప్రారంభించండి", tourSkip: "ఇప్పుడు వద్దు",
+      help: [
+        ["ఇద్దరు, ఒక ఫోన్", "స్క్రీన్ రెండు భాగాలుగా ఉంది. పై భాగం కావాలనే తలకిందులుగా ఉంది — ఫోన్‌ను మధ్యలో పెట్టండి, ఇద్దరికీ నేరుగా కనిపిస్తుంది."],
+        ["మైక్ నొక్కి మాట్లాడండి", "మీ వైపు ఉన్న గుండ్రటి మైక్ నొక్కి పట్టుకుని మాట్లాడి, తర్వాత వదలండి. అవతలి వైపు అనువాదం కనిపిస్తుంది, వినిపిస్తుంది."],
+        ["చేతులు ఖాళీ కావాలా?", "New conversation స్క్రీన్‌లో Open mic ఆన్ చేయండి — ఒక ట్యాప్‌తో రికార్డింగ్ మొదలు, ఆగగానే దానంతట అదే ఆగుతుంది."],
+        ["సిద్ధంగా ఉన్న వాక్యాలు", "💬 నొక్కండి — బేరం, సహాయం, నమస్కారం వంటి సాధారణ వాక్యాలు; ఇంటర్నెట్ లేకపోయినా పనిచేస్తాయి."],
+        ["మళ్ళీ వినాలా?", "ఎదుటి వ్యక్తి బబుల్‌పై ట్యాప్ చేయండి, శబ్దం మళ్ళీ వినిపిస్తుంది."],
+        ["భాష దానంతట అదే తెలుస్తుంది", "మొదటిసారి మాట్లాడగానే రెండు వైపుల భాష సెట్ అవుతుంది. కావాలంటే మీరే ఎంచుకోవచ్చు."],
+        ["నిమిషాల లెక్క", "₹ నొక్కి బ్యాలెన్స్ చూడండి. సుమారు 10 సంభాషణలకు 1 నిమిషం; కొత్త ఖాతాకు 15 నిమిషాలు ఉచితం."],
+        ["పాత సంభాషణలు", "🕐 లో పాత సంభాషణలు ఈ ఫోన్‌లోనే ఉంటాయి, ఏ సర్వర్‌కూ వెళ్ళవు."]
+      ]
+    }
+  };
+
   var PACKS = [
     { id: "starter", price: 99, minutes: 60, label: "Starter" },
     { id: "popular", price: 249, minutes: 180, label: "Most popular", popular: true },
@@ -826,12 +1100,14 @@
   var AUTH_TOKEN_KEY = "bc_session";
   var HISTORY_KEY = "bc_history";
   var OPENMIC_KEY = "bc_openmic";
+  var UI_LANG_KEY = "bc_ui_lang";
 
   // -----------------------------------------------------------------
   // App state
   // -----------------------------------------------------------------
   var state = {
     screen: "phone",
+    uiLang: localStorage.getItem(UI_LANG_KEY) || "en-IN",   // welcome/tour/help language
     account: null,              // {phone, plan, minutes, paymentsEnabled}
     pendingPhone: null,
     walletFrom: "setup",        // which screen the wallet was opened from
@@ -1052,16 +1328,16 @@
     var btn = $("btn-resend-otp");
     var left = 30;
     btn.disabled = true;
-    btn.textContent = "Resend in " + left + "s";
+    btn.textContent = t("resendIn") + " " + left + "s";
     clearInterval(state.resendCountdown);
     state.resendCountdown = setInterval(function () {
       left--;
       if (left <= 0) {
         clearInterval(state.resendCountdown);
         btn.disabled = false;
-        btn.textContent = "Didn't get it? Resend";
+        btn.textContent = t("resend");
       } else {
-        btn.textContent = "Resend in " + left + "s";
+        btn.textContent = t("resendIn") + " " + left + "s";
       }
     }, 1000);
   }
@@ -1104,7 +1380,7 @@
   $("btn-send-otp").addEventListener("click", function () {
     var phone = $("phone-input").value;
     if (!/^[6-9]\d{9}$/.test(phone)) {
-      $("phone-error").textContent = "Enter a valid 10-digit Indian mobile number.";
+      $("phone-error").textContent = t("phoneError");
       return;
     }
     sendOtp(phone, $("phone-error"));
@@ -1123,7 +1399,7 @@
   $("btn-verify-otp").addEventListener("click", function () {
     var otp = $("otp-input").value;
     if (otp.length < 4) {
-      $("otp-error").textContent = "Enter the OTP from the SMS.";
+      $("otp-error").textContent = t("otpError");
       return;
     }
     var btn = $("btn-verify-otp");
@@ -1225,6 +1501,7 @@
     state.openMic = !state.openMic;
     localStorage.setItem(OPENMIC_KEY, state.openMic ? "1" : "0");
     renderOpenMic();
+    renderMicHints();       // hold-to-talk vs tap-to-talk wording
   });
 
   $("btn-start").addEventListener("click", function () {
@@ -1447,48 +1724,96 @@
   // tour after the first conversation starts, and any time from the
   // "?" button. Hinglish, matching the rest of the app's voice.
   // -----------------------------------------------------------------
-  var HELP_STEPS = [
-    { icon: "📱", title: "Do log, ek phone",
-      body: "Screen do hisson mein bati hai. Upar wala hissa jaan-boojh kar ulta hai — phone ko beech mein rakho, dono ko apni taraf seedha dikhega." },
-    { icon: "🎤", title: "Mic dabao aur boliye",
-      body: "Apni taraf ka gol mic dabaye rakho, boliye, phir chhod do. Doosri taraf turant translation dikhegi aur sunai bhi degi." },
-    { icon: "🖐️", title: "Haath free chahiye?",
-      body: "New conversation screen par Open mic chalu karo. Ek tap se recording shuru — jaise hi aap rukte ho, apne aap band ho jati hai." },
-    { icon: "💬", title: "Ready-made jumle",
-      body: "Strip mein 💬 dabao — mol-bhav, madad aur namaste ke aam jumle, dono bhashaon mein. Internet na ho tab bhi ye chalte hain." },
-    { icon: "🔁", title: "Dobara sunna hai?",
-      body: "Saamne wale ki bubble par tap karo — wahi awaaz phir se baj jayegi." },
-    { icon: "🌐", title: "Bhasha khud pakadta hai",
-      body: "Dono taraf ki bhasha pehli baar bolte hi apne aap set ho jati hai. Khud chunna ho to New conversation par manual list khol lo." },
-    { icon: "₹", title: "Minutes ka hisaab",
-      body: "₹ par balance dekho. Lagbhag 10 baaton par 1 minute lagta hai, aur naye account ko 15 minute muft milte hain." },
-    { icon: "🕐", title: "Purani baatcheet",
-      body: "🕐 mein pichhli baatein isi phone mein safe rehti hain — kisi server par nahi jatin." }
-  ];
+  var HELP_ICONS = ["📱", "🎤", "🖐️", "💬", "🔁", "🌐", "₹", "🕐"];
   var TOUR_STEPS = [0, 1, 3, 6];   // the four that matter on day one
   var TOUR_SEEN_KEY = "bc_tour_seen";
   var tourPos = 0;
 
+  function t(key) {
+    var pack = UI_STRINGS[state.uiLang] || UI_STRINGS["en-IN"];
+    return pack[key] !== undefined ? pack[key] : UI_STRINGS["en-IN"][key];
+  }
+  function helpItems() {
+    var pack = UI_STRINGS[state.uiLang] || UI_STRINGS["en-IN"];
+    return pack.help || UI_STRINGS["en-IN"].help;
+  }
+
+  // Applies the chosen language to the welcome/OTP screens and the
+  // tour/help copy. The rest of the app stays English for now.
+  function applyUiLang(code) {
+    state.uiLang = code;
+    localStorage.setItem(UI_LANG_KEY, code);
+
+    $("t-tagline").textContent = t("tagline");
+    $("t-lang-label").textContent = t("langLabel");
+    $("t-mobile-label").textContent = t("mobileLabel");
+    $("btn-send-otp").textContent = t("sendOtp");
+    $("t-otp-title").textContent = t("otpTitle");
+    $("t-sent-to").textContent = t("sentTo");
+    $("btn-verify-otp").textContent = t("verify");
+    $("btn-change-phone").textContent = t("changeNumber");
+    $("t-help-title").textContent = t("helpTitle");
+    $("btn-close-help").textContent = t("close");
+    $("tour-skip").textContent = t("tourSkip");
+    if (!$("btn-resend-otp").disabled) $("btn-resend-otp").textContent = t("resend");
+
+    renderUiLangChips();
+    renderMicHints();
+    if ($("help-sheet").classList.contains("open")) renderHelp();
+    if ($("tour-sheet").classList.contains("open")) renderTour();
+
+    // The app language is almost always the language this person speaks,
+    // so pre-select it for the conversation — auto-detect still wins the
+    // moment either side actually talks.
+    state.hostSel = code;
+    if (state.guestSel === code) state.guestSel = code === "en-IN" ? "hi-IN" : "en-IN";
+    renderLangChips();
+    renderSetupValidation();
+  }
+
+  // "↑ Press and speak" under each mic, in the language chosen on the
+  // welcome screen, so the control is obvious without reading English.
+  function renderMicHints() {
+    var label = "↑ " + (state.openMic ? t("micTap") : t("micHold"));
+    $("mic-hint-host").textContent = label;
+    $("mic-hint-guest").textContent = label;
+  }
+
+  function renderUiLangChips() {
+    var wrap = $("ui-lang-grid");
+    wrap.innerHTML = "";
+    LANGUAGES.forEach(function (lang) {
+      var b = document.createElement("button");
+      b.className = "ui-lang-chip";
+      b.textContent = lang.native;
+      b.setAttribute("aria-pressed", state.uiLang === lang.code ? "true" : "false");
+      b.setAttribute("aria-label", lang.name);
+      b.addEventListener("click", function () { applyUiLang(lang.code); });
+      wrap.appendChild(b);
+    });
+  }
+
   function renderHelp() {
-    $("help-list").innerHTML = HELP_STEPS.map(function (s) {
+    $("help-list").innerHTML = helpItems().map(function (s, i) {
       return (
         '<div class="help-item">' +
-          '<span class="ico">' + s.icon + "</span>" +
-          "<div><h3>" + escapeHtml(s.title) + "</h3><p>" + escapeHtml(s.body) + "</p></div>" +
+          '<span class="ico">' + HELP_ICONS[i] + "</span>" +
+          "<div><h3>" + escapeHtml(s[0]) + "</h3><p>" + escapeHtml(s[1]) + "</p></div>" +
         "</div>"
       );
     }).join("");
   }
 
   function renderTour() {
-    var step = HELP_STEPS[TOUR_STEPS[tourPos]];
-    $("tour-icon").textContent = step.icon;
-    $("tour-title").textContent = step.title;
-    $("tour-body").textContent = step.body;
+    var idx = TOUR_STEPS[tourPos];
+    var step = helpItems()[idx];
+    $("tour-icon").textContent = HELP_ICONS[idx];
+    $("tour-title").textContent = step[0];
+    $("tour-body").textContent = step[1];
     $("tour-dots").innerHTML = TOUR_STEPS.map(function (_, i) {
       return '<span data-on="' + (i === tourPos) + '"></span>';
     }).join("");
-    $("tour-next").textContent = tourPos === TOUR_STEPS.length - 1 ? "Shuru karo" : "Aage →";
+    $("tour-next").textContent = tourPos === TOUR_STEPS.length - 1 ? t("tourStart") : t("tourNext");
   }
 
   function endTour() {
@@ -1706,7 +2031,11 @@
           audioBase64: audioBase64,
           mimeType: mimeType,
           sourceLangHint: state[side].lang || "unknown",
-          targetLangCode: state[listener].lang || "en-IN",
+          // Nobody's language is known until they speak, so the first
+          // exchange has no confirmed target. For the phone's owner we
+          // know what they picked on the welcome screen; for a stranger
+          // English is the safest guess until they say something.
+          targetLangCode: state[listener].lang || (listener === "host" ? state.uiLang : "en-IN"),
           token: localStorage.getItem(AUTH_TOKEN_KEY)
         })
       });
@@ -1783,7 +2112,7 @@
   // Init
   // -----------------------------------------------------------------
   function init() {
-    renderLangChips();
+    applyUiLang(state.uiLang);   // also renders the language chips + speaking default
     renderSetupValidation();
     renderOpenMic();
     restoreSession();
