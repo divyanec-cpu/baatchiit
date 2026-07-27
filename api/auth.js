@@ -223,9 +223,10 @@ async function verifyWidgetAccessToken(accessToken) {
     data = await response.json();
   } catch { /* treated as failure below */ }
   if (!response.ok || !data || data.type !== "success") {
-    // data.message is MSG91's reason ("Invalid authkey" etc.) -- it never
-    // contains the OTP or any credential, safe to log verbatim.
-    console.log("msg91 verifyAccessToken rejected:", JSON.stringify({ status: response.status, type: data && data.type, message: data && data.message }));
+    // data.message/code are MSG91's reason -- never contain the OTP or
+    // any credential, safe to log verbatim. The code disambiguates what
+    // the shared "AuthenticationFailure" message hides.
+    console.log("msg91 verifyAccessToken rejected:", JSON.stringify({ status: response.status, type: data && data.type, message: data && data.message, code: data && data.code }));
     return null;
   }
 
