@@ -123,9 +123,10 @@
     font-size: 17px; flex: 1; min-width: 0; color: var(--ink);
   }
   .otp-input {
-    width: 190px;
+    width: 240px;            /* MSG91 sends a 6-digit code */
+    max-width: 100%;
     text-align: center;
-    letter-spacing: 14px;
+    letter-spacing: 10px;
     font-size: 28px;
     font-weight: 800;
     color: var(--ink);
@@ -499,7 +500,7 @@
     <div class="auth-wrap">
       <div class="h-display" style="font-size:22px;">Enter OTP</div>
       <p class="otp-sub">Sent to <strong id="otp-target"></strong></p>
-      <input id="otp-input" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••" />
+      <input id="otp-input" class="otp-input" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="••••••" />
       <button class="btn-primary" id="btn-verify-otp" style="margin-top:8px;">Verify &amp; Continue</button>
       <button class="resend-btn" id="btn-resend-otp" disabled>Didn't get it? Resend</button>
       <button class="link-btn" id="btn-change-phone">Change number</button>
