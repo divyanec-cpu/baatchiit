@@ -81,6 +81,15 @@ module.exports = async function handler(req, res) {
           widgetId: process.env.MSG91_WIDGET_ID,
           tokenAuth: process.env.MSG91_TOKEN_AUTH,
         });
+      case "clientlog":
+        // Diagnostics only: the MSG91 widget runs in the browser, so its
+        // send/verify failure reasons never reach these logs otherwise.
+        // Nothing is stored; the payload is truncated and logged.
+        console.log("client widget issue:", JSON.stringify({
+          stage: String(body.stage || "").slice(0, 24),
+          reason: String(body.reason || "").slice(0, 300),
+        }));
+        return res.status(200).json({ logged: true });
       case "verify":
         return await verify(body, res);
       case "me":

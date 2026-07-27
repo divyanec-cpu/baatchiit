@@ -873,6 +873,20 @@
     return widgetLoadPromise;
   }
 
+  // The MSG91 widget runs in the browser, so when it refuses a send or a
+  // verify the reason dies on the phone. Ship it to the server log —
+  // fire-and-forget, never blocks or alters the user-facing flow.
+  function reportClientIssue(stage, data) {
+    try {
+      var reason = typeof data === "string" ? data : JSON.stringify(data);
+      fetch("/api/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "clientlog", stage: stage, reason: reason })
+      }).catch(function () {});
+    } catch (e) { /* diagnostics must never break login */ }
+  }
+
   // Widget callbacks receive {message, type} or a bare string.
   function widgetMessage(data) {
     if (typeof data === "string") return data;
@@ -915,7 +929,10 @@
     loadMsg91Widget().then(function () {
       return new Promise(function (resolve, reject) {
         var ok = function () { resolve(); };
-        var fail = function (data) { reject(widgetError(data, "Couldn't send the OTP. Try again in a minute.")); };
+        var fail = function (data) {
+          reportClientIssue(isResend ? "retryOtp" : "sendOtp", data);
+          reject(widgetError(data, "Couldn't send the OTP. Try again in a minute."));
+        };
         if (isResend && typeof window.retryOtp === "function") window.retryOtp("11", ok, fail);
         else window.sendOtp("91" + phone, ok, fail);
       });
@@ -974,8 +991,12 @@
         window.verifyOtp(otp, function (data) {
           var accessToken = widgetMessage(data);
           if (accessToken) resolve(accessToken);
-          else reject(new Error("OTP verification returned nothing usable. Try again."));
+          else {
+            reportClientIssue("verifyOtp-empty", data);
+            reject(new Error("OTP verification returned nothing usable. Try again."));
+          }
         }, function (data) {
+          reportClientIssue("verifyOtp", data);
           reject(widgetError(data, "That OTP didn't match (or expired). Check the SMS and try again."));
         });
       });
