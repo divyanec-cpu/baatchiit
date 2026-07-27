@@ -379,6 +379,63 @@
     text-align: left;
   }
   .phrase-item:active { background: var(--sand); }
+  /* ============== TOAST ============== */
+  .toast {
+    position: fixed;
+    left: 50%; bottom: 26px;
+    transform: translateX(-50%) translateY(8px);
+    background: rgba(33, 26, 20, 0.92);
+    color: var(--cream);
+    font-size: 13px; font-weight: 600;
+    padding: 10px 16px;
+    border-radius: 999px;
+    z-index: 60;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.18s ease, transform 0.18s ease;
+    max-width: 86%;
+    text-align: center;
+  }
+  .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+  /* ============== FIRST-RUN TOUR ============== */
+  .tour {
+    position: fixed; inset: 0;
+    background: rgba(20, 14, 8, 0.62);
+    z-index: 50;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 24px;
+  }
+  .tour.open { display: flex; }
+  .tour-card {
+    background: var(--cream);
+    border-radius: 22px;
+    padding: 26px 22px 18px;
+    max-width: 340px; width: 100%;
+    text-align: center;
+    display: flex; flex-direction: column; gap: 10px;
+    animation: bcFade 0.25s ease;
+  }
+  .tour-icon { font-size: 34px; line-height: 1; }
+  .tour-title { font-family: var(--font-display); font-weight: 800; font-size: 19px; margin: 0; }
+  .tour-body { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 0; }
+  .tour-dots { display: flex; gap: 6px; justify-content: center; padding: 6px 0 2px; }
+  .tour-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--border-strong); }
+  .tour-dots span[data-on="true"] { background: var(--saffron); }
+
+  /* ============== HELP SHEET ============== */
+  .help-item {
+    display: flex; gap: 12px; align-items: flex-start;
+    background: var(--card);
+    border: 1.5px solid rgba(33, 26, 20, 0.08);
+    border-radius: 14px;
+    padding: 13px 14px;
+  }
+  .help-item .ico { font-size: 19px; line-height: 1.2; flex-shrink: 0; }
+  .help-item h3 { font-family: var(--font-display); font-weight: 700; font-size: 15px; margin: 0 0 3px; }
+  .help-item p { margin: 0; font-size: 13px; line-height: 1.5; color: var(--muted); }
+
   .phrase-item .native-preview {
     font-family: var(--font-script);
     color: var(--muted);
@@ -512,7 +569,10 @@
   <section class="screen" id="screen-setup">
     <div class="setup-head">
       <div class="title">New conversation</div>
-      <button class="icon-btn" id="btn-wallet-1" style="color:var(--saffron);" aria-label="Wallet">₹</button>
+      <div class="strip-side" style="gap:8px;">
+        <button class="icon-btn" id="btn-help-1" aria-label="Help">?</button>
+        <button class="icon-btn" id="btn-wallet-1" style="color:var(--saffron);" aria-label="Wallet">₹</button>
+      </div>
     </div>
     <div class="setup-sub">Two people, one phone. Just start talking — no setup.</div>
 
@@ -581,6 +641,7 @@
         <button class="icon-btn" id="btn-history" aria-label="History">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/><path d="M12 8v4l3 2"/></svg>
         </button>
+        <button class="icon-btn" id="btn-help-2" aria-label="Help">?</button>
       </div>
     </div>
 
@@ -658,6 +719,29 @@
   <h2>History</h2>
   <div id="history-list"></div>
 </div>
+
+<!-- Help sheet: same explanations as the first-run tour, always reachable -->
+<div class="phrases-sheet" id="help-sheet" role="dialog" aria-label="How BaatChiit works">
+  <div class="phrases-head">
+    <h2>Kaise chalta hai?</h2>
+    <button class="link-btn" id="btn-close-help">Close</button>
+  </div>
+  <div class="phrases-list" id="help-list"></div>
+</div>
+
+<!-- First-run tour (once per device; the ? button reopens the same content) -->
+<div class="tour" id="tour-sheet" role="dialog" aria-label="Quick tour">
+  <div class="tour-card">
+    <div class="tour-icon" id="tour-icon"></div>
+    <h2 class="tour-title" id="tour-title"></h2>
+    <p class="tour-body" id="tour-body"></p>
+    <div class="tour-dots" id="tour-dots"></div>
+    <button class="btn-primary" id="tour-next">Aage →</button>
+    <button class="link-btn" id="tour-skip" style="align-self:center;">Abhi rehne do</button>
+  </div>
+</div>
+
+<div class="toast" id="toast" aria-live="polite"></div>
 
 <div class="phrases-sheet" id="phrases-sheet" role="dialog" aria-label="Phrase packs">
   <div class="phrases-head">
@@ -792,14 +876,75 @@
   }
 
   // -----------------------------------------------------------------
-  // Screens
+  // Screens + history
+  //
+  // Every forward move pushes a history entry so Android's hardware
+  // back button walks the app backwards instead of closing it (the TWA
+  // wraps this page, so the back key is plain browser history). Going
+  // back is ALWAYS history.back() — the popstate handler is the single
+  // place that renders, which keeps the two paths from disagreeing.
   // -----------------------------------------------------------------
-  function showScreen(name) {
+  function renderScreen(name) {
     state.screen = name;
     var screens = document.querySelectorAll(".screen");
     for (var i = 0; i < screens.length; i++) {
       screens[i].classList.toggle("active", screens[i].id === "screen-" + name);
     }
+  }
+  function showScreen(name) {          // forward navigation
+    renderScreen(name);
+    history.pushState({ bcScreen: name }, "");
+  }
+  function replaceScreen(name) {       // login/logout: no going "back" into auth
+    renderScreen(name);
+    history.replaceState({ bcScreen: name }, "");
+  }
+
+  var lastExitHintAt = 0;
+
+  window.addEventListener("popstate", function (e) {
+    var st = e.state || {};
+
+    // Sheet layer first: a sheet is just an extra entry on top of the
+    // screen it opened over, so back closes it and goes no further.
+    // Rebuild rather than only-close — entries can stack (the tour is
+    // open when the user taps a strip icon), and then going back lands
+    // on an entry that still names a sheet.
+    closeSheets();
+    if (st.bcSheet) showSheet(st.bcSheet);
+
+    var target = st.bcScreen || (state.account ? "setup" : "phone");
+
+    // Never expose the app to a logged-out person via history.
+    if (!state.account && ["setup", "main", "wallet", "payment", "success"].indexOf(target) > -1) {
+      replaceScreen("phone");
+      return;
+    }
+
+    // Logged in, but history points back at the login screens: that's
+    // the user asking to leave. Warn once, then let the next press fall
+    // through (no entries left below → Android closes the app).
+    if (state.account && (target === "phone" || target === "otp")) {
+      renderScreen("setup");
+      if (Date.now() - lastExitHintAt < 2500) return;
+      lastExitHintAt = Date.now();
+      toast("Ek baar aur back dabao to app band ho jayega");
+      history.pushState({ bcScreen: "setup" }, "");
+      return;
+    }
+
+    renderScreen(target);
+    if (target === "wallet") renderWallet();
+  });
+
+  // Small centred toast, host-oriented (outside the rotated halves).
+  var toastTimer = null;
+  function toast(text) {
+    var el = $("toast");
+    el.textContent = text;
+    el.classList.add("show");
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function () { el.classList.remove("show"); }, 2400);
   }
 
   // -----------------------------------------------------------------
@@ -969,7 +1114,7 @@
   });
   $("btn-change-phone").addEventListener("click", function () {
     clearInterval(state.resendCountdown);
-    showScreen("phone");
+    history.back();                    // the OTP screen sits on top of the phone screen
     $("phone-input").focus();
   });
   $("otp-input").addEventListener("input", function () {
@@ -1008,7 +1153,7 @@
       clearInterval(state.resendCountdown);
       localStorage.setItem(AUTH_TOKEN_KEY, data.token);
       setAccount(data);
-      showScreen("setup");
+      replaceScreen("setup");          // replaces the OTP entry: no back into login
     }).catch(function (err) {
       btn.disabled = false;
       $("otp-error").textContent = err.message;
@@ -1019,20 +1164,20 @@
     var token = localStorage.getItem(AUTH_TOKEN_KEY);
     localStorage.removeItem(AUTH_TOKEN_KEY);
     state.account = null;
-    showScreen("phone");
+    replaceScreen("phone");
     if (token) authFetch({ action: "logout", token: token }).catch(function () { /* session dies with the token either way */ });
   }
   $("btn-logout").addEventListener("click", logout);
 
   function restoreSession() {
     var token = localStorage.getItem(AUTH_TOKEN_KEY);
-    if (!token) { showScreen("phone"); return; }
+    if (!token) { replaceScreen("phone"); return; }
     authFetch({ action: "me", token: token }).then(function (data) {
       setAccount(data);
-      showScreen("setup");
+      replaceScreen("setup");
     }).catch(function (err) {
       if (err.status === 401) localStorage.removeItem(AUTH_TOKEN_KEY);
-      showScreen("phone");
+      replaceScreen("phone");
     });
   }
 
@@ -1096,9 +1241,10 @@
       console.error(err);
       notice("host", "Couldn't access the microphone. Check the site's mic permission.");
     });
+    maybeStartTour();
   });
 
-  $("btn-back-setup").addEventListener("click", function () { showScreen("setup"); });
+  $("btn-back-setup").addEventListener("click", function () { history.back(); });
 
   // -----------------------------------------------------------------
   // Main screen rendering
@@ -1230,21 +1376,39 @@
     }).join("");
   }
 
-  function openSheet(which) {
+  // A sheet is one history entry above the screen it covers, so the
+  // back key closes it first instead of leaving the conversation.
+  function showSheet(which) {         // visual only (also used when replaying history)
     $("sheet-backdrop").classList.add("open");
     $(which + "-sheet").classList.add("open");
     if (which === "history") renderHistory();
     if (which === "phrases") renderPhrasePacks();
+    if (which === "help") renderHelp();
+    // The tour dims the screen itself, so it doesn't want the backdrop.
+    if (which === "tour") { $("sheet-backdrop").classList.remove("open"); renderTour(); }
   }
-  function closeSheets() {
+  function openSheet(which) {
+    showSheet(which);
+    history.pushState({ bcScreen: state.screen, bcSheet: which }, "");
+  }
+  function closeSheets() {            // visual only — popstate calls this
+    // Dismissing the tour with the back key counts as having seen it,
+    // otherwise it reappears on the next conversation.
+    if ($("tour-sheet").classList.contains("open")) localStorage.setItem(TOUR_SEEN_KEY, "1");
     $("sheet-backdrop").classList.remove("open");
     $("history-sheet").classList.remove("open");
     $("phrases-sheet").classList.remove("open");
+    $("help-sheet").classList.remove("open");
+    $("tour-sheet").classList.remove("open");
+  }
+  function dismissSheet() {           // user-initiated close
+    if ((history.state || {}).bcSheet) history.back();
+    else closeSheets();
   }
   $("btn-history").addEventListener("click", function () { openSheet("history"); });
   $("btn-phrases").addEventListener("click", function () { openSheet("phrases"); });
-  $("btn-close-phrases").addEventListener("click", closeSheets);
-  $("sheet-backdrop").addEventListener("click", closeSheets);
+  $("btn-close-phrases").addEventListener("click", dismissSheet);
+  $("sheet-backdrop").addEventListener("click", dismissSheet);
 
   // -----------------------------------------------------------------
   // Phrases sheet
@@ -1272,11 +1436,85 @@
       b.addEventListener("click", function () {
         state.messages.push({ type: "phrase", phrase: phrase });
         renderFeeds();
-        closeSheets();
+        dismissSheet();
       });
       list.appendChild(b);
     });
   }
+
+  // -----------------------------------------------------------------
+  // Help: one list of explanations, shown two ways — as a one-time
+  // tour after the first conversation starts, and any time from the
+  // "?" button. Hinglish, matching the rest of the app's voice.
+  // -----------------------------------------------------------------
+  var HELP_STEPS = [
+    { icon: "📱", title: "Do log, ek phone",
+      body: "Screen do hisson mein bati hai. Upar wala hissa jaan-boojh kar ulta hai — phone ko beech mein rakho, dono ko apni taraf seedha dikhega." },
+    { icon: "🎤", title: "Mic dabao aur boliye",
+      body: "Apni taraf ka gol mic dabaye rakho, boliye, phir chhod do. Doosri taraf turant translation dikhegi aur sunai bhi degi." },
+    { icon: "🖐️", title: "Haath free chahiye?",
+      body: "New conversation screen par Open mic chalu karo. Ek tap se recording shuru — jaise hi aap rukte ho, apne aap band ho jati hai." },
+    { icon: "💬", title: "Ready-made jumle",
+      body: "Strip mein 💬 dabao — mol-bhav, madad aur namaste ke aam jumle, dono bhashaon mein. Internet na ho tab bhi ye chalte hain." },
+    { icon: "🔁", title: "Dobara sunna hai?",
+      body: "Saamne wale ki bubble par tap karo — wahi awaaz phir se baj jayegi." },
+    { icon: "🌐", title: "Bhasha khud pakadta hai",
+      body: "Dono taraf ki bhasha pehli baar bolte hi apne aap set ho jati hai. Khud chunna ho to New conversation par manual list khol lo." },
+    { icon: "₹", title: "Minutes ka hisaab",
+      body: "₹ par balance dekho. Lagbhag 10 baaton par 1 minute lagta hai, aur naye account ko 15 minute muft milte hain." },
+    { icon: "🕐", title: "Purani baatcheet",
+      body: "🕐 mein pichhli baatein isi phone mein safe rehti hain — kisi server par nahi jatin." }
+  ];
+  var TOUR_STEPS = [0, 1, 3, 6];   // the four that matter on day one
+  var TOUR_SEEN_KEY = "bc_tour_seen";
+  var tourPos = 0;
+
+  function renderHelp() {
+    $("help-list").innerHTML = HELP_STEPS.map(function (s) {
+      return (
+        '<div class="help-item">' +
+          '<span class="ico">' + s.icon + "</span>" +
+          "<div><h3>" + escapeHtml(s.title) + "</h3><p>" + escapeHtml(s.body) + "</p></div>" +
+        "</div>"
+      );
+    }).join("");
+  }
+
+  function renderTour() {
+    var step = HELP_STEPS[TOUR_STEPS[tourPos]];
+    $("tour-icon").textContent = step.icon;
+    $("tour-title").textContent = step.title;
+    $("tour-body").textContent = step.body;
+    $("tour-dots").innerHTML = TOUR_STEPS.map(function (_, i) {
+      return '<span data-on="' + (i === tourPos) + '"></span>';
+    }).join("");
+    $("tour-next").textContent = tourPos === TOUR_STEPS.length - 1 ? "Shuru karo" : "Aage →";
+  }
+
+  function endTour() {
+    localStorage.setItem(TOUR_SEEN_KEY, "1");
+    dismissSheet();
+  }
+  $("tour-next").addEventListener("click", function () {
+    if (tourPos < TOUR_STEPS.length - 1) { tourPos++; renderTour(); }
+    else endTour();
+  });
+  $("tour-skip").addEventListener("click", endTour);
+
+  // Shown once, after the first conversation actually opens — so it
+  // explains the split screen while the split screen is behind it.
+  function maybeStartTour() {
+    if (localStorage.getItem(TOUR_SEEN_KEY) === "1") return;
+    setTimeout(function () {
+      if (state.screen !== "main") return;
+      tourPos = 0;
+      openSheet("tour");
+    }, 500);
+  }
+
+  $("btn-help-1").addEventListener("click", function () { openSheet("help"); });
+  $("btn-help-2").addEventListener("click", function () { openSheet("help"); });
+  $("btn-close-help").addEventListener("click", dismissSheet);
 
   // -----------------------------------------------------------------
   // Wallet / payment
@@ -1293,10 +1531,12 @@
   }
   $("btn-wallet-1").addEventListener("click", function () { openWallet("setup"); });
   $("btn-wallet-2").addEventListener("click", function () { openWallet("main"); });
-  $("btn-wallet-back").addEventListener("click", function () { showScreen(state.walletFrom); });
+  $("btn-wallet-back").addEventListener("click", function () { history.back(); });
   $("btn-topup").addEventListener("click", function () { renderPayment(); showScreen("payment"); });
-  $("btn-payment-back").addEventListener("click", function () { showScreen("wallet"); });
-  $("btn-success-back").addEventListener("click", function () { showScreen(state.walletFrom); });
+  $("btn-payment-back").addEventListener("click", function () { history.back(); });
+  // Success is an end state: drop back to where the wallet was opened
+  // from rather than leaving the payment screen behind us.
+  $("btn-success-back").addEventListener("click", function () { replaceScreen(state.walletFrom); });
 
   function renderPayment() {
     var wrap = $("pack-list");
