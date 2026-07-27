@@ -78,8 +78,8 @@ module.exports = async function handler(req, res) {
         // exposes them as NEXT_PUBLIC_*); serving them from env keeps
         // them out of the repo and editable without a code deploy.
         return res.status(200).json({
-          widgetId: process.env.MSG91_WIDGET_ID,
-          tokenAuth: process.env.MSG91_TOKEN_AUTH,
+          widgetId: String(process.env.MSG91_WIDGET_ID || "").trim(),
+          tokenAuth: String(process.env.MSG91_TOKEN_AUTH || "").trim(),
         });
       case "clientlog":
         // Diagnostics only: the MSG91 widget runs in the browser, so its
@@ -220,7 +220,10 @@ async function verifyWidgetAccessToken(accessToken) {
     response = await fetch(VERIFY_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ authkey: process.env.MSG91_AUTH_KEY, "access-token": accessToken }),
+      // Trim: a stray space pasted into the env var makes MSG91 reject
+      // the key outright (error 207), which is indistinguishable from a
+      // wrong key unless you know to look for it.
+      body: JSON.stringify({ authkey: String(process.env.MSG91_AUTH_KEY || "").trim(), "access-token": accessToken }),
     });
   } catch (err) {
     console.error("msg91 verifyAccessToken request failed:", err);
