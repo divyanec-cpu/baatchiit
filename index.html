@@ -605,6 +605,9 @@
         <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <span id="t-install">Install app</span>
       </button>
+      <!-- Always available: the install button only appears when Chrome
+           offers it, so without this there is no route to the APK. -->
+      <a class="link-btn" id="t-get-android" href="/download">Download Android app</a>
     </div>
   </section>
 
@@ -904,6 +907,7 @@
       otpError: "Enter the 6-digit OTP from the SMS.",
       helpTitle: "How it works", close: "Close",
       micHold: "Press and speak", micTap: "Tap to speak",
+      getAndroid: "Download Android app",
       installApp: "Install app",
       installed: "Installed — open it from your home screen",
       setupTitle: "New conversation",
@@ -983,6 +987,7 @@
       otpError: "SMS में आया 6 अंकों का OTP डालें।",
       helpTitle: "कैसे चलता है?", close: "बंद करें",
       micHold: "दबाकर बोलें", micTap: "एक बार दबाएँ",
+      getAndroid: "Android ऐप डाउनलोड करें",
       installApp: "ऐप इंस्टॉल करें",
       installed: "इंस्टॉल हो गया — होम स्क्रीन से खोलें",
       setupTitle: "नई बातचीत",
@@ -1062,6 +1067,7 @@
       otpError: "SMS-এ আসা ৬ সংখ্যার OTP দিন।",
       helpTitle: "কীভাবে কাজ করে?", close: "বন্ধ করুন",
       micHold: "চেপে ধরে বলুন", micTap: "একবার চাপুন",
+      getAndroid: "Android অ্যাপ ডাউনলোড করুন",
       installApp: "অ্যাপ ইনস্টল করুন",
       installed: "ইনস্টল হয়েছে — হোম স্ক্রিন থেকে খুলুন",
       setupTitle: "নতুন কথোপকথন",
@@ -1141,6 +1147,7 @@
       otpError: "SMS માં આવેલો 6 અંકનો OTP નાખો.",
       helpTitle: "કેવી રીતે ચાલે છે?", close: "બંધ કરો",
       micHold: "દબાવીને બોલો", micTap: "એક વાર દબાવો",
+      getAndroid: "Android એપ ડાઉનલોડ કરો",
       installApp: "એપ ઇન્સ્ટોલ કરો",
       installed: "ઇન્સ્ટોલ થયું — હોમ સ્ક્રીનથી ખોલો",
       setupTitle: "નવી વાતચીત",
@@ -1220,6 +1227,7 @@
       otpError: "SMS ನಲ್ಲಿ ಬಂದ 6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ.",
       helpTitle: "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", close: "ಮುಚ್ಚಿ",
       micHold: "ಒತ್ತಿ ಮಾತನಾಡಿ", micTap: "ಒಮ್ಮೆ ಒತ್ತಿ",
+      getAndroid: "Android ಆ್ಯಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
       installApp: "ಆ್ಯಪ್ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ",
       installed: "ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿದೆ — ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ ತೆರೆಯಿರಿ",
       setupTitle: "ಹೊಸ ಸಂಭಾಷಣೆ",
@@ -1299,6 +1307,7 @@
       otpError: "SMS-ൽ വന്ന 6 അക്ക OTP നൽകൂ.",
       helpTitle: "എങ്ങനെ പ്രവർത്തിക്കുന്നു?", close: "അടയ്ക്കൂ",
       micHold: "അമർത്തി സംസാരിക്കൂ", micTap: "ഒരിക്കൽ അമർത്തൂ",
+      getAndroid: "Android ആപ്പ് ഡൗൺലോഡ് ചെയ്യൂ",
       installApp: "ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യൂ",
       installed: "ഇൻസ്റ്റാൾ ആയി — ഹോം സ്ക്രീനിൽ നിന്ന് തുറക്കൂ",
       setupTitle: "പുതിയ സംഭാഷണം",
@@ -1378,6 +1387,7 @@
       otpError: "SMS मध्ये आलेला 6 अंकी OTP टाका.",
       helpTitle: "कसे चालते?", close: "बंद करा",
       micHold: "दाबून बोला", micTap: "एकदा दाबा",
+      getAndroid: "Android अ‍ॅप डाउनलोड करा",
       installApp: "अ‍ॅप इन्स्टॉल करा",
       installed: "इन्स्टॉल झालं — होम स्क्रीनवरून उघडा",
       setupTitle: "नवीन संवाद",
@@ -1457,6 +1467,7 @@
       otpError: "SMS ରେ ଆସିଥିବା 6 ଅଙ୍କର OTP ଦିଅନ୍ତୁ।",
       helpTitle: "କିପରି କାମ କରେ?", close: "ବନ୍ଦ କରନ୍ତୁ",
       micHold: "ଦବାଇ କୁହନ୍ତୁ", micTap: "ଥରେ ଦବାନ୍ତୁ",
+      getAndroid: "Android ଆପ୍ ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
       installApp: "ଆପ୍ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ",
       installed: "ଇନଷ୍ଟଲ୍ ହୋଇଛି — ହୋମ୍ ସ୍କ୍ରିନରୁ ଖୋଲନ୍ତୁ",
       setupTitle: "ନୂଆ କଥାବାର୍ତ୍ତା",
@@ -1536,6 +1547,7 @@
       otpError: "SMS ਵਿੱਚ ਆਇਆ 6 ਅੰਕਾਂ ਦਾ OTP ਭਰੋ।",
       helpTitle: "ਕਿਵੇਂ ਚੱਲਦਾ ਹੈ?", close: "ਬੰਦ ਕਰੋ",
       micHold: "ਦਬਾ ਕੇ ਬੋਲੋ", micTap: "ਇੱਕ ਵਾਰ ਦਬਾਓ",
+      getAndroid: "Android ਐਪ ਡਾਊਨਲੋਡ ਕਰੋ",
       installApp: "ਐਪ ਇੰਸਟਾਲ ਕਰੋ",
       installed: "ਇੰਸਟਾਲ ਹੋ ਗਿਆ — ਹੋਮ ਸਕਰੀਨ ਤੋਂ ਖੋਲ੍ਹੋ",
       setupTitle: "ਨਵੀਂ ਗੱਲਬਾਤ",
@@ -1615,6 +1627,7 @@
       otpError: "SMS-ல் வந்த 6 இலக்க OTP-யை உள்ளிடுங்கள்.",
       helpTitle: "எப்படி வேலை செய்கிறது?", close: "மூடு",
       micHold: "அழுத்திப் பேசுங்கள்", micTap: "ஒரு முறை தட்டவும்",
+      getAndroid: "Android ஆப்பைப் பதிவிறக்கு",
       installApp: "ஆப்பை நிறுவுங்கள்",
       installed: "நிறுவப்பட்டது — முகப்புத் திரையிலிருந்து திறக்கவும்",
       setupTitle: "புதிய உரையாடல்",
@@ -1694,6 +1707,7 @@
       otpError: "SMS లో వచ్చిన 6 అంకెల OTP ఇవ్వండి.",
       helpTitle: "ఎలా పనిచేస్తుంది?", close: "మూసివేయండి",
       micHold: "నొక్కి మాట్లాడండి", micTap: "ఒకసారి నొక్కండి",
+      getAndroid: "Android యాప్ డౌన్‌లోడ్ చేయండి",
       installApp: "యాప్ ఇన్‌స్టాల్ చేయండి",
       installed: "ఇన్‌స్టాల్ అయ్యింది — హోమ్ స్క్రీన్ నుండి తెరవండి",
       setupTitle: "కొత్త సంభాషణ",
@@ -2437,6 +2451,7 @@
     $("btn-verify-otp").textContent = t("verify");
     $("btn-change-phone").textContent = t("changeNumber");
     $("t-install").textContent = t("installApp");
+    $("t-get-android").textContent = t("getAndroid");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
     $("tour-skip").textContent = t("tourSkip");
