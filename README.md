@@ -80,6 +80,23 @@ One-time setup, both in the Vercel dashboard:
 Until both exist, the Login drawer shows a clear "isn't configured" error and
 the rest of the app is unaffected.
 
+## Profile and onboarding
+
+After the first OTP login the app offers a short, skippable form: name,
+city, and what they'll use BaatChiit for (shop, travel, hospital, work,
+family). Skipping is one tap and it never asks again — `onboardedAt` on
+the user record marks it done.
+
+**Profile** (the ₹ icon, on both the setup screen and the conversation
+strip) is the one account screen: minutes left, top-up button, name,
+mobile, city, use-case, member-since, lifetime translations, an *Edit
+details* link back to the same form, and **Sign out** (confirmed, and it
+reminds you minutes stay with the number). Payment history will appear
+here once Razorpay is live — nothing fake is shown before then.
+
+Profile fields are optional and length-capped server-side; they're stored
+on `user:<phone>` in Redis and visible in the admin panel.
+
 ## Monitoring usage
 
 `/api/stats?key=<STATS_KEY>` serves a private dashboard: accounts total, new

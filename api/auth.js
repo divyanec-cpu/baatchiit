@@ -18,6 +18,7 @@
 // Actions:
 //   POST /api/auth  { action: "config" }                    -> widget creds for the client
 //   POST /api/auth  { action: "verify", accessToken: "…" }  -> session + account
+//   POST /api/auth  { action: "profile", token, name, city, purpose } -> account
 //   POST /api/auth  { action: "me",     token: "…" }        -> account
 //   POST /api/auth  { action: "logout", token: "…" }
 //
@@ -92,12 +93,14 @@ module.exports = async function handler(req, res) {
         return res.status(200).json({ logged: true });
       case "verify":
         return await verify(body, res);
+      case "profile":
+        return await saveProfile(body, res);
       case "me":
         return await whoAmI(body, res);
       case "logout":
         return await logout(body, res);
       default:
-        return res.status(400).json({ error: "action must be one of: config, verify, me, logout." });
+        return res.status(400).json({ error: "action must be one of: config, verify, profile, me, logout." });
     }
   } catch (err) {
     console.error("auth error:", err);
@@ -149,6 +152,28 @@ async function verify(body, res) {
   return res.status(200).json(accountPayload(user, { token }));
 }
 
+// Optional profile details, collected after the first login. Everything
+// here is skippable, and each field is length-capped — these are
+// free-text inputs on a public app.
+async function saveProfile(body, res) {
+  const session = await getSession(body.token);
+  if (!session) return res.status(401).json({ error: "Not logged in." });
+
+  const user = (await getUser(session.phone)) || { phone: session.phone, firstSeen: Date.now(), plan: "free", deciminutes: 0 };
+  const clean = (v, max) => (typeof v === "string" ? v.trim().slice(0, max) : "");
+
+  if (body.name !== undefined) user.name = clean(body.name, 60);
+  if (body.city !== undefined) user.city = clean(body.city, 60);
+  if (body.purpose !== undefined) {
+    const allowed = ["shop", "travel", "health", "work", "personal"];
+    const p = clean(body.purpose, 20);
+    user.purpose = allowed.indexOf(p) > -1 ? p : "";
+  }
+  user.onboardedAt = user.onboardedAt || Date.now();
+  await saveUser(user);
+  return res.status(200).json(accountPayload(user));
+}
+
 async function whoAmI(body, res) {
   const session = await getSession(body.token);
   if (!session) return res.status(401).json({ error: "Not logged in." });
@@ -171,6 +196,14 @@ function accountPayload(user, extra) {
       plan: user.plan,
       minutes: Math.floor((user.deciminutes || 0) / 10),
       paymentsEnabled: paymentsEnabled(),
+      // Profile: absent fields come back as empty strings so the client
+      // can render "not set" without guarding every one.
+      name: user.name || "",
+      city: user.city || "",
+      purpose: user.purpose || "",
+      onboarded: Boolean(user.onboardedAt),
+      memberSince: user.firstSeen || null,
+      translations: user.exchanges || 0,
     },
     extra || {}
   );

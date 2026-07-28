@@ -514,6 +514,25 @@
   }
   .quiet-btn { align-self: center; margin: 14px 0 0; font-size: 13px; font-weight: 700; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; }
 
+  /* ============== PROFILE DETAILS ============== */
+  .profile-list {
+    margin: 18px 20px 0;
+    background: var(--card);
+    border: 1.5px solid var(--line, rgba(33,26,20,.1));
+    border-radius: 16px;
+    overflow: hidden;
+  }
+  .profile-row {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 14px;
+    padding: 12px 15px;
+    border-bottom: 1px solid rgba(33, 26, 20, 0.08);
+    font-size: 14px;
+  }
+  .profile-row:last-child { border-bottom: none; }
+  .profile-row .k { color: var(--muted); font-size: 12.5px; flex-shrink: 0; }
+  .profile-row .v { font-weight: 700; text-align: right; font-family: var(--font-script); }
+  .profile-row .v[data-empty="true"] { font-weight: 500; color: var(--muted); font-style: italic; }
+
   .packs-scroll { flex: 1; overflow-y: auto; padding: 12px 20px; display: flex; flex-direction: column; gap: 10px; }
   .pack-card {
     display: flex; justify-content: space-between; align-items: center;
@@ -720,22 +739,69 @@
     </div>
   </section>
 
-  <!-- ============== SCREEN: WALLET ============== -->
-  <section class="screen" id="screen-wallet">
+  <!-- ============== SCREEN: ONBOARDING (optional, once) ============== -->
+  <section class="screen" id="screen-onboarding">
+    <div class="auth-wrap" style="justify-content:flex-start;padding-top:34px;gap:14px;">
+      <div class="h-display" id="t-ob-title" style="font-size:22px;">A little about you</div>
+      <p class="tagline" id="t-ob-sub" style="margin:0 0 4px;">All optional — you can skip and fill it later.</p>
+
+      <div style="width:100%;">
+        <div class="field-label" id="t-ob-name-label">YOUR NAME</div>
+        <div class="phone-row"><input id="ob-name" type="text" maxlength="60" autocomplete="name" /></div>
+      </div>
+
+      <div style="width:100%;">
+        <div class="field-label" id="t-ob-city-label">CITY OR AREA</div>
+        <div class="phone-row"><input id="ob-city" type="text" maxlength="60" autocomplete="address-level2" /></div>
+      </div>
+
+      <div style="width:100%;">
+        <div class="field-label" id="t-ob-purpose-label">WHERE WILL YOU USE IT?</div>
+        <div class="chip-row" id="ob-purpose-chips"></div>
+      </div>
+
+      <div style="flex:1;"></div>
+      <button class="btn-primary" id="btn-ob-save">Save and continue →</button>
+      <button class="link-btn" id="btn-ob-skip" style="align-self:center;">Skip for now</button>
+    </div>
+  </section>
+
+  <!-- ============== SCREEN: PROFILE (identity + minutes) ============== -->
+  <section class="screen" id="screen-profile">
     <div class="page-head">
-      <button class="back-btn" id="btn-wallet-back" aria-label="Back">←</button>
-      <div class="title" id="t-wallet-title">Wallet</div>
+      <button class="back-btn" id="btn-profile-back" aria-label="Back">←</button>
+      <div class="title" id="t-profile-title">Profile</div>
     </div>
-    <div class="balance-card">
-      <div class="lbl" id="t-minutes-remaining">MINUTES REMAINING</div>
-      <div class="amount"><span id="wallet-balance">–</span> <span id="t-min-unit">min</span></div>
-      <div class="low" id="wallet-low" hidden>Running low — top up before your next chat</div>
+
+    <div class="setup-scroll">
+      <div class="balance-card">
+        <div class="lbl" id="t-minutes-remaining">MINUTES REMAINING</div>
+        <div class="amount"><span id="wallet-balance">–</span> <span id="t-min-unit">min</span></div>
+        <div class="low" id="wallet-low" hidden>Running low — top up before your next chat</div>
+      </div>
+
+      <div style="padding:0 20px;">
+        <button class="btn-primary" id="btn-topup" style="padding:15px;">Buy more minutes</button>
+      </div>
+
+      <div class="info-card" id="t-wallet-info" style="margin-top:14px;">Live translation uses about 1 minute per 10 exchanges. Buy a pack any time — minutes never expire.</div>
+
+      <div class="profile-list">
+        <div class="profile-row"><span class="k" id="t-profile-name">Name</span><span class="v" id="pv-name">–</span></div>
+        <div class="profile-row"><span class="k" id="t-profile-phone">Mobile</span><span class="v" id="pv-phone">–</span></div>
+        <div class="profile-row"><span class="k" id="t-profile-city">City</span><span class="v" id="pv-city">–</span></div>
+        <div class="profile-row"><span class="k" id="t-profile-use">Used for</span><span class="v" id="pv-use">–</span></div>
+        <div class="profile-row"><span class="k" id="t-profile-since">Member since</span><span class="v" id="pv-since">–</span></div>
+        <div class="profile-row"><span class="k" id="t-profile-translations">Translations done</span><span class="v" id="pv-translations">–</span></div>
+      </div>
+
+      <div style="padding:14px 20px 0;">
+        <button class="link-btn" id="btn-profile-edit">Edit details</button>
+      </div>
     </div>
-    <div class="info-card" id="t-wallet-info">Live translation uses about 1 minute per 10 exchanges. Buy a pack any time — minutes never expire.</div>
-    <div style="flex:1;"></div>
-    <div style="padding:20px;display:flex;flex-direction:column;">
-      <button class="btn-primary" id="btn-topup" style="padding:16px;">Buy more minutes</button>
-      <button class="quiet-btn" id="btn-logout">Log out</button>
+
+    <div style="padding:16px 20px 20px;display:flex;flex-direction:column;">
+      <button class="quiet-btn" id="btn-logout" style="margin:0;">Sign out</button>
     </div>
   </section>
 
@@ -907,6 +973,32 @@
       otpError: "Enter the 6-digit OTP from the SMS.",
       helpTitle: "How it works", close: "Close",
       micHold: "Press and speak", micTap: "Tap to speak",
+      obTitle: "A little about you",
+      obSub: "All optional — you can skip and fill it later.",
+      obNameLabel: "YOUR NAME",
+      obNamePlaceholder: "e.g. Divya",
+      obCityLabel: "CITY OR AREA",
+      obCityPlaceholder: "e.g. Jaipur",
+      obPurposeLabel: "WHERE WILL YOU USE IT?",
+      purposeShop: "Shop or market",
+      purposeTravel: "Travel",
+      purposeHealth: "Hospital or clinic",
+      purposeWork: "Work or office",
+      purposePersonal: "Family and friends",
+      obSave: "Save and continue →",
+      obSkip: "Skip for now",
+      profileTitle: "Profile",
+      profilePhone: "Mobile",
+      profileName: "Name",
+      profileCity: "City",
+      profileUse: "Used for",
+      profileSince: "Member since",
+      profileTranslations: "Translations done",
+      profileNotSet: "Not set",
+      profileEdit: "Edit details",
+      signOut: "Sign out",
+      signOutConfirm: "Sign out of BaatChiit? Your minutes stay safe on this number.",
+      profileSaved: "Saved",
       getAndroid: "Download Android app",
       installApp: "Install app",
       installed: "Installed — open it from your home screen",
@@ -987,6 +1079,32 @@
       otpError: "SMS में आया 6 अंकों का OTP डालें।",
       helpTitle: "कैसे चलता है?", close: "बंद करें",
       micHold: "दबाकर बोलें", micTap: "एक बार दबाएँ",
+      obTitle: "आपके बारे में थोड़ा",
+      obSub: "सब वैकल्पिक है — छोड़कर बाद में भी भर सकते हैं।",
+      obNameLabel: "आपका नाम",
+      obNamePlaceholder: "जैसे दिव्या",
+      obCityLabel: "शहर या इलाका",
+      obCityPlaceholder: "जैसे जयपुर",
+      obPurposeLabel: "कहाँ इस्तेमाल करेंगे?",
+      purposeShop: "दुकान या बाज़ार",
+      purposeTravel: "सफ़र",
+      purposeHealth: "अस्पताल या क्लिनिक",
+      purposeWork: "काम या दफ़्तर",
+      purposePersonal: "परिवार और दोस्त",
+      obSave: "सेव करके आगे →",
+      obSkip: "अभी छोड़ें",
+      profileTitle: "प्रोफ़ाइल",
+      profilePhone: "मोबाइल",
+      profileName: "नाम",
+      profileCity: "शहर",
+      profileUse: "किसलिए",
+      profileSince: "सदस्य कब से",
+      profileTranslations: "कुल अनुवाद",
+      profileNotSet: "नहीं भरा",
+      profileEdit: "जानकारी बदलें",
+      signOut: "साइन आउट",
+      signOutConfirm: "BaatChiit से साइन आउट करें? आपके मिनट इसी नंबर पर सुरक्षित रहेंगे।",
+      profileSaved: "सेव हो गया",
       getAndroid: "Android ऐप डाउनलोड करें",
       installApp: "ऐप इंस्टॉल करें",
       installed: "इंस्टॉल हो गया — होम स्क्रीन से खोलें",
@@ -1067,6 +1185,32 @@
       otpError: "SMS-এ আসা ৬ সংখ্যার OTP দিন।",
       helpTitle: "কীভাবে কাজ করে?", close: "বন্ধ করুন",
       micHold: "চেপে ধরে বলুন", micTap: "একবার চাপুন",
+      obTitle: "আপনার সম্পর্কে একটু",
+      obSub: "সবই ঐচ্ছিক — এড়িয়ে গিয়ে পরেও দিতে পারেন।",
+      obNameLabel: "আপনার নাম",
+      obNamePlaceholder: "যেমন দিব্যা",
+      obCityLabel: "শহর বা এলাকা",
+      obCityPlaceholder: "যেমন জয়পুর",
+      obPurposeLabel: "কোথায় ব্যবহার করবেন?",
+      purposeShop: "দোকান বা বাজার",
+      purposeTravel: "ভ্রমণ",
+      purposeHealth: "হাসপাতাল বা ক্লিনিক",
+      purposeWork: "কাজ বা অফিস",
+      purposePersonal: "পরিবার ও বন্ধু",
+      obSave: "সেভ করে এগিয়ে যান →",
+      obSkip: "আপাতত এড়িয়ে যান",
+      profileTitle: "প্রোফাইল",
+      profilePhone: "মোবাইল",
+      profileName: "নাম",
+      profileCity: "শহর",
+      profileUse: "কীসের জন্য",
+      profileSince: "সদস্য কবে থেকে",
+      profileTranslations: "মোট অনুবাদ",
+      profileNotSet: "দেওয়া হয়নি",
+      profileEdit: "তথ্য বদলান",
+      signOut: "সাইন আউট",
+      signOutConfirm: "BaatChiit থেকে সাইন আউট করবেন? আপনার মিনিট এই নম্বরেই থাকবে।",
+      profileSaved: "সেভ হয়েছে",
       getAndroid: "Android অ্যাপ ডাউনলোড করুন",
       installApp: "অ্যাপ ইনস্টল করুন",
       installed: "ইনস্টল হয়েছে — হোম স্ক্রিন থেকে খুলুন",
@@ -1147,6 +1291,32 @@
       otpError: "SMS માં આવેલો 6 અંકનો OTP નાખો.",
       helpTitle: "કેવી રીતે ચાલે છે?", close: "બંધ કરો",
       micHold: "દબાવીને બોલો", micTap: "એક વાર દબાવો",
+      obTitle: "તમારા વિશે થોડું",
+      obSub: "બધું વૈકલ્પિક છે — છોડીને પછી પણ ભરી શકો.",
+      obNameLabel: "તમારું નામ",
+      obNamePlaceholder: "દા.ત. દિવ્યા",
+      obCityLabel: "શહેર કે વિસ્તાર",
+      obCityPlaceholder: "દા.ત. જયપુર",
+      obPurposeLabel: "ક્યાં વાપરશો?",
+      purposeShop: "દુકાન કે બજાર",
+      purposeTravel: "મુસાફરી",
+      purposeHealth: "હોસ્પિટલ કે ક્લિનિક",
+      purposeWork: "કામ કે ઓફિસ",
+      purposePersonal: "પરિવાર અને મિત્રો",
+      obSave: "સેવ કરીને આગળ →",
+      obSkip: "હમણાં છોડો",
+      profileTitle: "પ્રોફાઇલ",
+      profilePhone: "મોબાઇલ",
+      profileName: "નામ",
+      profileCity: "શહેર",
+      profileUse: "શેના માટે",
+      profileSince: "સભ્ય ક્યારથી",
+      profileTranslations: "કુલ અનુવાદ",
+      profileNotSet: "ભર્યું નથી",
+      profileEdit: "વિગતો બદલો",
+      signOut: "સાઇન આઉટ",
+      signOutConfirm: "BaatChiit માંથી સાઇન આઉટ કરવું? તમારી મિનિટ આ નંબર પર સચવાયેલી રહેશે.",
+      profileSaved: "સેવ થયું",
       getAndroid: "Android એપ ડાઉનલોડ કરો",
       installApp: "એપ ઇન્સ્ટોલ કરો",
       installed: "ઇન્સ્ટોલ થયું — હોમ સ્ક્રીનથી ખોલો",
@@ -1227,6 +1397,32 @@
       otpError: "SMS ನಲ್ಲಿ ಬಂದ 6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ.",
       helpTitle: "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", close: "ಮುಚ್ಚಿ",
       micHold: "ಒತ್ತಿ ಮಾತನಾಡಿ", micTap: "ಒಮ್ಮೆ ಒತ್ತಿ",
+      obTitle: "ನಿಮ್ಮ ಬಗ್ಗೆ ಸ್ವಲ್ಪ",
+      obSub: "ಎಲ್ಲವೂ ಐಚ್ಛಿಕ — ಬಿಟ್ಟು ನಂತರವೂ ಭರ್ತಿ ಮಾಡಬಹುದು.",
+      obNameLabel: "ನಿಮ್ಮ ಹೆಸರು",
+      obNamePlaceholder: "ಉದಾ. ದಿವ್ಯಾ",
+      obCityLabel: "ಊರು ಅಥವಾ ಪ್ರದೇಶ",
+      obCityPlaceholder: "ಉದಾ. ಜೈಪುರ",
+      obPurposeLabel: "ಎಲ್ಲಿ ಬಳಸುತ್ತೀರಿ?",
+      purposeShop: "ಅಂಗಡಿ ಅಥವಾ ಮಾರುಕಟ್ಟೆ",
+      purposeTravel: "ಪ್ರಯಾಣ",
+      purposeHealth: "ಆಸ್ಪತ್ರೆ ಅಥವಾ ಕ್ಲಿನಿಕ್",
+      purposeWork: "ಕೆಲಸ ಅಥವಾ ಕಚೇರಿ",
+      purposePersonal: "ಕುಟುಂಬ ಮತ್ತು ಸ್ನೇಹಿತರು",
+      obSave: "ಉಳಿಸಿ ಮುಂದುವರಿಯಿರಿ →",
+      obSkip: "ಈಗ ಬಿಟ್ಟುಬಿಡಿ",
+      profileTitle: "ಪ್ರೊಫೈಲ್",
+      profilePhone: "ಮೊಬೈಲ್",
+      profileName: "ಹೆಸರು",
+      profileCity: "ಊರು",
+      profileUse: "ಯಾವುದಕ್ಕಾಗಿ",
+      profileSince: "ಸದಸ್ಯ ಯಾವಾಗಿನಿಂದ",
+      profileTranslations: "ಒಟ್ಟು ಅನುವಾದ",
+      profileNotSet: "ಭರ್ತಿ ಮಾಡಿಲ್ಲ",
+      profileEdit: "ವಿವರ ಬದಲಾಯಿಸಿ",
+      signOut: "ಸೈನ್ ಔಟ್",
+      signOutConfirm: "BaatChiit ನಿಂದ ಸೈನ್ ಔಟ್ ಮಾಡುವುದೇ? ನಿಮ್ಮ ನಿಮಿಷಗಳು ಈ ಸಂಖ್ಯೆಯಲ್ಲಿ ಸುರಕ್ಷಿತ.",
+      profileSaved: "ಉಳಿಸಲಾಗಿದೆ",
       getAndroid: "Android ಆ್ಯಪ್ ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
       installApp: "ಆ್ಯಪ್ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ",
       installed: "ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿದೆ — ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ ತೆರೆಯಿರಿ",
@@ -1307,6 +1503,32 @@
       otpError: "SMS-ൽ വന്ന 6 അക്ക OTP നൽകൂ.",
       helpTitle: "എങ്ങനെ പ്രവർത്തിക്കുന്നു?", close: "അടയ്ക്കൂ",
       micHold: "അമർത്തി സംസാരിക്കൂ", micTap: "ഒരിക്കൽ അമർത്തൂ",
+      obTitle: "നിങ്ങളെക്കുറിച്ച് അല്പം",
+      obSub: "എല്ലാം ഐച്ഛികം — ഒഴിവാക്കി പിന്നീടും നൽകാം.",
+      obNameLabel: "നിങ്ങളുടെ പേര്",
+      obNamePlaceholder: "ഉദാ. ദിവ്യ",
+      obCityLabel: "നഗരം അല്ലെങ്കിൽ പ്രദേശം",
+      obCityPlaceholder: "ഉദാ. ജയ്പുർ",
+      obPurposeLabel: "എവിടെ ഉപയോഗിക്കും?",
+      purposeShop: "കട അല്ലെങ്കിൽ മാർക്കറ്റ്",
+      purposeTravel: "യാത്ര",
+      purposeHealth: "ആശുപത്രി അല്ലെങ്കിൽ ക്ലിനിക്",
+      purposeWork: "ജോലി അല്ലെങ്കിൽ ഓഫീസ്",
+      purposePersonal: "കുടുംബവും സുഹൃത്തുക്കളും",
+      obSave: "സേവ് ചെയ്ത് തുടരൂ →",
+      obSkip: "ഇപ്പോൾ ഒഴിവാക്കൂ",
+      profileTitle: "പ്രൊഫൈൽ",
+      profilePhone: "മൊബൈൽ",
+      profileName: "പേര്",
+      profileCity: "നഗരം",
+      profileUse: "എന്തിനായി",
+      profileSince: "അംഗം എന്നു മുതൽ",
+      profileTranslations: "ആകെ പരിഭാഷകൾ",
+      profileNotSet: "നൽകിയിട്ടില്ല",
+      profileEdit: "വിവരങ്ങൾ മാറ്റൂ",
+      signOut: "സൈൻ ഔട്ട്",
+      signOutConfirm: "BaatChiit-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്യണോ? നിങ്ങളുടെ മിനിറ്റുകൾ ഈ നമ്പറിൽ സുരക്ഷിതം.",
+      profileSaved: "സേവ് ചെയ്തു",
       getAndroid: "Android ആപ്പ് ഡൗൺലോഡ് ചെയ്യൂ",
       installApp: "ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യൂ",
       installed: "ഇൻസ്റ്റാൾ ആയി — ഹോം സ്ക്രീനിൽ നിന്ന് തുറക്കൂ",
@@ -1387,6 +1609,32 @@
       otpError: "SMS मध्ये आलेला 6 अंकी OTP टाका.",
       helpTitle: "कसे चालते?", close: "बंद करा",
       micHold: "दाबून बोला", micTap: "एकदा दाबा",
+      obTitle: "तुमच्याबद्दल थोडं",
+      obSub: "सर्व ऐच्छिक — वगळून नंतरही भरू शकता.",
+      obNameLabel: "तुमचं नाव",
+      obNamePlaceholder: "उदा. दिव्या",
+      obCityLabel: "शहर किंवा भाग",
+      obCityPlaceholder: "उदा. जयपूर",
+      obPurposeLabel: "कुठे वापरणार?",
+      purposeShop: "दुकान किंवा बाजार",
+      purposeTravel: "प्रवास",
+      purposeHealth: "रुग्णालय किंवा दवाखाना",
+      purposeWork: "काम किंवा कार्यालय",
+      purposePersonal: "कुटुंब आणि मित्र",
+      obSave: "सेव्ह करून पुढे →",
+      obSkip: "आत्ता वगळा",
+      profileTitle: "प्रोफाइल",
+      profilePhone: "मोबाइल",
+      profileName: "नाव",
+      profileCity: "शहर",
+      profileUse: "कशासाठी",
+      profileSince: "सदस्य कधीपासून",
+      profileTranslations: "एकूण भाषांतरं",
+      profileNotSet: "भरलेलं नाही",
+      profileEdit: "माहिती बदला",
+      signOut: "साइन आउट",
+      signOutConfirm: "BaatChiit मधून साइन आउट करायचं? तुमची मिनिटं याच नंबरवर सुरक्षित राहतील.",
+      profileSaved: "सेव्ह झालं",
       getAndroid: "Android अ‍ॅप डाउनलोड करा",
       installApp: "अ‍ॅप इन्स्टॉल करा",
       installed: "इन्स्टॉल झालं — होम स्क्रीनवरून उघडा",
@@ -1467,6 +1715,32 @@
       otpError: "SMS ରେ ଆସିଥିବା 6 ଅଙ୍କର OTP ଦିଅନ୍ତୁ।",
       helpTitle: "କିପରି କାମ କରେ?", close: "ବନ୍ଦ କରନ୍ତୁ",
       micHold: "ଦବାଇ କୁହନ୍ତୁ", micTap: "ଥରେ ଦବାନ୍ତୁ",
+      obTitle: "ଆପଣଙ୍କ ବିଷୟରେ ଟିକେ",
+      obSub: "ସବୁ ଐଚ୍ଛିକ — ଛାଡ଼ି ପରେ ମଧ୍ୟ ଭରିପାରିବେ।",
+      obNameLabel: "ଆପଣଙ୍କ ନାମ",
+      obNamePlaceholder: "ଯଥା ଦିବ୍ୟା",
+      obCityLabel: "ସହର କିମ୍ବା ଅଞ୍ଚଳ",
+      obCityPlaceholder: "ଯଥା ଜୟପୁର",
+      obPurposeLabel: "କେଉଁଠି ବ୍ୟବହାର କରିବେ?",
+      purposeShop: "ଦୋକାନ କିମ୍ବା ବଜାର",
+      purposeTravel: "ଯାତ୍ରା",
+      purposeHealth: "ଡାକ୍ତରଖାନା କିମ୍ବା କ୍ଲିନିକ୍",
+      purposeWork: "କାମ କିମ୍ବା ଅଫିସ୍",
+      purposePersonal: "ପରିବାର ଓ ସାଙ୍ଗ",
+      obSave: "ସେଭ୍ କରି ଆଗକୁ →",
+      obSkip: "ବର୍ତ୍ତମାନ ଛାଡ଼ନ୍ତୁ",
+      profileTitle: "ପ୍ରୋଫାଇଲ୍",
+      profilePhone: "ମୋବାଇଲ",
+      profileName: "ନାମ",
+      profileCity: "ସହର",
+      profileUse: "କାହିଁକି",
+      profileSince: "ସଦସ୍ୟ କେବେଠାରୁ",
+      profileTranslations: "ମୋଟ ଅନୁବାଦ",
+      profileNotSet: "ଦିଆଯାଇନାହିଁ",
+      profileEdit: "ବିବରଣୀ ବଦଳାନ୍ତୁ",
+      signOut: "ସାଇନ୍ ଆଉଟ୍",
+      signOutConfirm: "BaatChiit ରୁ ସାଇନ୍ ଆଉଟ୍ କରିବେ? ଆପଣଙ୍କ ମିନିଟ୍ ଏହି ନମ୍ବରରେ ସୁରକ୍ଷିତ ରହିବ।",
+      profileSaved: "ସେଭ୍ ହେଲା",
       getAndroid: "Android ଆପ୍ ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
       installApp: "ଆପ୍ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ",
       installed: "ଇନଷ୍ଟଲ୍ ହୋଇଛି — ହୋମ୍ ସ୍କ୍ରିନରୁ ଖୋଲନ୍ତୁ",
@@ -1547,6 +1821,32 @@
       otpError: "SMS ਵਿੱਚ ਆਇਆ 6 ਅੰਕਾਂ ਦਾ OTP ਭਰੋ।",
       helpTitle: "ਕਿਵੇਂ ਚੱਲਦਾ ਹੈ?", close: "ਬੰਦ ਕਰੋ",
       micHold: "ਦਬਾ ਕੇ ਬੋਲੋ", micTap: "ਇੱਕ ਵਾਰ ਦਬਾਓ",
+      obTitle: "ਤੁਹਾਡੇ ਬਾਰੇ ਥੋੜ੍ਹਾ",
+      obSub: "ਸਭ ਵਿਕਲਪਿਕ — ਛੱਡ ਕੇ ਬਾਅਦ ਵਿੱਚ ਵੀ ਭਰ ਸਕਦੇ ਹੋ।",
+      obNameLabel: "ਤੁਹਾਡਾ ਨਾਮ",
+      obNamePlaceholder: "ਜਿਵੇਂ ਦਿਵਿਆ",
+      obCityLabel: "ਸ਼ਹਿਰ ਜਾਂ ਇਲਾਕਾ",
+      obCityPlaceholder: "ਜਿਵੇਂ ਜੈਪੁਰ",
+      obPurposeLabel: "ਕਿੱਥੇ ਵਰਤੋਗੇ?",
+      purposeShop: "ਦੁਕਾਨ ਜਾਂ ਬਾਜ਼ਾਰ",
+      purposeTravel: "ਸਫ਼ਰ",
+      purposeHealth: "ਹਸਪਤਾਲ ਜਾਂ ਕਲੀਨਿਕ",
+      purposeWork: "ਕੰਮ ਜਾਂ ਦਫ਼ਤਰ",
+      purposePersonal: "ਪਰਿਵਾਰ ਤੇ ਦੋਸਤ",
+      obSave: "ਸੇਵ ਕਰਕੇ ਅੱਗੇ →",
+      obSkip: "ਹੁਣੇ ਛੱਡੋ",
+      profileTitle: "ਪ੍ਰੋਫਾਈਲ",
+      profilePhone: "ਮੋਬਾਈਲ",
+      profileName: "ਨਾਮ",
+      profileCity: "ਸ਼ਹਿਰ",
+      profileUse: "ਕਿਸ ਲਈ",
+      profileSince: "ਮੈਂਬਰ ਕਦੋਂ ਤੋਂ",
+      profileTranslations: "ਕੁੱਲ ਅਨੁਵਾਦ",
+      profileNotSet: "ਨਹੀਂ ਭਰਿਆ",
+      profileEdit: "ਜਾਣਕਾਰੀ ਬਦਲੋ",
+      signOut: "ਸਾਈਨ ਆਊਟ",
+      signOutConfirm: "BaatChiit ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰਨਾ? ਤੁਹਾਡੇ ਮਿੰਟ ਇਸੇ ਨੰਬਰ 'ਤੇ ਸੁਰੱਖਿਅਤ ਰਹਿਣਗੇ।",
+      profileSaved: "ਸੇਵ ਹੋ ਗਿਆ",
       getAndroid: "Android ਐਪ ਡਾਊਨਲੋਡ ਕਰੋ",
       installApp: "ਐਪ ਇੰਸਟਾਲ ਕਰੋ",
       installed: "ਇੰਸਟਾਲ ਹੋ ਗਿਆ — ਹੋਮ ਸਕਰੀਨ ਤੋਂ ਖੋਲ੍ਹੋ",
@@ -1627,6 +1927,32 @@
       otpError: "SMS-ல் வந்த 6 இலக்க OTP-யை உள்ளிடுங்கள்.",
       helpTitle: "எப்படி வேலை செய்கிறது?", close: "மூடு",
       micHold: "அழுத்திப் பேசுங்கள்", micTap: "ஒரு முறை தட்டவும்",
+      obTitle: "உங்களைப் பற்றி சிறிது",
+      obSub: "அனைத்தும் விருப்பமானது — தவிர்த்து பின்னரும் நிரப்பலாம்.",
+      obNameLabel: "உங்கள் பெயர்",
+      obNamePlaceholder: "எ.கா. திவ்யா",
+      obCityLabel: "நகரம் அல்லது பகுதி",
+      obCityPlaceholder: "எ.கா. ஜெய்ப்பூர்",
+      obPurposeLabel: "எங்கே பயன்படுத்துவீர்கள்?",
+      purposeShop: "கடை அல்லது சந்தை",
+      purposeTravel: "பயணம்",
+      purposeHealth: "மருத்துவமனை அல்லது கிளினிக்",
+      purposeWork: "வேலை அல்லது அலுவலகம்",
+      purposePersonal: "குடும்பம் மற்றும் நண்பர்கள்",
+      obSave: "சேமித்து தொடரவும் →",
+      obSkip: "இப்போது தவிர்",
+      profileTitle: "சுயவிவரம்",
+      profilePhone: "மொபைல்",
+      profileName: "பெயர்",
+      profileCity: "நகரம்",
+      profileUse: "எதற்காக",
+      profileSince: "உறுப்பினர் எப்போதிருந்து",
+      profileTranslations: "மொத்த மொழிபெயர்ப்பு",
+      profileNotSet: "நிரப்பப்படவில்லை",
+      profileEdit: "விவரங்களை மாற்று",
+      signOut: "வெளியேறு",
+      signOutConfirm: "BaatChiit-லிருந்து வெளியேறவா? உங்கள் நிமிடங்கள் இந்த எண்ணில் பாதுகாப்பாக இருக்கும்.",
+      profileSaved: "சேமிக்கப்பட்டது",
       getAndroid: "Android ஆப்பைப் பதிவிறக்கு",
       installApp: "ஆப்பை நிறுவுங்கள்",
       installed: "நிறுவப்பட்டது — முகப்புத் திரையிலிருந்து திறக்கவும்",
@@ -1707,6 +2033,32 @@
       otpError: "SMS లో వచ్చిన 6 అంకెల OTP ఇవ్వండి.",
       helpTitle: "ఎలా పనిచేస్తుంది?", close: "మూసివేయండి",
       micHold: "నొక్కి మాట్లాడండి", micTap: "ఒకసారి నొక్కండి",
+      obTitle: "మీ గురించి కొంచెం",
+      obSub: "అన్నీ ఐచ్ఛికం — దాటవేసి తర్వాత కూడా నింపవచ్చు.",
+      obNameLabel: "మీ పేరు",
+      obNamePlaceholder: "ఉదా. దివ్య",
+      obCityLabel: "నగరం లేదా ప్రాంతం",
+      obCityPlaceholder: "ఉదా. జైపూర్",
+      obPurposeLabel: "ఎక్కడ ఉపయోగిస్తారు?",
+      purposeShop: "దుకాణం లేదా మార్కెట్",
+      purposeTravel: "ప్రయాణం",
+      purposeHealth: "ఆసుపత్రి లేదా క్లినిక్",
+      purposeWork: "పని లేదా ఆఫీసు",
+      purposePersonal: "కుటుంబం మరియు స్నేహితులు",
+      obSave: "సేవ్ చేసి కొనసాగండి →",
+      obSkip: "ప్రస్తుతానికి దాటవేయండి",
+      profileTitle: "ప్రొఫైల్",
+      profilePhone: "మొబైల్",
+      profileName: "పేరు",
+      profileCity: "నగరం",
+      profileUse: "దేని కోసం",
+      profileSince: "సభ్యుడు ఎప్పటినుండి",
+      profileTranslations: "మొత్తం అనువాదాలు",
+      profileNotSet: "ఇవ్వలేదు",
+      profileEdit: "వివరాలు మార్చండి",
+      signOut: "సైన్ అవుట్",
+      signOutConfirm: "BaatChiit నుండి సైన్ అవుట్ చేయాలా? మీ నిమిషాలు ఈ నంబర్‌లో సురక్షితంగా ఉంటాయి.",
+      profileSaved: "సేవ్ అయ్యింది",
       getAndroid: "Android యాప్ డౌన్‌లోడ్ చేయండి",
       installApp: "యాప్ ఇన్‌స్టాల్ చేయండి",
       installed: "ఇన్‌స్టాల్ అయ్యింది — హోమ్ స్క్రీన్ నుండి తెరవండి",
@@ -1804,7 +2156,7 @@
     uiLang: localStorage.getItem(UI_LANG_KEY) || "en-IN",   // welcome/tour/help language
     account: null,              // {phone, plan, minutes, paymentsEnabled}
     pendingPhone: null,
-    walletFrom: "setup",        // which screen the wallet was opened from
+    profileFrom: "setup",       // which screen Profile was opened from
 
     autoDetect: true,
     manualOpen: false,
@@ -1886,7 +2238,7 @@
     var target = st.bcScreen || (state.account ? "setup" : "phone");
 
     // Never expose the app to a logged-out person via history.
-    if (!state.account && ["setup", "main", "wallet", "payment", "success"].indexOf(target) > -1) {
+    if (!state.account && ["setup", "main", "profile", "payment", "success", "onboarding"].indexOf(target) > -1) {
       replaceScreen("phone");
       return;
     }
@@ -1904,7 +2256,7 @@
     }
 
     renderScreen(target);
-    if (target === "wallet") renderWallet();
+    if (target === "profile") renderProfile();
   });
 
   // Small centred toast, host-oriented (outside the rotated halves).
@@ -2014,8 +2366,18 @@
   }
 
   function setAccount(data) {
-    state.account = { phone: data.phone, plan: data.plan, minutes: data.minutes, paymentsEnabled: data.paymentsEnabled };
-    renderWallet();
+    // Keep the whole account, not a hand-picked subset — the Profile
+    // screen reads name/city/purpose/memberSince/translations, and
+    // dropping them here is why they showed as "not set".
+    state.account = {
+      phone: data.phone, plan: data.plan, minutes: data.minutes,
+      paymentsEnabled: data.paymentsEnabled,
+      name: data.name || "", city: data.city || "", purpose: data.purpose || "",
+      onboarded: Boolean(data.onboarded),
+      memberSince: data.memberSince || null,
+      translations: data.translations || 0
+    };
+    renderProfile();
   }
 
   function startResendCountdown() {
@@ -2123,7 +2485,11 @@
       clearInterval(state.resendCountdown);
       localStorage.setItem(AUTH_TOKEN_KEY, data.token);
       setAccount(data);
-      replaceScreen("setup");          // replaces the OTP entry: no back into login
+      // Replaces the OTP entry either way, so back never returns to login.
+      // First-time accounts get the optional profile questions; everyone
+      // else goes straight to a conversation.
+      if (!data.onboarded) { renderObPurposes(); replaceScreen("onboarding"); }
+      else replaceScreen("setup");
     }).catch(function (err) {
       btn.disabled = false;
       $("otp-error").textContent = err.message;
@@ -2137,7 +2503,11 @@
     replaceScreen("phone");
     if (token) authFetch({ action: "logout", token: token }).catch(function () { /* session dies with the token either way */ });
   }
-  $("btn-logout").addEventListener("click", logout);
+  // Signing out costs a fresh OTP to undo, so confirm — but reassure
+  // that minutes are tied to the number, not the session.
+  $("btn-logout").addEventListener("click", function () {
+    if (confirm(t("signOutConfirm"))) logout();
+  });
 
   function restoreSession() {
     var token = localStorage.getItem(AUTH_TOKEN_KEY);
@@ -2470,14 +2840,34 @@
     $("btn-toggle-manual").textContent = state.manualOpen ? t("manualClose") : t("manualOpen");
     $("btn-start").textContent = state.autoDetect ? t("startAuto") : t("startManual");
 
-    // wallet
-    $("t-wallet-title").textContent = t("walletTitle");
+    // onboarding
+    $("t-ob-title").textContent = t("obTitle");
+    $("t-ob-sub").textContent = t("obSub");
+    $("t-ob-name-label").textContent = t("obNameLabel");
+    $("ob-name").placeholder = t("obNamePlaceholder");
+    $("t-ob-city-label").textContent = t("obCityLabel");
+    $("ob-city").placeholder = t("obCityPlaceholder");
+    $("t-ob-purpose-label").textContent = t("obPurposeLabel");
+    $("btn-ob-save").textContent = t("obSave");
+    $("btn-ob-skip").textContent = t("obSkip");
+    renderObPurposes();
+
+    // profile
+    $("t-profile-title").textContent = t("profileTitle");
+    $("t-profile-name").textContent = t("profileName");
+    $("t-profile-phone").textContent = t("profilePhone");
+    $("t-profile-city").textContent = t("profileCity");
+    $("t-profile-use").textContent = t("profileUse");
+    $("t-profile-since").textContent = t("profileSince");
+    $("t-profile-translations").textContent = t("profileTranslations");
+    $("btn-profile-edit").textContent = t("profileEdit");
+    $("btn-logout").textContent = t("signOut");
+    if (state.account) renderProfile();
     $("t-minutes-remaining").textContent = t("minutesRemaining");
     $("t-min-unit").textContent = t("minUnit");
     $("wallet-low").textContent = t("lowBalance");
     $("t-wallet-info").textContent = t("walletInfo");
     $("btn-topup").textContent = t("buyMinutes");
-    $("btn-logout").textContent = t("logout");
 
     // payment + success
     $("t-pay-title").textContent = t("payTitle");
@@ -2632,26 +3022,105 @@
   $("btn-close-help").addEventListener("click", dismissSheet);
 
   // -----------------------------------------------------------------
-  // Wallet / payment
+  // Profile: who you are, what you've used, and what you have left.
+  // Minutes live here rather than on a separate wallet screen, so
+  // there's one place to answer "what's my account?".
   // -----------------------------------------------------------------
-  function renderWallet() {
-    var minutes = state.account ? state.account.minutes : null;
+  var PURPOSE_KEYS = {
+    shop: "purposeShop", travel: "purposeTravel", health: "purposeHealth",
+    work: "purposeWork", personal: "purposePersonal"
+  };
+
+  function setProfileRow(id, value) {
+    var el = $(id);
+    var empty = !value;
+    el.textContent = empty ? t("profileNotSet") : value;
+    el.dataset.empty = empty ? "true" : "false";
+  }
+
+  function renderProfile() {
+    var a = state.account;
+    var minutes = a ? a.minutes : null;
     $("wallet-balance").textContent = minutes === null ? "–" : minutes;
     $("wallet-low").hidden = !(minutes !== null && minutes < 15);
+
+    setProfileRow("pv-name", a && a.name);
+    setProfileRow("pv-city", a && a.city);
+    $("pv-phone").textContent = a ? "+91 " + a.phone : "–";
+    $("pv-phone").dataset.empty = "false";
+    setProfileRow("pv-use", a && a.purpose ? t(PURPOSE_KEYS[a.purpose]) : "");
+    setProfileRow("pv-since", a && a.memberSince
+      ? new Date(a.memberSince).toLocaleDateString([], { month: "short", year: "numeric" })
+      : "");
+    $("pv-translations").textContent = a ? String(a.translations || 0) : "–";
+    $("pv-translations").dataset.empty = "false";
   }
-  function openWallet(from) {
-    state.walletFrom = from;
-    renderWallet();
-    showScreen("wallet");
+
+  // ---- optional onboarding, shown once after the first login ----
+  var obPurpose = "";
+
+  function renderObPurposes() {
+    var wrap = $("ob-purpose-chips");
+    wrap.innerHTML = "";
+    Object.keys(PURPOSE_KEYS).forEach(function (id) {
+      var b = document.createElement("button");
+      b.className = "lang-chip";
+      b.textContent = t(PURPOSE_KEYS[id]);
+      b.dataset.selected = obPurpose === id ? "true" : "false";
+      b.addEventListener("click", function () {
+        obPurpose = obPurpose === id ? "" : id;   // tapping again clears it
+        renderObPurposes();
+      });
+      wrap.appendChild(b);
+    });
   }
-  $("btn-wallet-1").addEventListener("click", function () { openWallet("setup"); });
-  $("btn-wallet-2").addEventListener("click", function () { openWallet("main"); });
-  $("btn-wallet-back").addEventListener("click", function () { history.back(); });
+
+  function openOnboarding() {
+    var a = state.account || {};
+    $("ob-name").value = a.name || "";
+    $("ob-city").value = a.city || "";
+    obPurpose = a.purpose || "";
+    renderObPurposes();
+    showScreen("onboarding");
+  }
+
+  function saveOnboarding(skip) {
+    var token = localStorage.getItem(AUTH_TOKEN_KEY);
+    var payload = { action: "profile", token: token };
+    if (!skip) {
+      payload.name = $("ob-name").value;
+      payload.city = $("ob-city").value;
+      payload.purpose = obPurpose;
+    }
+    var btn = $("btn-ob-save");
+    btn.disabled = true;
+    // Either way we move on: this is optional, so a failed save must
+    // never trap someone on a form they didn't want to fill.
+    authFetch(payload).then(function (data) {
+      setAccount(data);
+      if (!skip) toast(t("profileSaved"));
+    }).catch(function () { /* keep whatever we already had */ })
+      .then(function () {
+        btn.disabled = false;
+        replaceScreen("setup");
+      });
+  }
+  $("btn-ob-save").addEventListener("click", function () { saveOnboarding(false); });
+  $("btn-ob-skip").addEventListener("click", function () { saveOnboarding(true); });
+  $("btn-profile-edit").addEventListener("click", function () { openOnboarding(); });
+  function openProfile(from) {
+    state.profileFrom = from;
+    renderProfile();
+    showScreen("profile");
+  }
+  $("btn-wallet-1").addEventListener("click", function () { openProfile("setup"); });
+  $("btn-wallet-2").addEventListener("click", function () { openProfile("main"); });
+  $("btn-profile-back").addEventListener("click", function () { history.back(); });
   $("btn-topup").addEventListener("click", function () { renderPayment(); showScreen("payment"); });
   $("btn-payment-back").addEventListener("click", function () { history.back(); });
-  // Success is an end state: drop back to where the wallet was opened
+  // Success is an end state: drop back to where Profile was opened
   // from rather than leaving the payment screen behind us.
-  $("btn-success-back").addEventListener("click", function () { replaceScreen(state.walletFrom); });
+  $("btn-success-back").addEventListener("click", function () { replaceScreen(state.profileFrom); });
 
   function renderPayment() {
     var wrap = $("pack-list");
@@ -2862,7 +3331,7 @@
 
       if (typeof data.minutesLeft === "number" && state.account) {
         state.account.minutes = data.minutesLeft;
-        renderWallet();
+        renderProfile();
         if (data.minutesLeft <= 2) notice(side, t("lowMinsNotice").replace("{n}", data.minutesLeft));
       }
     }).catch(function (err) {
@@ -2872,7 +3341,7 @@
       if (err.code === "LOGIN_REQUIRED" || err.status === 401) {
         logout();
       } else if (err.code === "NO_MINUTES" || err.status === 402) {
-        openWallet("main");
+        openProfile("main");
       } else if (err.code === "ACCOUNT_BLOCKED") {
         // Server's wording is the useful one here, and it must not be
         // mistaken for a passing network glitch.
