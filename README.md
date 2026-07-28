@@ -80,6 +80,23 @@ One-time setup, both in the Vercel dashboard:
 Until both exist, the Login drawer shows a clear "isn't configured" error and
 the rest of the app is unaffected.
 
+## Monitoring usage
+
+`/api/stats?key=<STATS_KEY>` serves a private dashboard: accounts total, new
+this week, people active today and this week, translations ever, minutes used
+and still owed, a 14-day bar chart of daily active users, and the newest
+accounts (phone numbers masked to the last 4 digits). Add `&format=json` for
+raw numbers.
+
+`STATS_KEY` is a Vercel env var — any long random string. Without it the
+endpoint disables itself, and a wrong key returns 404, so the page can't be
+left open by accident. Rotate it by changing the env var and redeploying.
+
+What it counts: logged-in activity only. Someone who opens the app and never
+signs in doesn't appear (there's no analytics script). `lastSeen` and
+per-user translation counts only exist from 2026-07-28 onward, so accounts
+that used the app before then show blank until their next translation.
+
 ## Generate the APK
 
 1. With the Vercel deployment live, go to **pwabuilder.com**, paste your site URL.

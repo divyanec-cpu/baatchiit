@@ -2813,6 +2813,10 @@
         logout();
       } else if (err.code === "NO_MINUTES" || err.status === 402) {
         openWallet("main");
+      } else if (err.code === "ACCOUNT_BLOCKED") {
+        // Server's wording is the useful one here, and it must not be
+        // mistaken for a passing network glitch.
+        notice(side, err.message, 8000);
       } else {
         notice(side, err.message || "Translation failed. Try again.");
       }
@@ -2841,8 +2845,62 @@
   // -----------------------------------------------------------------
   // Init
   // -----------------------------------------------------------------
+  // -----------------------------------------------------------------
+  // Content overrides: wording, phrases and pack prices edited in the
+  // admin panel arrive here and sit on top of the built-in text. Any
+  // failure is silent by design — the app already has everything it
+  // needs, so a bad network or an empty store changes nothing.
+  // -----------------------------------------------------------------
+  function applyOverrides() {
+    // The minute-stamp makes the URL change once a minute: caches still
+    // do their job, but an admin edit can never be more than a minute
+    // stale no matter how the CDN feels about revalidating.
+    fetch("/api/content?m=" + Math.floor(Date.now() / 60000)).then(function (res) {
+      return res.ok ? res.json() : null;
+    }).then(function (data) {
+      if (!data) return;
+      var touched = false;
+
+      Object.keys(data.ui || {}).forEach(function (lang) {
+        if (!UI_STRINGS[lang]) return;
+        Object.keys(data.ui[lang]).forEach(function (key) {
+          // Only override keys the app actually has, and never the
+          // help array (its shape matters).
+          if (typeof UI_STRINGS[lang][key] === "string") {
+            UI_STRINGS[lang][key] = data.ui[lang][key];
+            touched = true;
+          }
+        });
+      });
+
+      Object.keys(data.phrases || {}).forEach(function (lang) {
+        Object.keys(data.phrases[lang]).forEach(function (id) {
+          var parts = id.split(":");
+          var pack = PHRASE_PACKS[Number(parts[0])];
+          var phrase = pack && pack.phrases[Number(parts[1])];
+          if (phrase && typeof phrase[lang] === "string") {
+            phrase[lang] = data.phrases[lang][id];
+            touched = true;
+          }
+        });
+      });
+
+      if (Array.isArray(data.packs) && data.packs.length) {
+        PACKS.length = 0;
+        data.packs.forEach(function (p) { PACKS.push(p); });
+        touched = true;
+      }
+
+      if (touched) {
+        applyUiLang(state.uiLang);          // relabel whatever is on screen
+        if (state.screen === "payment") renderPayment();
+      }
+    }).catch(function () { /* built-in text is already correct */ });
+  }
+
   function init() {
     applyUiLang(state.uiLang);   // also renders the language chips + speaking default
+    applyOverrides();
     renderSetupValidation();
     renderOpenMic();
     restoreSession();

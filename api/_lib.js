@@ -70,6 +70,108 @@ function paymentsEnabled() {
   return Boolean(process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_SECRET);
 }
 
+// ---------------------------------------------------------------------
+// Usage tracking (feeds api/stats.js)
+//
+// Deliberately cheap: two extra Redis writes per exchange, no per-user
+// event log, nothing that grows without bound. Daily-active sets expire
+// after 5 weeks, which is all the stats page looks back.
+// ---------------------------------------------------------------------
+const DAU_TTL_SECONDS = 35 * 24 * 60 * 60;
+
+// UTC day key. India is UTC+5:30, so a "day" here starts at 5:30am IST —
+// close enough for a usage trend, and it avoids timezone maths in a
+// serverless function that could run anywhere.
+function dayKey(date) {
+  const d = date || new Date();
+  return d.toISOString().slice(0, 10).replace(/-/g, "");
+}
+
+async function recordActivity(phone, sourceLang, targetLang) {
+  const day = dayKey();
+  try {
+    await redis(["SADD", `dau:${day}`, phone]);
+    await redis(["EXPIRE", `dau:${day}`, String(DAU_TTL_SECONDS)]);
+    await redis(["INCR", "stats:exchanges"]);
+    await redis(["INCR", `stats:ex:${day}`]);
+    await redis(["EXPIRE", `stats:ex:${day}`, String(DAU_TTL_SECONDS)]);
+    // Which language pairs people actually use — the one number that
+    // says where to focus translation quality and TTS voices.
+    if (sourceLang && targetLang) {
+      await redis(["ZINCRBY", "stats:pairs", "1", `${sourceLang}>${targetLang}`]);
+    }
+  } catch (err) {
+    // Never let a stats write break a translation the user paid for.
+    console.error("activity tracking failed:", err.message);
+  }
+}
+
+// ---------------------------------------------------------------------
+// Admin sessions (api/admin.js)
+//
+// A single password in ADMIN_PASSWORD, exchanged for a short-lived
+// token held in Redis and sent back as an httpOnly cookie — so the
+// password itself is never stored in the browser or in a URL.
+// ---------------------------------------------------------------------
+const ADMIN_SESSION_TTL_SECONDS = 12 * 60 * 60; // 12 hours
+const ADMIN_COOKIE = "bc_admin";
+
+// Length-independent comparison so a wrong guess can't be timed.
+function safeEqual(a, b) {
+  const x = String(a || "");
+  const y = String(b || "");
+  let diff = x.length ^ y.length;
+  for (let i = 0; i < Math.max(x.length, y.length); i++) {
+    diff |= x.charCodeAt(i % (x.length || 1)) ^ y.charCodeAt(i % (y.length || 1));
+  }
+  return diff === 0;
+}
+
+async function createAdminSession() {
+  const token = randomToken();
+  await redis(["SETEX", `admin:${token}`, String(ADMIN_SESSION_TTL_SECONDS), String(Date.now())]);
+  return token;
+}
+
+async function adminSessionValid(token) {
+  if (!token || !/^[a-f0-9]{48}$/.test(token)) return false;
+  return Boolean(await redis(["GET", `admin:${token}`]));
+}
+
+function readCookie(req, name) {
+  const raw = (req.headers && req.headers.cookie) || "";
+  const hit = raw.split(";").map((s) => s.trim()).find((s) => s.indexOf(name + "=") === 0);
+  return hit ? decodeURIComponent(hit.slice(name.length + 1)) : null;
+}
+
+// ---------------------------------------------------------------------
+// Editable content (api/admin.js writes, api/content.js serves)
+//
+// The app ships with built-in defaults; these are sparse OVERRIDES laid
+// on top, so an empty store changes nothing and a bad edit can be
+// deleted rather than repaired.
+// ---------------------------------------------------------------------
+async function getOverrides() {
+  const raw = await redis(["GET", "cfg:overrides"]);
+  if (!raw) return { ui: {}, phrases: {}, packs: null };
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      ui: parsed.ui || {},
+      phrases: parsed.phrases || {},
+      packs: parsed.packs || null,
+      updatedAt: parsed.updatedAt || null,
+    };
+  } catch {
+    return { ui: {}, phrases: {}, packs: null };
+  }
+}
+
+async function saveOverrides(next) {
+  next.updatedAt = Date.now();
+  await redis(["SET", "cfg:overrides", JSON.stringify(next)]);
+}
+
 module.exports = {
   SESSION_TTL_SECONDS,
   WELCOME_DECIMINUTES,
@@ -81,4 +183,14 @@ module.exports = {
   saveUser,
   randomToken,
   paymentsEnabled,
+  dayKey,
+  recordActivity,
+  ADMIN_COOKIE,
+  ADMIN_SESSION_TTL_SECONDS,
+  safeEqual,
+  createAdminSession,
+  adminSessionValid,
+  readCookie,
+  getOverrides,
+  saveOverrides,
 };

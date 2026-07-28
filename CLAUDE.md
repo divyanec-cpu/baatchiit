@@ -10,6 +10,17 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
 - Deploy: Vercel → then pwabuilder.com wraps the live URL into an Android APK.
 - Demo mode was removed 2026-07-21 (user's call, after live mode was verified on-device). To check UI changes without an API key, use the phrase packs (fully offline) or a local static server; the live pipeline needs the deployed function.
 
+## State as of 2026-07-28 (sixth session): login works, app localized, usage visible
+
+- **Login verified end-to-end on-device.** The whole MSG91 saga is resolved — see the credentials section below, which is the single most useful thing in this file if auth ever breaks again.
+- **Back key** (`index.html`): every forward move pushes a history entry, every back path calls `history.back()`, and one `popstate` handler renders. Sheets are one entry above the screen they cover and are mutually exclusive; login screens are *replaced* so back never lands on the OTP screen while signed in; back on the setup screen exits the app (normal Android behaviour).
+- **In-app help**: 8 explanations shown as a 4-card first-run tour (`bc_tour_seen`) when the first conversation opens, and any time from the **?** button on the setup screen and the conversation strip.
+- **Localized to all 11 languages**: a native-script picker on the welcome screen (`bc_ui_lang`) drives *every* screen — welcome, OTP, setup, wallet, payment, success, conversation statuses, sheets. ~1,240 strings in `UI_STRINGS` in index.html, all Claude-authored: **a native check is still outstanding, Odia/Punjabi and the payment wording especially.** The choice also pre-selects that language as the host's speaking language. Data that used to hold English labels (phrase packs, top-up packs, payment methods) now holds translation keys.
+- **Mic labels**: "↑ Press and speak" under each mic in the chosen language, switching to tap wording when open-mic is on.
+- **Pair pill is editable**: tapping "Auto-detecting…" opens a Set-languages sheet (You speak / They speak + back-to-auto-detect). Picking marks that side `manual` so detection stops overriding it; the pill then reads e.g. "Tamil ⇄ Hindi".
+- **Language detection, for the record**: each side locks independently the first time *that side* speaks. Before anyone speaks there's no confirmed target, so the opening utterance now targets the owner's chosen UI language when the listener is the phone's owner; a stranger still defaults to English.
+- **Usage monitoring**: `api/stats.js` → `/api/stats?key=<STATS_KEY>` (env var; absent = endpoint disabled, wrong = 404). Plain-language dashboard + `&format=json`. Fed by `recordActivity()` in `_lib.js`: `user.lastSeen`, `user.exchanges`, `dau:<yyyymmdd>` sets (35-day TTL), `stats:exchanges` counter — two extra Redis writes per exchange, wrapped so a stats failure can never break a translation. Phones masked to last 4. **Tracking starts 2026-07-28**, so older accounts show blank until their next translation.
+
 ## State as of 2026-07-25 (fifth session): full redesign to the Claude Design handoff
 
 - **UI rebuilt to the design bundle** at `..\baatchiit-ai-translator-prototype\` (read its `project/Sarvam Translator.dc.html` for the reference): cream/saffron/gold/indigo palette, Baloo 2 + Manrope, seven screens — phone login → 4-digit OTP → "New conversation" setup (auto-detect card + manual chip picker) → split-screen chat FEED (bubbles, mine/theirs, secondary line in the other language, number chips) → wallet → payment → success. Guest half still rotated 180°.
@@ -39,9 +50,10 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
 
 ## Remaining roadmap
 
-- User setup for login (Upstash + MSG91 vars), then test the OTP flow on the deployed site.
-- Payments per PAYMENTS.md, starting with usage metering.
-- Regenerate the APK after any manifest change (not needed for pure code deploys — the TWA wraps the live URL).
+- **Native review of the UI translations** (~1,240 Claude-authored strings) before any real marketing push.
+- **Razorpay checkout** per PAYMENTS.md — metering, wallet and packs are live; only the order + verified webhook remain, blocked on Divya's KYC.
+- **Regenerate the APK** at pwabuilder.com — the manifest colours changed in the redesign, so the installed app's splash/theme are stale. Pure code deploys need no regeneration (the TWA wraps the live URL).
+- Rotate `MSG91_AUTH_KEY` and `STATS_KEY` when convenient — both passed through chat during setup.
 - Still untested: iPhone audio/mp4 path.
 
 ## Context

@@ -35,7 +35,7 @@
 
 const SARVAM_BASE = "https://api.sarvam.ai";
 
-const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser } = require("./_lib.js");
+const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser, recordActivity } = require("./_lib.js");
 
 // These 11 codes are the ones Sarvam's translation model (mayura:v1)
 // supports today, and every one of them also works with the
@@ -95,6 +95,9 @@ module.exports = async function handler(req, res) {
       return res.status(401).json({ error: "Please log in to translate.", code: "LOGIN_REQUIRED" });
     }
     user = await getUser(session.phone);
+    if (user && user.blocked) {
+      return res.status(403).json({ error: "This account has been paused. Please get in touch.", code: "ACCOUNT_BLOCKED" });
+    }
     if (!user || (user.deciminutes || 0) < DECIMINUTES_PER_EXCHANGE) {
       return res.status(402).json({ error: "You're out of minutes. Top up to keep translating.", code: "NO_MINUTES" });
     }
@@ -151,7 +154,10 @@ module.exports = async function handler(req, res) {
     let minutesLeft = null;
     if (user) {
       user.deciminutes = Math.max(0, (user.deciminutes || 0) - DECIMINUTES_PER_EXCHANGE);
+      user.lastSeen = Date.now();
+      user.exchanges = (user.exchanges || 0) + 1;
       await saveUser(user);
+      await recordActivity(user.phone, translation.sourceLangCode || detectedLang, targetLangCode);
       minutesLeft = Math.floor(user.deciminutes / 10);
     }
 
