@@ -97,7 +97,50 @@ signs in doesn't appear (there's no analytics script). `lastSeen` and
 per-user translation counts only exist from 2026-07-28 onward, so accounts
 that used the app before then show blank until their next translation.
 
-## Generate the APK
+## Rebuild the APK locally (Bubblewrap)
+
+The APK is a thin TWA wrapper around the live URL, so **code and text
+changes need no rebuild** — they arrive the next time the app opens. Only
+`manifest.json` changes (splash colours, icons, name) require a new APK.
+
+The rebuild must reuse `android-package/signing.keystore`, because Android
+only installs an update signed with the same key, and
+`/.well-known/assetlinks.json` pins that key's fingerprint. A fresh key
+means users must uninstall first and the address bar reappears.
+
+```bash
+cd android-build                       # generated project, gitignored
+export JAVA_HOME="C:/Program Files/Microsoft/jdk-17.0.19.10-hotspot"
+export ANDROID_HOME="C:/Users/MOBIUS/android-sdk"
+bubblewrap update --skipVersionUpgrade # re-reads twa-manifest.json
+```
+
+then build with Gradle from PowerShell (Bubblewrap's own `build` can't
+find `gradlew.bat` when it is launched from Git Bash):
+
+```bash
+.\gradlew.bat assembleRelease --no-daemon
+```
+
+and sign with the existing key (passwords are in
+`android-package/signing-key-info.txt`):
+
+```bash
+apksigner sign --ks android-package/signing.keystore --ks-key-alias baatchiit-key --out BaatChiit.ai.apk app/build/outputs/apk/release/app-release-unsigned.apk
+```
+
+Bump `appVersionCode` in `android-build/twa-manifest.json` for every
+release — Android refuses an update whose versionCode isn't higher.
+Afterwards **always** confirm the fingerprint still matches assetlinks:
+
+```bash
+keytool -printcert -jarfile BaatChiit.ai.apk
+```
+
+`android-build/` is gitignored: it is regenerated from
+`twa-manifest.json`, which is the file worth keeping.
+
+## Generate the APK (PWABuilder, the original route)
 
 1. With the Vercel deployment live, go to **pwabuilder.com**, paste your site URL.
 2. It validates the manifest/service worker (already included here) and generates an **Android package (APK/AAB)**.

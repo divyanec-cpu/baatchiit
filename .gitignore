@@ -8,3 +8,5 @@ node_modules/
 baatchiit-android.zip
 android-package/
 *.keystore
+# Generated TWA project — rebuilt from twa-manifest.json, see README
+android-build/
