@@ -97,6 +97,30 @@ signs in doesn't appear (there's no analytics script). `lastSeen` and
 per-user translation counts only exist from 2026-07-28 onward, so accounts
 that used the app before then show blank until their next translation.
 
+## How people get the app
+
+Share **baatchiit.vercel.app** — that's the whole distribution story for
+most users. Three routes, in the order to recommend them:
+
+1. **Just use it in the browser.** Nothing to install; works on any phone.
+2. **Install it from the browser.** The welcome screen shows an *Install
+   app* button whenever Chrome offers installation (it appears only when
+   the browser can actually do it, and vanishes once installed). Result
+   is a home-screen icon, fullscreen, own splash — and it keeps updating
+   itself on every deploy.
+3. **Download the APK** from **baatchiit.vercel.app/download**, which
+   also explains routes 1 and 2 in plain language. The APK is served with
+   the right content-type so Android treats it as an installable package.
+   It does **not** self-update: every rebuild has to be redistributed by
+   hand, which is why the page steers people to the browser routes first.
+
+Play Store is not set up. `android-package/BaatChiit.ai.aab` is signed
+and ready to upload, but publishing needs a Play developer account ($25,
+identity verification), a privacy-policy URL, and a data-safety
+declaration covering the phone number and the voice audio. Note that
+personal accounts opened since late 2023 must run a 14-day closed test
+with 12 testers before production access — a company account avoids that.
+
 ## Rebuild the APK locally (Bubblewrap)
 
 The APK is a thin TWA wrapper around the live URL, so **code and text

@@ -124,6 +124,21 @@
     font-family: var(--font-script);
   }
   .ui-lang-chip[aria-pressed="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+
+  /* Install prompt — quiet, below the primary action, since the app
+     works perfectly well in the browser without it. */
+  .install-btn {
+    display: inline-flex; align-items: center; gap: 7px;
+    margin-top: 2px;
+    padding: 9px 16px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 13px; font-weight: 700;
+  }
+  .install-btn:active { background: var(--sand); }
+  .install-btn[hidden] { display: none; }
   .phone-row {
     display: flex; align-items: center; gap: 8px;
     background: var(--card);
@@ -583,6 +598,13 @@
       </div>
       <button class="btn-primary" id="btn-send-otp" disabled>Send OTP</button>
       <p class="field-error" id="phone-error" aria-live="polite"></p>
+      <!-- Only shown when the browser actually offers installation; on
+           an already-installed app or an unsupported browser it stays
+           hidden rather than promising something that won't happen. -->
+      <button class="install-btn" id="btn-install" hidden>
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+        <span id="t-install">Install app</span>
+      </button>
     </div>
   </section>
 
@@ -882,6 +904,8 @@
       otpError: "Enter the 6-digit OTP from the SMS.",
       helpTitle: "How it works", close: "Close",
       micHold: "Press and speak", micTap: "Tap to speak",
+      installApp: "Install app",
+      installed: "Installed — open it from your home screen",
       setupTitle: "New conversation",
       setupSub: "Two people, one phone. Just start talking — no setup.",
       autoOn: "Auto-detect is on",
@@ -959,6 +983,8 @@
       otpError: "SMS में आया 6 अंकों का OTP डालें।",
       helpTitle: "कैसे चलता है?", close: "बंद करें",
       micHold: "दबाकर बोलें", micTap: "एक बार दबाएँ",
+      installApp: "ऐप इंस्टॉल करें",
+      installed: "इंस्टॉल हो गया — होम स्क्रीन से खोलें",
       setupTitle: "नई बातचीत",
       setupSub: "दो लोग, एक फ़ोन। बस बोलना शुरू करें — कुछ सेट नहीं करना।",
       autoOn: "भाषा अपने आप पहचानी जाएगी",
@@ -1036,6 +1062,8 @@
       otpError: "SMS-এ আসা ৬ সংখ্যার OTP দিন।",
       helpTitle: "কীভাবে কাজ করে?", close: "বন্ধ করুন",
       micHold: "চেপে ধরে বলুন", micTap: "একবার চাপুন",
+      installApp: "অ্যাপ ইনস্টল করুন",
+      installed: "ইনস্টল হয়েছে — হোম স্ক্রিন থেকে খুলুন",
       setupTitle: "নতুন কথোপকথন",
       setupSub: "দুজন, একটি ফোন। শুধু বলা শুরু করুন — কিছু সেট করতে হবে না।",
       autoOn: "ভাষা নিজে থেকেই শনাক্ত হবে",
@@ -1113,6 +1141,8 @@
       otpError: "SMS માં આવેલો 6 અંકનો OTP નાખો.",
       helpTitle: "કેવી રીતે ચાલે છે?", close: "બંધ કરો",
       micHold: "દબાવીને બોલો", micTap: "એક વાર દબાવો",
+      installApp: "એપ ઇન્સ્ટોલ કરો",
+      installed: "ઇન્સ્ટોલ થયું — હોમ સ્ક્રીનથી ખોલો",
       setupTitle: "નવી વાતચીત",
       setupSub: "બે વ્યક્તિ, એક ફોન. બસ બોલવાનું શરૂ કરો — કંઈ સેટ કરવાનું નથી.",
       autoOn: "ભાષા આપોઆપ ઓળખાશે",
@@ -1190,6 +1220,8 @@
       otpError: "SMS ನಲ್ಲಿ ಬಂದ 6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ.",
       helpTitle: "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", close: "ಮುಚ್ಚಿ",
       micHold: "ಒತ್ತಿ ಮಾತನಾಡಿ", micTap: "ಒಮ್ಮೆ ಒತ್ತಿ",
+      installApp: "ಆ್ಯಪ್ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ",
+      installed: "ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿದೆ — ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ ತೆರೆಯಿರಿ",
       setupTitle: "ಹೊಸ ಸಂಭಾಷಣೆ",
       setupSub: "ಇಬ್ಬರು, ಒಂದು ಫೋನ್. ಸುಮ್ಮನೆ ಮಾತು ಶುರು ಮಾಡಿ — ಏನೂ ಸಿದ್ಧಪಡಿಸಬೇಕಿಲ್ಲ.",
       autoOn: "ಭಾಷೆ ತಾನಾಗಿ ಗುರುತಿಸಲ್ಪಡುತ್ತದೆ",
@@ -1267,6 +1299,8 @@
       otpError: "SMS-ൽ വന്ന 6 അക്ക OTP നൽകൂ.",
       helpTitle: "എങ്ങനെ പ്രവർത്തിക്കുന്നു?", close: "അടയ്ക്കൂ",
       micHold: "അമർത്തി സംസാരിക്കൂ", micTap: "ഒരിക്കൽ അമർത്തൂ",
+      installApp: "ആപ്പ് ഇൻസ്റ്റാൾ ചെയ്യൂ",
+      installed: "ഇൻസ്റ്റാൾ ആയി — ഹോം സ്ക്രീനിൽ നിന്ന് തുറക്കൂ",
       setupTitle: "പുതിയ സംഭാഷണം",
       setupSub: "രണ്ടു പേർ, ഒരു ഫോൺ. സംസാരിച്ചു തുടങ്ങൂ — ഒന്നും സെറ്റ് ചെയ്യേണ്ട.",
       autoOn: "ഭാഷ തനിയെ തിരിച്ചറിയും",
@@ -1344,6 +1378,8 @@
       otpError: "SMS मध्ये आलेला 6 अंकी OTP टाका.",
       helpTitle: "कसे चालते?", close: "बंद करा",
       micHold: "दाबून बोला", micTap: "एकदा दाबा",
+      installApp: "अ‍ॅप इन्स्टॉल करा",
+      installed: "इन्स्टॉल झालं — होम स्क्रीनवरून उघडा",
       setupTitle: "नवीन संवाद",
       setupSub: "दोन माणसं, एक फोन. फक्त बोलायला सुरुवात करा — काही सेट करायचं नाही.",
       autoOn: "भाषा आपोआप ओळखली जाईल",
@@ -1421,6 +1457,8 @@
       otpError: "SMS ରେ ଆସିଥିବା 6 ଅଙ୍କର OTP ଦିଅନ୍ତୁ।",
       helpTitle: "କିପରି କାମ କରେ?", close: "ବନ୍ଦ କରନ୍ତୁ",
       micHold: "ଦବାଇ କୁହନ୍ତୁ", micTap: "ଥରେ ଦବାନ୍ତୁ",
+      installApp: "ଆପ୍ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ",
+      installed: "ଇନଷ୍ଟଲ୍ ହୋଇଛି — ହୋମ୍ ସ୍କ୍ରିନରୁ ଖୋଲନ୍ତୁ",
       setupTitle: "ନୂଆ କଥାବାର୍ତ୍ତା",
       setupSub: "ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍। କେବଳ କହିବା ଆରମ୍ଭ କରନ୍ତୁ — କିଛି ସେଟ୍ କରିବାକୁ ନାହିଁ।",
       autoOn: "ଭାଷା ନିଜେ ଚିହ୍ନଟ ହେବ",
@@ -1498,6 +1536,8 @@
       otpError: "SMS ਵਿੱਚ ਆਇਆ 6 ਅੰਕਾਂ ਦਾ OTP ਭਰੋ।",
       helpTitle: "ਕਿਵੇਂ ਚੱਲਦਾ ਹੈ?", close: "ਬੰਦ ਕਰੋ",
       micHold: "ਦਬਾ ਕੇ ਬੋਲੋ", micTap: "ਇੱਕ ਵਾਰ ਦਬਾਓ",
+      installApp: "ਐਪ ਇੰਸਟਾਲ ਕਰੋ",
+      installed: "ਇੰਸਟਾਲ ਹੋ ਗਿਆ — ਹੋਮ ਸਕਰੀਨ ਤੋਂ ਖੋਲ੍ਹੋ",
       setupTitle: "ਨਵੀਂ ਗੱਲਬਾਤ",
       setupSub: "ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ। ਬੱਸ ਬੋਲਣਾ ਸ਼ੁਰੂ ਕਰੋ — ਕੁਝ ਸੈੱਟ ਨਹੀਂ ਕਰਨਾ।",
       autoOn: "ਭਾਸ਼ਾ ਆਪੇ ਪਛਾਣੀ ਜਾਵੇਗੀ",
@@ -1575,6 +1615,8 @@
       otpError: "SMS-ல் வந்த 6 இலக்க OTP-யை உள்ளிடுங்கள்.",
       helpTitle: "எப்படி வேலை செய்கிறது?", close: "மூடு",
       micHold: "அழுத்திப் பேசுங்கள்", micTap: "ஒரு முறை தட்டவும்",
+      installApp: "ஆப்பை நிறுவுங்கள்",
+      installed: "நிறுவப்பட்டது — முகப்புத் திரையிலிருந்து திறக்கவும்",
       setupTitle: "புதிய உரையாடல்",
       setupSub: "இருவர், ஒரு ஃபோன். பேசத் தொடங்குங்கள் — எதுவும் அமைக்க வேண்டாம்.",
       autoOn: "மொழி தானாகவே கண்டறியப்படும்",
@@ -1652,6 +1694,8 @@
       otpError: "SMS లో వచ్చిన 6 అంకెల OTP ఇవ్వండి.",
       helpTitle: "ఎలా పనిచేస్తుంది?", close: "మూసివేయండి",
       micHold: "నొక్కి మాట్లాడండి", micTap: "ఒకసారి నొక్కండి",
+      installApp: "యాప్ ఇన్‌స్టాల్ చేయండి",
+      installed: "ఇన్‌స్టాల్ అయ్యింది — హోమ్ స్క్రీన్ నుండి తెరవండి",
       setupTitle: "కొత్త సంభాషణ",
       setupSub: "ఇద్దరు, ఒక ఫోన్. మాట్లాడటం మొదలుపెట్టండి — ఏమీ సెట్ చేయనవసరం లేదు.",
       autoOn: "భాష దానంతట అదే గుర్తించబడుతుంది",
@@ -2392,6 +2436,7 @@
     $("t-sent-to").textContent = t("sentTo");
     $("btn-verify-otp").textContent = t("verify");
     $("btn-change-phone").textContent = t("changeNumber");
+    $("t-install").textContent = t("installApp");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
     $("tour-skip").textContent = t("tourSkip");
@@ -2845,6 +2890,39 @@
   // -----------------------------------------------------------------
   // Init
   // -----------------------------------------------------------------
+  // -----------------------------------------------------------------
+  // Install prompt. Chrome fires beforeinstallprompt only when the app
+  // is installable and not already installed, so the button appears
+  // exactly when it can do something — no dead "Install" that opens
+  // instructions. iOS Safari never fires it and has no API, so nothing
+  // is shown there rather than a misleading button.
+  // -----------------------------------------------------------------
+  var deferredInstall = null;
+
+  window.addEventListener("beforeinstallprompt", function (e) {
+    e.preventDefault();          // keep Chrome's own mini-bar from taking over
+    deferredInstall = e;
+    $("btn-install").hidden = false;
+  });
+
+  $("btn-install").addEventListener("click", function () {
+    if (!deferredInstall) return;
+    var prompt = deferredInstall;
+    deferredInstall = null;       // a prompt can only be used once
+    $("btn-install").hidden = true;
+    prompt.prompt();
+    prompt.userChoice.then(function (choice) {
+      // Dismissed? Offer it again next visit rather than nagging now.
+      if (choice.outcome !== "accepted") $("btn-install").hidden = false;
+    }).catch(function () { $("btn-install").hidden = false; });
+  });
+
+  window.addEventListener("appinstalled", function () {
+    deferredInstall = null;
+    $("btn-install").hidden = true;
+    toast(t("installed"));
+  });
+
   // -----------------------------------------------------------------
   // Content overrides: wording, phrases and pack prices edited in the
   // admin panel arrive here and sit on top of the built-in text. Any
