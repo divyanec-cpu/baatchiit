@@ -333,6 +333,9 @@
     text-overflow: ellipsis;
   }
   .pair-pill[data-waiting="true"] { color: var(--saffron-dk); }
+  /* A caret marks the pill as tappable — it opens the language picker. */
+  .pair-pill::after { content: " ▾"; opacity: 0.55; font-size: 11px; }
+  .pair-pill:active { background: #E8DCC8; }
 
   /* ============== SHEETS (history right, phrases bottom) ============== */
   .sheet-backdrop {
@@ -599,19 +602,19 @@
   <!-- ============== SCREEN: SETUP ("New conversation") ============== -->
   <section class="screen" id="screen-setup">
     <div class="setup-head">
-      <div class="title">New conversation</div>
+      <div class="title" id="t-setup-title">New conversation</div>
       <div class="strip-side" style="gap:8px;">
         <button class="icon-btn" id="btn-help-1" aria-label="Help">?</button>
         <button class="icon-btn" id="btn-wallet-1" style="color:var(--saffron);" aria-label="Wallet">₹</button>
       </div>
     </div>
-    <div class="setup-sub">Two people, one phone. Just start talking — no setup.</div>
+    <div class="setup-sub" id="t-setup-sub">Two people, one phone. Just start talking — no setup.</div>
 
     <div class="setup-scroll">
       <div class="detect-card">
-        <div class="head"><span class="dot"></span>Auto-detect is on</div>
-        <div class="copy">Bolna shuru karo — BaatChiit sunta hai, language khud pehchaan leta hai. Both sides get set the moment each person speaks.</div>
-        <span class="badge">All languages supported</span>
+        <div class="head"><span class="dot"></span><span id="t-auto-on">Auto-detect is on</span></div>
+        <div class="copy" id="t-auto-copy">Start talking — BaatChiit listens and works out each language by itself.</div>
+        <span class="badge" id="t-auto-badge">All languages supported</span>
       </div>
 
       <div style="padding:0 20px;">
@@ -620,11 +623,11 @@
 
       <div class="manual-wrap" id="manual-wrap" hidden>
         <div>
-          <div class="chip-group-label">YOU SPEAK — POPULAR PICKS</div>
+          <div class="chip-group-label" id="t-you-speak">YOU SPEAK</div>
           <div class="chip-row" data-side="host" id="host-chips"></div>
         </div>
         <div>
-          <div class="chip-group-label">THEY SPEAK — POPULAR PICKS</div>
+          <div class="chip-group-label" id="t-they-speak">THEY SPEAK</div>
           <div class="chip-row" data-side="guest" id="guest-chips"></div>
         </div>
         <p class="field-error" id="same-lang-error"></p>
@@ -632,8 +635,8 @@
 
       <div class="setting-row">
         <div>
-          <div class="lbl">Open mic (hands-free)</div>
-          <div class="sub">Tap once to talk — recording stops by itself when you pause.</div>
+          <div class="lbl" id="t-openmic-lbl">Open mic (hands-free)</div>
+          <div class="sub" id="t-openmic-sub">Tap once to talk — recording stops by itself when you pause.</div>
         </div>
         <button class="switch" id="openmic-switch" role="switch" aria-pressed="false" aria-label="Open mic"></button>
       </div>
@@ -667,7 +670,7 @@
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.4 8.4 0 0 1-9 8.4 8.9 8.9 0 0 1-3.9-.9L3 20l1-4.9a8.3 8.3 0 0 1-1-4A8.4 8.4 0 0 1 12 3a8.4 8.4 0 0 1 9 8.5Z"/></svg>
         </button>
       </div>
-      <div class="pair-pill" id="pair-pill" data-waiting="true">Auto-detecting…</div>
+      <button class="pair-pill" id="pair-pill" data-waiting="true" aria-label="Set languages">Auto-detecting…</button>
       <div class="strip-side">
         <button class="icon-btn" id="btn-wallet-2" style="color:var(--saffron-dk);" aria-label="Wallet">₹</button>
         <button class="icon-btn" id="btn-history" aria-label="History">
@@ -696,14 +699,14 @@
   <section class="screen" id="screen-wallet">
     <div class="page-head">
       <button class="back-btn" id="btn-wallet-back" aria-label="Back">←</button>
-      <div class="title">Wallet</div>
+      <div class="title" id="t-wallet-title">Wallet</div>
     </div>
     <div class="balance-card">
-      <div class="lbl">MINUTES REMAINING</div>
-      <div class="amount"><span id="wallet-balance">–</span> min</div>
+      <div class="lbl" id="t-minutes-remaining">MINUTES REMAINING</div>
+      <div class="amount"><span id="wallet-balance">–</span> <span id="t-min-unit">min</span></div>
       <div class="low" id="wallet-low" hidden>Running low — top up before your next chat</div>
     </div>
-    <div class="info-card">Live translation uses ~1 minute per 10 exchanges. Buy a pack any time — minutes never expire.</div>
+    <div class="info-card" id="t-wallet-info">Live translation uses about 1 minute per 10 exchanges. Buy a pack any time — minutes never expire.</div>
     <div style="flex:1;"></div>
     <div style="padding:20px;display:flex;flex-direction:column;">
       <button class="btn-primary" id="btn-topup" style="padding:16px;">Buy more minutes</button>
@@ -715,19 +718,19 @@
   <section class="screen" id="screen-payment">
     <div class="page-head">
       <button class="back-btn" id="btn-payment-back" aria-label="Back">←</button>
-      <div class="title">Top up minutes</div>
+      <div class="title" id="t-pay-title">Top up minutes</div>
     </div>
     <div class="packs-scroll">
       <div id="pack-list" style="display:flex;flex-direction:column;gap:10px;"></div>
       <div style="margin-top:10px;">
-        <div class="chip-group-label">PAY WITH</div>
+        <div class="chip-group-label" id="t-pay-with">PAY WITH</div>
         <div class="method-chips" id="method-chips"></div>
       </div>
     </div>
     <div class="pay-foot">
-      <div class="secure-note">🔒 Secured checkout via Razorpay</div>
-      <div class="secure-note" id="payments-soon" hidden>Payments are launching soon — packs shown are a preview.</div>
-      <button class="btn-primary" id="btn-pay" style="padding:16px;">Pay ₹<span id="pay-price">249</span></button>
+      <div class="secure-note">🔒 <span id="t-secure-note">Secured checkout via Razorpay</span></div>
+      <div class="secure-note" id="payments-soon" hidden></div>
+      <button class="btn-primary" id="btn-pay" style="padding:16px;"><span id="t-pay-word">Pay</span> ₹<span id="pay-price">249</span></button>
     </div>
   </section>
 
@@ -737,7 +740,7 @@
       <div class="success-tick">
         <svg width="32" height="32" viewBox="0 0 24 24" fill="none"><path d="M5 12l5 5L19 7" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
-      <div class="h-display" style="font-size:20px;">Payment successful</div>
+      <div class="h-display" id="t-pay-success" style="font-size:20px;">Payment successful</div>
       <p class="otp-sub" id="success-detail"></p>
       <button class="btn-primary" id="btn-success-back" style="margin-top:8px;">Back to conversation</button>
     </div>
@@ -749,8 +752,25 @@
 <div class="sheet-backdrop" id="sheet-backdrop"></div>
 
 <div class="history-sheet" id="history-sheet" role="dialog" aria-label="History">
-  <h2>History</h2>
+  <h2 id="t-history-title">History</h2>
   <div id="history-list"></div>
+</div>
+
+<!-- Language pair: tapping the pill mid-conversation overrides a wrong
+     auto-detect guess without leaving the conversation. -->
+<div class="phrases-sheet" id="langpair-sheet" role="dialog" aria-label="Set languages">
+  <div class="phrases-head">
+    <h2 id="t-setlangs-title">Set languages</h2>
+    <button class="link-btn" id="btn-close-langpair">Close</button>
+  </div>
+  <p class="phrase-hint" id="t-pair-hint">Tap the pill any time to fix a wrong guess.</p>
+  <div class="phrases-list">
+    <div class="chip-group-label" id="t-pair-you">YOU SPEAK</div>
+    <div class="chip-row" data-side="host" id="pair-host-chips" style="margin-bottom:14px;"></div>
+    <div class="chip-group-label" id="t-pair-they">THEY SPEAK</div>
+    <div class="chip-row" data-side="guest" id="pair-guest-chips"></div>
+    <button class="link-btn" id="btn-pair-auto" style="margin-top:16px;align-self:flex-start;">Back to auto-detect</button>
+  </div>
 </div>
 
 <!-- Help sheet: same explanations as the first-run tour, always reachable -->
@@ -778,11 +798,11 @@
 
 <div class="phrases-sheet" id="phrases-sheet" role="dialog" aria-label="Phrase packs">
   <div class="phrases-head">
-    <h2>Phrases</h2>
+    <h2 id="t-phrases-title">Phrases</h2>
     <button class="link-btn" id="btn-close-phrases">Close</button>
   </div>
   <div class="pack-tabs" id="pack-tabs" role="tablist"></div>
-  <p class="phrase-hint">Tap a phrase — each side of the screen shows it in that side's language. Works offline.</p>
+  <p class="phrase-hint" id="t-phrases-hint">Tap a phrase — each side of the screen shows it in that side's language. Works offline.</p>
   <div class="phrases-list" id="phrases-list"></div>
 </div>
 
@@ -823,20 +843,20 @@
   // each in that side's current language.
   // -----------------------------------------------------------------
   var PHRASE_PACKS = [
-    { name: "Greetings", phrases: [
+    { key: "packGreetings", phrases: [
       { "en-IN": "Hello", "hi-IN": "नमस्ते", "bn-IN": "নমস্কার", "gu-IN": "નમસ્તે", "kn-IN": "ನಮಸ್ಕಾರ", "ml-IN": "നമസ്കാരം", "mr-IN": "नमस्कार", "od-IN": "ନମସ୍କାର", "pa-IN": "ਸਤ ਸ੍ਰੀ ਅਕਾਲ", "ta-IN": "வணக்கம்", "te-IN": "నమస్కారం" },
       { "en-IN": "Thank you", "hi-IN": "धन्यवाद", "bn-IN": "ধন্যবাদ", "gu-IN": "આભાર", "kn-IN": "ಧನ್ಯವಾದಗಳು", "ml-IN": "നന്ദി", "mr-IN": "धन्यवाद", "od-IN": "ଧନ୍ୟବାଦ", "pa-IN": "ਧੰਨਵਾਦ", "ta-IN": "நன்றி", "te-IN": "ధన్యవాదాలు" },
       { "en-IN": "Okay", "hi-IN": "ठीक है", "bn-IN": "ঠিক আছে", "gu-IN": "બરાબર", "kn-IN": "ಸರಿ", "ml-IN": "ശരി", "mr-IN": "ठीक आहे", "od-IN": "ଠିକ୍ ଅଛି", "pa-IN": "ਠੀਕ ਹੈ", "ta-IN": "சரி", "te-IN": "సరే" },
       { "en-IN": "See you again", "hi-IN": "फिर मिलेंगे", "bn-IN": "আবার দেখা হবে", "gu-IN": "આવજો", "kn-IN": "ಮತ್ತೆ ಸಿಗೋಣ", "ml-IN": "പിന്നെ കാണാം", "mr-IN": "पुन्हा भेटू", "od-IN": "ପୁଣି ଦେଖା ହେବ", "pa-IN": "ਫਿਰ ਮਿਲਾਂਗੇ", "ta-IN": "மீண்டும் சந்திப்போம்", "te-IN": "మళ్ళీ కలుద్దాం" }
     ]},
-    { name: "Bargaining", phrases: [
+    { key: "packBargaining", phrases: [
       { "en-IN": "How much is this?", "hi-IN": "यह कितने का है?", "bn-IN": "এটার দাম কত?", "gu-IN": "આ કેટલાનું છે?", "kn-IN": "ಇದು ಎಷ್ಟು?", "ml-IN": "ഇതിന് എത്രയാണ്?", "mr-IN": "हे किती रुपयांचे आहे?", "od-IN": "ଏହା କେତେ ଟଙ୍କା?", "pa-IN": "ਇਹ ਕਿੰਨੇ ਦਾ ਹੈ?", "ta-IN": "இது எவ்வளவு?", "te-IN": "ఇది ఎంత?" },
       { "en-IN": "That's too expensive", "hi-IN": "यह बहुत महंगा है।", "bn-IN": "এটা খুব দামি।", "gu-IN": "આ બહુ મોંઘું છે.", "kn-IN": "ಇದು ತುಂಬಾ ದುಬಾರಿ.", "ml-IN": "ഇത് വളരെ വിലകൂടുതലാണ്.", "mr-IN": "हे खूप महाग आहे.", "od-IN": "ଏହା ବହୁତ ମହଙ୍ଗା।", "pa-IN": "ਇਹ ਬਹੁਤ ਮਹਿੰਗਾ ਹੈ।", "ta-IN": "இது ரொம்ப விலை அதிகம்.", "te-IN": "ఇది చాలా ఖరీదు." },
       { "en-IN": "Please lower the price a little", "hi-IN": "थोड़ा कम कर दीजिए।", "bn-IN": "একটু কম করুন।", "gu-IN": "થોડું ઓછું કરો.", "kn-IN": "ಸ್ವಲ್ಪ ಕಡಿಮೆ ಮಾಡಿ.", "ml-IN": "കുറച്ച് കുറയ്ക്കാമോ?", "mr-IN": "थोडे कमी करा.", "od-IN": "ଟିକେ କମ୍ କରନ୍ତୁ।", "pa-IN": "ਥੋੜ੍ਹਾ ਘੱਟ ਕਰ ਦਿਓ।", "ta-IN": "கொஞ்சம் குறைத்துக் கொடுங்கள்.", "te-IN": "కొంచెం తగ్గించండి." },
       { "en-IN": "What's your final price?", "hi-IN": "आख़िरी दाम क्या होगा?", "bn-IN": "শেষ দাম কত হবে?", "gu-IN": "છેલ્લો ભાવ શું થશે?", "kn-IN": "ಕೊನೆಯ ಬೆಲೆ ಎಷ್ಟು?", "ml-IN": "അവസാന വില എത്ര?", "mr-IN": "शेवटची किंमत किती?", "od-IN": "ଶେଷ ଦାମ କେତେ?", "pa-IN": "ਆਖਰੀ ਭਾਅ ਕੀ ਹੋਵੇਗਾ?", "ta-IN": "கடைசி விலை என்ன?", "te-IN": "చివరి ధర ఎంత?" },
       { "en-IN": "Okay, I'll take it", "hi-IN": "ठीक है, दे दीजिए।", "bn-IN": "ঠিক আছে, দিন।", "gu-IN": "બરાબર, આપી દો.", "kn-IN": "ಸರಿ, ಕೊಡಿ.", "ml-IN": "ശരി, തരൂ.", "mr-IN": "ठीक आहे, द्या.", "od-IN": "ଠିକ୍ ଅଛି, ଦିଅନ୍ତୁ।", "pa-IN": "ਠੀਕ ਹੈ, ਦੇ ਦਿਓ।", "ta-IN": "சரி, கொடுங்கள்.", "te-IN": "సరే, ఇవ్వండి." }
     ]},
-    { name: "Help", phrases: [
+    { key: "packHelp", phrases: [
       { "en-IN": "I need help", "hi-IN": "मुझे मदद चाहिए।", "bn-IN": "আমার সাহায্য দরকার।", "gu-IN": "મને મદદ જોઈએ છે.", "kn-IN": "ನನಗೆ ಸಹಾಯ ಬೇಕು.", "ml-IN": "എനിക്ക് സഹായം വേണം.", "mr-IN": "मला मदत हवी आहे.", "od-IN": "ମୋତେ ସାହାଯ୍ୟ ଦରକାର।", "pa-IN": "ਮੈਨੂੰ ਮਦਦ ਚਾਹੀਦੀ ਹੈ।", "ta-IN": "எனக்கு உதவி வேண்டும்.", "te-IN": "నాకు సహాయం కావాలి." },
       { "en-IN": "Please call a doctor", "hi-IN": "कृपया डॉक्टर को बुलाइए।", "bn-IN": "দয়া করে ডাক্তার ডাকুন।", "gu-IN": "મહેરબાની કરીને ડૉક્ટરને બોલાવો.", "kn-IN": "ದಯವಿಟ್ಟು ವೈದ್ಯರನ್ನು ಕರೆಯಿರಿ.", "ml-IN": "ദയവായി ഡോക്ടറെ വിളിക്കൂ.", "mr-IN": "कृपया डॉक्टरांना बोलवा.", "od-IN": "ଦୟାକରି ଡାକ୍ତରଙ୍କୁ ଡାକନ୍ତୁ।", "pa-IN": "ਕਿਰਪਾ ਕਰਕੇ ਡਾਕਟਰ ਨੂੰ ਬੁਲਾਓ।", "ta-IN": "தயவுசெய்து டாக்டரை கூப்பிடுங்கள்.", "te-IN": "దయచేసి డాక్టర్‌ని పిలవండి." },
       { "en-IN": "Where is the toilet?", "hi-IN": "शौचालय कहाँ है?", "bn-IN": "টয়লেট কোথায়?", "gu-IN": "શૌચાલય ક્યાં છે?", "kn-IN": "ಶೌಚಾಲಯ ಎಲ್ಲಿದೆ?", "ml-IN": "ടോയ്‌ലറ്റ് എവിടെയാണ്?", "mr-IN": "स्वच्छतागृह कुठे आहे?", "od-IN": "ଶୌଚାଳୟ କେଉଁଠି ଅଛି?", "pa-IN": "ਪਖਾਨਾ ਕਿੱਥੇ ਹੈ?", "ta-IN": "கழிவறை எங்கே இருக்கிறது?", "te-IN": "టాయిలెట్ ఎక్కడ ఉంది?" },
@@ -862,6 +882,62 @@
       otpError: "Enter the 6-digit OTP from the SMS.",
       helpTitle: "How it works", close: "Close",
       micHold: "Press and speak", micTap: "Tap to speak",
+      setupTitle: "New conversation",
+      setupSub: "Two people, one phone. Just start talking — no setup.",
+      autoOn: "Auto-detect is on",
+      autoCopy: "Start talking — BaatChiit listens and works out each language by itself. Both sides are set the moment each person speaks.",
+      autoBadge: "All languages supported",
+      manualOpen: "Set languages manually",
+      manualClose: "Use auto-detect instead",
+      youSpeak: "YOU SPEAK",
+      theySpeak: "THEY SPEAK",
+      sameLang: "Pick two different languages",
+      openMicLbl: "Open mic (hands-free)",
+      openMicSub: "Tap once to talk — recording stops by itself when you pause.",
+      startAuto: "Start listening →",
+      startManual: "Start conversation →",
+      walletTitle: "Wallet",
+      minutesRemaining: "MINUTES REMAINING",
+      minUnit: "min",
+      lowBalance: "Running low — top up before your next chat",
+      walletInfo: "Live translation uses about 1 minute per 10 exchanges. Buy a pack any time — minutes never expire.",
+      buyMinutes: "Buy more minutes",
+      logout: "Log out",
+      payTitle: "Top up minutes",
+      packStarter: "Starter",
+      packPopular: "Most popular",
+      packValue: "Best value",
+      popularTag: "POPULAR",
+      payWith: "PAY WITH",
+      methodCard: "Card",
+      methodNet: "Netbanking",
+      secureNote: "Secured checkout via Razorpay",
+      paySoon: "Payments are launching soon — these packs are a preview.",
+      payBtn: "Pay",
+      paySuccess: "Payment successful",
+      successDetail: "{m} minutes added · ₹{p} paid",
+      backToChat: "Back to conversation",
+      detecting: "Listening — detecting language…",
+      autoDetecting: "Auto-detecting…",
+      listening: "Listening…",
+      listeningTap: "Listening — tap again to stop",
+      translating: "Translating…",
+      holdLonger: "Hold the mic while you speak",
+      micDenied: "Couldn't use the microphone. Check the app's mic permission.",
+      noSpeech: "Didn't catch that — try again, a little longer.",
+      lowMinsNotice: "Only {n} min left — top up in the wallet (₹)",
+      historyTitle: "History",
+      historyEmpty: "No conversations yet. They're saved on this phone only.",
+      exchangesWord: "exchanges",
+      phrasesTitle: "Phrases",
+      phrasesHint: "Tap a phrase — each side shows it in that side's language. Works offline.",
+      packGreetings: "Greetings",
+      packBargaining: "Bargaining",
+      packHelp: "Help",
+      setLangs: "Set languages",
+      pairHint: "Tap the pill any time to fix a wrong guess.",
+      backToAuto: "Back to auto-detect",
+      langsUpdated: "Languages updated",
       tourNext: "Next", tourStart: "Start", tourSkip: "Not now",
       help: [
         ["Two people, one phone", "The screen is split in two. The top half is upside down on purpose — put the phone between you and both sides read straight."],
@@ -883,6 +959,62 @@
       otpError: "SMS में आया 6 अंकों का OTP डालें।",
       helpTitle: "कैसे चलता है?", close: "बंद करें",
       micHold: "दबाकर बोलें", micTap: "एक बार दबाएँ",
+      setupTitle: "नई बातचीत",
+      setupSub: "दो लोग, एक फ़ोन। बस बोलना शुरू करें — कुछ सेट नहीं करना।",
+      autoOn: "भाषा अपने आप पहचानी जाएगी",
+      autoCopy: "बस बोलना शुरू करें — BaatChiit सुनकर हर तरफ़ की भाषा खुद पहचान लेता है। दोनों तरफ़ पहली बार बोलते ही सेट हो जाती है।",
+      autoBadge: "सभी भाषाएँ उपलब्ध",
+      manualOpen: "भाषाएँ खुद चुनें",
+      manualClose: "अपने आप पहचानने दें",
+      youSpeak: "आप बोलते हैं",
+      theySpeak: "वे बोलते हैं",
+      sameLang: "दो अलग भाषाएँ चुनें",
+      openMicLbl: "ओपन माइक (हाथ खाली)",
+      openMicSub: "एक बार दबाएँ और बोलें — रुकते ही रिकॉर्डिंग अपने आप बंद।",
+      startAuto: "सुनना शुरू करें →",
+      startManual: "बातचीत शुरू करें →",
+      walletTitle: "वॉलेट",
+      minutesRemaining: "बचे हुए मिनट",
+      minUnit: "मिनट",
+      lowBalance: "मिनट कम हैं — अगली बातचीत से पहले टॉप-अप करें",
+      walletInfo: "लगभग 10 बातों पर 1 मिनट लगता है। कभी भी पैक लें — मिनट कभी ख़त्म नहीं होते।",
+      buyMinutes: "और मिनट खरीदें",
+      logout: "लॉग आउट",
+      payTitle: "मिनट टॉप-अप करें",
+      packStarter: "शुरुआती",
+      packPopular: "सबसे लोकप्रिय",
+      packValue: "सबसे किफ़ायती",
+      popularTag: "लोकप्रिय",
+      payWith: "भुगतान का तरीका",
+      methodCard: "कार्ड",
+      methodNet: "नेटबैंकिंग",
+      secureNote: "Razorpay से सुरक्षित भुगतान",
+      paySoon: "भुगतान जल्द शुरू होगा — ये पैक अभी सिर्फ़ झलक हैं।",
+      payBtn: "भुगतान करें",
+      paySuccess: "भुगतान सफल",
+      successDetail: "{m} मिनट जुड़े · ₹{p} भुगतान",
+      backToChat: "बातचीत पर वापस",
+      detecting: "सुन रहे हैं — भाषा पहचान रहे हैं…",
+      autoDetecting: "पहचान रहे हैं…",
+      listening: "सुन रहे हैं…",
+      listeningTap: "सुन रहे हैं — रोकने के लिए फिर दबाएँ",
+      translating: "अनुवाद हो रहा है…",
+      holdLonger: "बोलते समय माइक दबाए रखें",
+      micDenied: "माइक नहीं चला। ऐप की माइक अनुमति जाँचें।",
+      noSpeech: "सुनाई नहीं दिया — थोड़ा लंबा बोलकर फिर कोशिश करें।",
+      lowMinsNotice: "सिर्फ़ {n} मिनट बचे — वॉलेट (₹) में टॉप-अप करें",
+      historyTitle: "पुरानी बातचीत",
+      historyEmpty: "अभी कोई बातचीत नहीं। ये सिर्फ़ इसी फ़ोन में सेव होती हैं।",
+      exchangesWord: "बातें",
+      phrasesTitle: "तैयार वाक्य",
+      phrasesHint: "कोई वाक्य दबाएँ — हर तरफ़ अपनी भाषा में दिखेगा। बिना इंटरनेट भी चलता है।",
+      packGreetings: "नमस्ते",
+      packBargaining: "मोल-भाव",
+      packHelp: "मदद",
+      setLangs: "भाषाएँ चुनें",
+      pairHint: "गलत पहचान हो तो ऊपर वाली पट्टी दबाकर बदल दें।",
+      backToAuto: "फिर से अपने आप पहचानें",
+      langsUpdated: "भाषाएँ बदल दी गईं",
       tourNext: "आगे", tourStart: "शुरू करें", tourSkip: "अभी नहीं",
       help: [
         ["दो लोग, एक फ़ोन", "स्क्रीन दो हिस्सों में है। ऊपर वाला हिस्सा जानबूझकर उल्टा है — फ़ोन बीच में रखें, दोनों को सीधा दिखेगा।"],
@@ -904,6 +1036,62 @@
       otpError: "SMS-এ আসা ৬ সংখ্যার OTP দিন।",
       helpTitle: "কীভাবে কাজ করে?", close: "বন্ধ করুন",
       micHold: "চেপে ধরে বলুন", micTap: "একবার চাপুন",
+      setupTitle: "নতুন কথোপকথন",
+      setupSub: "দুজন, একটি ফোন। শুধু বলা শুরু করুন — কিছু সেট করতে হবে না।",
+      autoOn: "ভাষা নিজে থেকেই শনাক্ত হবে",
+      autoCopy: "বলা শুরু করুন — BaatChiit শুনে দুই দিকের ভাষা নিজেই বুঝে নেয়। প্রথমবার বলার সঙ্গে সঙ্গেই ঠিক হয়ে যায়।",
+      autoBadge: "সব ভাষা সমর্থিত",
+      manualOpen: "ভাষা নিজে বেছে নিন",
+      manualClose: "নিজে থেকে শনাক্ত হতে দিন",
+      youSpeak: "আপনি বলেন",
+      theySpeak: "তাঁরা বলেন",
+      sameLang: "দুটি আলাদা ভাষা বেছে নিন",
+      openMicLbl: "ওপেন মাইক (হাত ফাঁকা)",
+      openMicSub: "একবার চাপুন আর বলুন — থামলেই রেকর্ডিং নিজে বন্ধ হবে।",
+      startAuto: "শোনা শুরু করুন →",
+      startManual: "কথা শুরু করুন →",
+      walletTitle: "ওয়ালেট",
+      minutesRemaining: "বাকি মিনিট",
+      minUnit: "মিনিট",
+      lowBalance: "মিনিট কমে আসছে — পরের কথার আগে টপ-আপ করুন",
+      walletInfo: "প্রায় ১০টি কথায় ১ মিনিট খরচ হয়। যেকোনো সময় প্যাক কিনুন — মিনিট কখনও শেষ হয় না।",
+      buyMinutes: "আরও মিনিট কিনুন",
+      logout: "লগ আউট",
+      payTitle: "মিনিট টপ-আপ করুন",
+      packStarter: "শুরুর প্যাক",
+      packPopular: "সবচেয়ে জনপ্রিয়",
+      packValue: "সবচেয়ে সাশ্রয়ী",
+      popularTag: "জনপ্রিয়",
+      payWith: "পেমেন্টের উপায়",
+      methodCard: "কার্ড",
+      methodNet: "নেটব্যাঙ্কিং",
+      secureNote: "Razorpay-এর মাধ্যমে নিরাপদ পেমেন্ট",
+      paySoon: "পেমেন্ট শীঘ্রই চালু হবে — এই প্যাকগুলো আপাতত শুধু ঝলক।",
+      payBtn: "পেমেন্ট করুন",
+      paySuccess: "পেমেন্ট সফল",
+      successDetail: "{m} মিনিট যোগ হয়েছে · ₹{p} পেমেন্ট",
+      backToChat: "কথায় ফিরে যান",
+      detecting: "শুনছি — ভাষা বুঝছি…",
+      autoDetecting: "শনাক্ত হচ্ছে…",
+      listening: "শুনছি…",
+      listeningTap: "শুনছি — থামাতে আবার চাপুন",
+      translating: "অনুবাদ হচ্ছে…",
+      holdLonger: "বলার সময় মাইক চেপে ধরুন",
+      micDenied: "মাইক চালু হয়নি। অ্যাপের মাইক অনুমতি দেখুন।",
+      noSpeech: "বোঝা গেল না — একটু বেশি সময় ধরে আবার বলুন।",
+      lowMinsNotice: "মাত্র {n} মিনিট বাকি — ওয়ালেটে (₹) টপ-আপ করুন",
+      historyTitle: "পুরোনো কথা",
+      historyEmpty: "এখনও কোনো কথা নেই। এগুলো শুধু এই ফোনেই থাকে।",
+      exchangesWord: "কথা",
+      phrasesTitle: "তৈরি বাক্য",
+      phrasesHint: "একটি বাক্যে চাপুন — প্রতি দিকে নিজের ভাষায় দেখাবে। ইন্টারনেট ছাড়াও চলে।",
+      packGreetings: "অভিবাদন",
+      packBargaining: "দরদাম",
+      packHelp: "সাহায্য",
+      setLangs: "ভাষা বেছে নিন",
+      pairHint: "ভুল হলে উপরের পিল চেপে বদলে নিন।",
+      backToAuto: "আবার নিজে থেকে শনাক্ত",
+      langsUpdated: "ভাষা বদলে গেছে",
       tourNext: "পরবর্তী", tourStart: "শুরু করুন", tourSkip: "এখন নয়",
       help: [
         ["দুজন, একটি ফোন", "স্ক্রিন দুই ভাগে ভাগ করা। উপরের অংশ ইচ্ছে করেই উল্টো — ফোনটি মাঝখানে রাখুন, দুজনেই সোজা দেখতে পাবেন।"],
@@ -925,6 +1113,62 @@
       otpError: "SMS માં આવેલો 6 અંકનો OTP નાખો.",
       helpTitle: "કેવી રીતે ચાલે છે?", close: "બંધ કરો",
       micHold: "દબાવીને બોલો", micTap: "એક વાર દબાવો",
+      setupTitle: "નવી વાતચીત",
+      setupSub: "બે વ્યક્તિ, એક ફોન. બસ બોલવાનું શરૂ કરો — કંઈ સેટ કરવાનું નથી.",
+      autoOn: "ભાષા આપોઆપ ઓળખાશે",
+      autoCopy: "બોલવાનું શરૂ કરો — BaatChiit સાંભળીને દરેક બાજુની ભાષા જાતે ઓળખી લે છે. પહેલી વાર બોલતાં જ બંને બાજુ સેટ થઈ જાય છે.",
+      autoBadge: "બધી ભાષાઓ ઉપલબ્ધ",
+      manualOpen: "ભાષાઓ જાતે પસંદ કરો",
+      manualClose: "આપોઆપ ઓળખવા દો",
+      youSpeak: "તમે બોલો છો",
+      theySpeak: "તેઓ બોલે છે",
+      sameLang: "બે અલગ ભાષાઓ પસંદ કરો",
+      openMicLbl: "ઓપન માઇક (હાથ ફ્રી)",
+      openMicSub: "એક વાર દબાવો અને બોલો — અટકતાં જ રેકોર્ડિંગ આપોઆપ બંધ.",
+      startAuto: "સાંભળવાનું શરૂ કરો →",
+      startManual: "વાતચીત શરૂ કરો →",
+      walletTitle: "વૉલેટ",
+      minutesRemaining: "બાકી મિનિટ",
+      minUnit: "મિનિટ",
+      lowBalance: "મિનિટ ઓછી છે — આગલી વાત પહેલાં ટોપ-અપ કરો",
+      walletInfo: "આશરે 10 વાતોમાં 1 મિનિટ વપરાય છે. ગમે ત્યારે પેક લો — મિનિટ ક્યારેય પૂરી નથી થતી.",
+      buyMinutes: "વધુ મિનિટ ખરીદો",
+      logout: "લૉગ આઉટ",
+      payTitle: "મિનિટ ટોપ-અપ કરો",
+      packStarter: "શરૂઆતી",
+      packPopular: "સૌથી લોકપ્રિય",
+      packValue: "સૌથી કિફાયતી",
+      popularTag: "લોકપ્રિય",
+      payWith: "ચુકવણીની રીત",
+      methodCard: "કાર્ડ",
+      methodNet: "નેટબેંકિંગ",
+      secureNote: "Razorpay દ્વારા સુરક્ષિત ચુકવણી",
+      paySoon: "ચુકવણી ટૂંક સમયમાં શરૂ થશે — આ પેક હાલ ફક્ત ઝલક છે.",
+      payBtn: "ચૂકવો",
+      paySuccess: "ચુકવણી સફળ",
+      successDetail: "{m} મિનિટ ઉમેરાઈ · ₹{p} ચૂકવ્યા",
+      backToChat: "વાતચીત પર પાછા",
+      detecting: "સાંભળી રહ્યા છીએ — ભાષા ઓળખી રહ્યા છીએ…",
+      autoDetecting: "ઓળખાઈ રહ્યું છે…",
+      listening: "સાંભળી રહ્યા છીએ…",
+      listeningTap: "સાંભળી રહ્યા છીએ — રોકવા ફરી દબાવો",
+      translating: "અનુવાદ થઈ રહ્યો છે…",
+      holdLonger: "બોલતી વખતે માઇક દબાવી રાખો",
+      micDenied: "માઇક ચાલ્યો નહીં. એપની માઇક પરવાનગી તપાસો.",
+      noSpeech: "સંભળાયું નહીં — થોડું લાંબું બોલીને ફરી પ્રયાસ કરો.",
+      lowMinsNotice: "ફક્ત {n} મિનિટ બાકી — વૉલેટ (₹) માં ટોપ-અપ કરો",
+      historyTitle: "જૂની વાતચીત",
+      historyEmpty: "હજી કોઈ વાતચીત નથી. આ ફક્ત આ ફોનમાં જ સચવાય છે.",
+      exchangesWord: "વાતો",
+      phrasesTitle: "તૈયાર વાક્યો",
+      phrasesHint: "કોઈ વાક્ય દબાવો — દરેક બાજુ પોતાની ભાષામાં દેખાશે. ઇન્ટરનેટ વગર પણ ચાલે.",
+      packGreetings: "અભિવાદન",
+      packBargaining: "ભાવતાલ",
+      packHelp: "મદદ",
+      setLangs: "ભાષાઓ પસંદ કરો",
+      pairHint: "ખોટું ઓળખાય તો ઉપરની પટ્ટી દબાવીને બદલો.",
+      backToAuto: "ફરી આપોઆપ ઓળખ",
+      langsUpdated: "ભાષાઓ બદલાઈ",
       tourNext: "આગળ", tourStart: "શરૂ કરો", tourSkip: "હમણાં નહીં",
       help: [
         ["બે વ્યક્તિ, એક ફોન", "સ્ક્રીન બે ભાગમાં છે. ઉપરનો ભાગ જાણી જોઈને ઊંધો છે — ફોન વચ્ચે મૂકો, બંનેને સીધું દેખાશે."],
@@ -946,6 +1190,62 @@
       otpError: "SMS ನಲ್ಲಿ ಬಂದ 6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ.",
       helpTitle: "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", close: "ಮುಚ್ಚಿ",
       micHold: "ಒತ್ತಿ ಮಾತನಾಡಿ", micTap: "ಒಮ್ಮೆ ಒತ್ತಿ",
+      setupTitle: "ಹೊಸ ಸಂಭಾಷಣೆ",
+      setupSub: "ಇಬ್ಬರು, ಒಂದು ಫೋನ್. ಸುಮ್ಮನೆ ಮಾತು ಶುರು ಮಾಡಿ — ಏನೂ ಸಿದ್ಧಪಡಿಸಬೇಕಿಲ್ಲ.",
+      autoOn: "ಭಾಷೆ ತಾನಾಗಿ ಗುರುತಿಸಲ್ಪಡುತ್ತದೆ",
+      autoCopy: "ಮಾತು ಶುರು ಮಾಡಿ — BaatChiit ಕೇಳಿ ಪ್ರತಿ ಕಡೆಯ ಭಾಷೆಯನ್ನು ತಾನಾಗಿ ಗುರುತಿಸುತ್ತದೆ. ಮೊದಲ ಬಾರಿ ಮಾತನಾಡಿದ ತಕ್ಷಣ ಎರಡೂ ಕಡೆ ಸೆಟ್ ಆಗುತ್ತದೆ.",
+      autoBadge: "ಎಲ್ಲಾ ಭಾಷೆಗಳು ಲಭ್ಯ",
+      manualOpen: "ಭಾಷೆಗಳನ್ನು ನೀವೇ ಆಯ್ಕೆ ಮಾಡಿ",
+      manualClose: "ತಾನಾಗಿ ಗುರುತಿಸಲಿ",
+      youSpeak: "ನೀವು ಮಾತನಾಡುವ ಭಾಷೆ",
+      theySpeak: "ಅವರು ಮಾತನಾಡುವ ಭಾಷೆ",
+      sameLang: "ಎರಡು ಬೇರೆ ಭಾಷೆಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+      openMicLbl: "ಓಪನ್ ಮೈಕ್ (ಕೈ ಮುಕ್ತ)",
+      openMicSub: "ಒಮ್ಮೆ ಒತ್ತಿ ಮಾತನಾಡಿ — ನಿಲ್ಲಿಸಿದ ತಕ್ಷಣ ರೆಕಾರ್ಡಿಂಗ್ ತಾನಾಗಿ ನಿಲ್ಲುತ್ತದೆ.",
+      startAuto: "ಕೇಳಲು ಪ್ರಾರಂಭಿಸಿ →",
+      startManual: "ಸಂಭಾಷಣೆ ಪ್ರಾರಂಭಿಸಿ →",
+      walletTitle: "ವಾಲೆಟ್",
+      minutesRemaining: "ಉಳಿದ ನಿಮಿಷಗಳು",
+      minUnit: "ನಿಮಿಷ",
+      lowBalance: "ನಿಮಿಷಗಳು ಕಡಿಮೆ — ಮುಂದಿನ ಮಾತಿಗೆ ಮೊದಲು ಟಾಪ್-ಅಪ್ ಮಾಡಿ",
+      walletInfo: "ಸುಮಾರು 10 ಮಾತುಗಳಿಗೆ 1 ನಿಮಿಷ ಬಳಕೆಯಾಗುತ್ತದೆ. ಯಾವಾಗ ಬೇಕಾದರೂ ಪ್ಯಾಕ್ ಖರೀದಿಸಿ — ನಿಮಿಷಗಳು ಎಂದಿಗೂ ಮುಗಿಯುವುದಿಲ್ಲ.",
+      buyMinutes: "ಇನ್ನಷ್ಟು ನಿಮಿಷ ಖರೀದಿಸಿ",
+      logout: "ಲಾಗ್ ಔಟ್",
+      payTitle: "ನಿಮಿಷ ಟಾಪ್-ಅಪ್ ಮಾಡಿ",
+      packStarter: "ಆರಂಭಿಕ",
+      packPopular: "ಅತಿ ಜನಪ್ರಿಯ",
+      packValue: "ಅತ್ಯುತ್ತಮ ಮೌಲ್ಯ",
+      popularTag: "ಜನಪ್ರಿಯ",
+      payWith: "ಪಾವತಿ ವಿಧಾನ",
+      methodCard: "ಕಾರ್ಡ್",
+      methodNet: "ನೆಟ್‌ಬ್ಯಾಂಕಿಂಗ್",
+      secureNote: "Razorpay ಮೂಲಕ ಸುರಕ್ಷಿತ ಪಾವತಿ",
+      paySoon: "ಪಾವತಿ ಶೀಘ್ರದಲ್ಲೇ ಆರಂಭ — ಈ ಪ್ಯಾಕ್‌ಗಳು ಸದ್ಯಕ್ಕೆ ಕೇವಲ ಮುನ್ನೋಟ.",
+      payBtn: "ಪಾವತಿಸಿ",
+      paySuccess: "ಪಾವತಿ ಯಶಸ್ವಿ",
+      successDetail: "{m} ನಿಮಿಷ ಸೇರಿಸಲಾಗಿದೆ · ₹{p} ಪಾವತಿ",
+      backToChat: "ಸಂಭಾಷಣೆಗೆ ಹಿಂತಿರುಗಿ",
+      detecting: "ಕೇಳುತ್ತಿದೆ — ಭಾಷೆ ಗುರುತಿಸುತ್ತಿದೆ…",
+      autoDetecting: "ಗುರುತಿಸಲಾಗುತ್ತಿದೆ…",
+      listening: "ಕೇಳುತ್ತಿದೆ…",
+      listeningTap: "ಕೇಳುತ್ತಿದೆ — ನಿಲ್ಲಿಸಲು ಮತ್ತೆ ಒತ್ತಿ",
+      translating: "ಅನುವಾದವಾಗುತ್ತಿದೆ…",
+      holdLonger: "ಮಾತನಾಡುವಾಗ ಮೈಕ್ ಒತ್ತಿ ಹಿಡಿಯಿರಿ",
+      micDenied: "ಮೈಕ್ ಬಳಸಲಾಗಲಿಲ್ಲ. ಅಪ್ಲಿಕೇಶನ್‌ನ ಮೈಕ್ ಅನುಮತಿ ಪರಿಶೀಲಿಸಿ.",
+      noSpeech: "ಕೇಳಿಸಲಿಲ್ಲ — ಸ್ವಲ್ಪ ಹೆಚ್ಚು ಹೊತ್ತು ಮಾತನಾಡಿ ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
+      lowMinsNotice: "ಕೇವಲ {n} ನಿಮಿಷ ಬಾಕಿ — ವಾಲೆಟ್ (₹) ನಲ್ಲಿ ಟಾಪ್-ಅಪ್ ಮಾಡಿ",
+      historyTitle: "ಹಿಂದಿನ ಸಂಭಾಷಣೆ",
+      historyEmpty: "ಇನ್ನೂ ಯಾವುದೇ ಸಂಭಾಷಣೆ ಇಲ್ಲ. ಇವು ಈ ಫೋನಿನಲ್ಲಿ ಮಾತ್ರ ಉಳಿಯುತ್ತವೆ.",
+      exchangesWord: "ಮಾತುಗಳು",
+      phrasesTitle: "ಸಿದ್ಧ ವಾಕ್ಯಗಳು",
+      phrasesHint: "ಒಂದು ವಾಕ್ಯ ಒತ್ತಿ — ಪ್ರತಿ ಕಡೆ ಅದರ ಭಾಷೆಯಲ್ಲಿ ಕಾಣುತ್ತದೆ. ಇಂಟರ್ನೆಟ್ ಇಲ್ಲದೆಯೂ ಕೆಲಸ ಮಾಡುತ್ತದೆ.",
+      packGreetings: "ನಮಸ್ಕಾರ",
+      packBargaining: "ಚೌಕಾಸಿ",
+      packHelp: "ಸಹಾಯ",
+      setLangs: "ಭಾಷೆಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+      pairHint: "ತಪ್ಪಾಗಿ ಗುರುತಿಸಿದರೆ ಮೇಲಿನ ಪಟ್ಟಿ ಒತ್ತಿ ಬದಲಾಯಿಸಿ.",
+      backToAuto: "ಮತ್ತೆ ತಾನಾಗಿ ಗುರುತಿಸಲಿ",
+      langsUpdated: "ಭಾಷೆಗಳು ಬದಲಾಗಿವೆ",
       tourNext: "ಮುಂದೆ", tourStart: "ಪ್ರಾರಂಭಿಸಿ", tourSkip: "ಈಗ ಬೇಡ",
       help: [
         ["ಇಬ್ಬರು, ಒಂದು ಫೋನ್", "ಪರದೆ ಎರಡು ಭಾಗಗಳಲ್ಲಿದೆ. ಮೇಲಿನ ಭಾಗ ಉದ್ದೇಶಪೂರ್ವಕವಾಗಿ ತಲೆಕೆಳಗಾಗಿದೆ — ಫೋನನ್ನು ನಡುವೆ ಇಡಿ, ಇಬ್ಬರಿಗೂ ನೇರವಾಗಿ ಕಾಣುತ್ತದೆ."],
@@ -967,6 +1267,62 @@
       otpError: "SMS-ൽ വന്ന 6 അക്ക OTP നൽകൂ.",
       helpTitle: "എങ്ങനെ പ്രവർത്തിക്കുന്നു?", close: "അടയ്ക്കൂ",
       micHold: "അമർത്തി സംസാരിക്കൂ", micTap: "ഒരിക്കൽ അമർത്തൂ",
+      setupTitle: "പുതിയ സംഭാഷണം",
+      setupSub: "രണ്ടു പേർ, ഒരു ഫോൺ. സംസാരിച്ചു തുടങ്ങൂ — ഒന്നും സെറ്റ് ചെയ്യേണ്ട.",
+      autoOn: "ഭാഷ തനിയെ തിരിച്ചറിയും",
+      autoCopy: "സംസാരിച്ചു തുടങ്ങൂ — BaatChiit കേട്ട് ഓരോ ഭാഗത്തെയും ഭാഷ സ്വയം കണ്ടെത്തും. ആദ്യം സംസാരിക്കുമ്പോൾ തന്നെ ഇരുഭാഗവും സെറ്റ് ആകും.",
+      autoBadge: "എല്ലാ ഭാഷകളും ലഭ്യം",
+      manualOpen: "ഭാഷകൾ സ്വയം തിരഞ്ഞെടുക്കൂ",
+      manualClose: "തനിയെ തിരിച്ചറിയട്ടെ",
+      youSpeak: "നിങ്ങൾ സംസാരിക്കുന്നത്",
+      theySpeak: "അവർ സംസാരിക്കുന്നത്",
+      sameLang: "രണ്ട് വ്യത്യസ്ത ഭാഷകൾ തിരഞ്ഞെടുക്കൂ",
+      openMicLbl: "ഓപ്പൺ മൈക്ക് (കൈ സ്വതന്ത്രം)",
+      openMicSub: "ഒരിക്കൽ അമർത്തി സംസാരിക്കൂ — നിർത്തുമ്പോൾ റെക്കോർഡിംഗ് തനിയെ നിൽക്കും.",
+      startAuto: "കേൾക്കാൻ തുടങ്ങൂ →",
+      startManual: "സംഭാഷണം തുടങ്ങൂ →",
+      walletTitle: "വാലറ്റ്",
+      minutesRemaining: "ബാക്കി മിനിറ്റ്",
+      minUnit: "മിനിറ്റ്",
+      lowBalance: "മിനിറ്റ് കുറവാണ് — അടുത്ത സംഭാഷണത്തിന് മുമ്പ് ടോപ്പ്-അപ്പ് ചെയ്യൂ",
+      walletInfo: "ഏകദേശം 10 സംഭാഷണങ്ങൾക്ക് 1 മിനിറ്റ് ചെലവാകും. എപ്പോൾ വേണമെങ്കിലും പായ്ക്ക് വാങ്ങാം — മിനിറ്റുകൾ കാലഹരണപ്പെടില്ല.",
+      buyMinutes: "കൂടുതൽ മിനിറ്റ് വാങ്ങൂ",
+      logout: "ലോഗ് ഔട്ട്",
+      payTitle: "മിനിറ്റ് ടോപ്പ്-അപ്പ് ചെയ്യൂ",
+      packStarter: "തുടക്കം",
+      packPopular: "ഏറ്റവും ജനപ്രിയം",
+      packValue: "ഏറ്റവും ലാഭകരം",
+      popularTag: "ജനപ്രിയം",
+      payWith: "പണമടയ്ക്കൽ രീതി",
+      methodCard: "കാർഡ്",
+      methodNet: "നെറ്റ്ബാങ്കിംഗ്",
+      secureNote: "Razorpay വഴി സുരക്ഷിത പണമടയ്ക്കൽ",
+      paySoon: "പണമടയ്ക്കൽ ഉടൻ ആരംഭിക്കും — ഈ പായ്ക്കുകൾ ഇപ്പോൾ ഒരു കാഴ്ച മാത്രം.",
+      payBtn: "അടയ്ക്കൂ",
+      paySuccess: "പണമടയ്ക്കൽ വിജയകരം",
+      successDetail: "{m} മിനിറ്റ് ചേർത്തു · ₹{p} അടച്ചു",
+      backToChat: "സംഭാഷണത്തിലേക്ക് മടങ്ങൂ",
+      detecting: "കേൾക്കുന്നു — ഭാഷ തിരിച്ചറിയുന്നു…",
+      autoDetecting: "തിരിച്ചറിയുന്നു…",
+      listening: "കേൾക്കുന്നു…",
+      listeningTap: "കേൾക്കുന്നു — നിർത്താൻ വീണ്ടും അമർത്തൂ",
+      translating: "പരിഭാഷ ചെയ്യുന്നു…",
+      holdLonger: "സംസാരിക്കുമ്പോൾ മൈക്ക് അമർത്തിപ്പിടിക്കൂ",
+      micDenied: "മൈക്ക് ഉപയോഗിക്കാനായില്ല. ആപ്പിന്റെ മൈക്ക് അനുമതി പരിശോധിക്കൂ.",
+      noSpeech: "മനസ്സിലായില്ല — അല്പം കൂടി നീട്ടി വീണ്ടും പറയൂ.",
+      lowMinsNotice: "{n} മിനിറ്റ് മാത്രം ബാക്കി — വാലറ്റിൽ (₹) ടോപ്പ്-അപ്പ് ചെയ്യൂ",
+      historyTitle: "പഴയ സംഭാഷണങ്ങൾ",
+      historyEmpty: "ഇതുവരെ സംഭാഷണങ്ങളില്ല. ഇവ ഈ ഫോണിൽ മാത്രം സൂക്ഷിക്കുന്നു.",
+      exchangesWord: "സംഭാഷണങ്ങൾ",
+      phrasesTitle: "തയ്യാർ വാക്യങ്ങൾ",
+      phrasesHint: "ഒരു വാക്യം അമർത്തൂ — ഓരോ ഭാഗത്തും അതത് ഭാഷയിൽ കാണാം. ഇന്റർനെറ്റ് ഇല്ലാതെയും പ്രവർത്തിക്കും.",
+      packGreetings: "അഭിവാദ്യം",
+      packBargaining: "വിലപേശൽ",
+      packHelp: "സഹായം",
+      setLangs: "ഭാഷകൾ തിരഞ്ഞെടുക്കൂ",
+      pairHint: "തെറ്റിയാൽ മുകളിലെ പട്ട അമർത്തി മാറ്റാം.",
+      backToAuto: "വീണ്ടും തനിയെ തിരിച്ചറിയട്ടെ",
+      langsUpdated: "ഭാഷകൾ മാറ്റി",
       tourNext: "അടുത്തത്", tourStart: "തുടങ്ങാം", tourSkip: "ഇപ്പോൾ വേണ്ട",
       help: [
         ["രണ്ടു പേർ, ഒരു ഫോൺ", "സ്ക്രീൻ രണ്ടായി പകുത്തിരിക്കുന്നു. മുകൾഭാഗം മനഃപൂർവം തലകീഴായാണ് — ഫോൺ നടുവിൽ വെക്കൂ, രണ്ടു പേർക്കും നേരെ കാണാം."],
@@ -988,6 +1344,62 @@
       otpError: "SMS मध्ये आलेला 6 अंकी OTP टाका.",
       helpTitle: "कसे चालते?", close: "बंद करा",
       micHold: "दाबून बोला", micTap: "एकदा दाबा",
+      setupTitle: "नवीन संवाद",
+      setupSub: "दोन माणसं, एक फोन. फक्त बोलायला सुरुवात करा — काही सेट करायचं नाही.",
+      autoOn: "भाषा आपोआप ओळखली जाईल",
+      autoCopy: "बोलायला सुरुवात करा — BaatChiit ऐकून दोन्ही बाजूंची भाषा स्वतः ओळखतो. पहिल्यांदा बोलताच दोन्ही बाजू सेट होतात.",
+      autoBadge: "सर्व भाषा उपलब्ध",
+      manualOpen: "भाषा स्वतः निवडा",
+      manualClose: "आपोआप ओळखू द्या",
+      youSpeak: "तुम्ही बोलता",
+      theySpeak: "ते बोलतात",
+      sameLang: "दोन वेगळ्या भाषा निवडा",
+      openMicLbl: "ओपन माइक (हात मोकळे)",
+      openMicSub: "एकदा दाबा आणि बोला — थांबताच रेकॉर्डिंग आपोआप बंद.",
+      startAuto: "ऐकायला सुरुवात करा →",
+      startManual: "संवाद सुरू करा →",
+      walletTitle: "वॉलेट",
+      minutesRemaining: "शिल्लक मिनिटं",
+      minUnit: "मिनिटं",
+      lowBalance: "मिनिटं कमी आहेत — पुढच्या गप्पांआधी टॉप-अप करा",
+      walletInfo: "साधारण 10 वाक्यांना 1 मिनिट लागतं. कधीही पॅक घ्या — मिनिटं कधीच संपत नाहीत.",
+      buyMinutes: "आणखी मिनिटं घ्या",
+      logout: "लॉग आउट",
+      payTitle: "मिनिटं टॉप-अप करा",
+      packStarter: "सुरुवातीचा",
+      packPopular: "सर्वाधिक लोकप्रिय",
+      packValue: "सर्वात किफायतशीर",
+      popularTag: "लोकप्रिय",
+      payWith: "पैसे भरण्याची पद्धत",
+      methodCard: "कार्ड",
+      methodNet: "नेटबँकिंग",
+      secureNote: "Razorpay मार्फत सुरक्षित पेमेंट",
+      paySoon: "पेमेंट लवकरच सुरू होईल — हे पॅक सध्या फक्त झलक आहेत.",
+      payBtn: "पैसे भरा",
+      paySuccess: "पेमेंट यशस्वी",
+      successDetail: "{m} मिनिटं जोडली · ₹{p} भरले",
+      backToChat: "संवादाकडे परत",
+      detecting: "ऐकत आहोत — भाषा ओळखत आहोत…",
+      autoDetecting: "ओळखत आहोत…",
+      listening: "ऐकत आहोत…",
+      listeningTap: "ऐकत आहोत — थांबवण्यासाठी पुन्हा दाबा",
+      translating: "भाषांतर होत आहे…",
+      holdLonger: "बोलताना माइक दाबून धरा",
+      micDenied: "माइक वापरता आला नाही. अ‍ॅपची माइक परवानगी तपासा.",
+      noSpeech: "ऐकू आलं नाही — थोडं जास्त वेळ बोलून पुन्हा प्रयत्न करा.",
+      lowMinsNotice: "फक्त {n} मिनिटं शिल्लक — वॉलेटमध्ये (₹) टॉप-अप करा",
+      historyTitle: "जुनी बातचीत",
+      historyEmpty: "अजून कोणतीही बातचीत नाही. या फक्त याच फोनमध्ये साठवल्या जातात.",
+      exchangesWord: "वाक्यं",
+      phrasesTitle: "तयार वाक्यं",
+      phrasesHint: "एखादं वाक्य दाबा — प्रत्येक बाजूला त्या भाषेत दिसेल. इंटरनेटशिवायही चालतं.",
+      packGreetings: "नमस्कार",
+      packBargaining: "घासाघीस",
+      packHelp: "मदत",
+      setLangs: "भाषा निवडा",
+      pairHint: "चुकीचं ओळखलं तर वरची पट्टी दाबून बदला.",
+      backToAuto: "पुन्हा आपोआप ओळख",
+      langsUpdated: "भाषा बदलल्या",
       tourNext: "पुढे", tourStart: "सुरू करा", tourSkip: "आत्ता नको",
       help: [
         ["दोन माणसं, एक फोन", "स्क्रीन दोन भागांत आहे. वरचा भाग मुद्दाम उलटा आहे — फोन मध्ये ठेवा, दोघांना सरळ दिसेल."],
@@ -1009,6 +1421,62 @@
       otpError: "SMS ରେ ଆସିଥିବା 6 ଅଙ୍କର OTP ଦିଅନ୍ତୁ।",
       helpTitle: "କିପରି କାମ କରେ?", close: "ବନ୍ଦ କରନ୍ତୁ",
       micHold: "ଦବାଇ କୁହନ୍ତୁ", micTap: "ଥରେ ଦବାନ୍ତୁ",
+      setupTitle: "ନୂଆ କଥାବାର୍ତ୍ତା",
+      setupSub: "ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍। କେବଳ କହିବା ଆରମ୍ଭ କରନ୍ତୁ — କିଛି ସେଟ୍ କରିବାକୁ ନାହିଁ।",
+      autoOn: "ଭାଷା ନିଜେ ଚିହ୍ନଟ ହେବ",
+      autoCopy: "କହିବା ଆରମ୍ଭ କରନ୍ତୁ — BaatChiit ଶୁଣି ପ୍ରତ୍ୟେକ ପାଖର ଭାଷା ନିଜେ ଜାଣିଯାଏ। ପ୍ରଥମ ଥର କହିବା ମାତ୍ରେ ଦୁଇ ପାଖ ସେଟ୍ ହୋଇଯାଏ।",
+      autoBadge: "ସବୁ ଭାଷା ଉପଲବ୍ଧ",
+      manualOpen: "ଭାଷା ନିଜେ ବାଛନ୍ତୁ",
+      manualClose: "ନିଜେ ଚିହ୍ନଟ ହେବାକୁ ଦିଅନ୍ତୁ",
+      youSpeak: "ଆପଣ କୁହନ୍ତି",
+      theySpeak: "ସେମାନେ କୁହନ୍ତି",
+      sameLang: "ଦୁଇଟି ଅଲଗା ଭାଷା ବାଛନ୍ତୁ",
+      openMicLbl: "ଓପନ୍ ମାଇକ୍ (ହାତ ଖାଲି)",
+      openMicSub: "ଥରେ ଦବାଇ କୁହନ୍ତୁ — ଅଟକିଲେ ରେକର୍ଡିଂ ନିଜେ ବନ୍ଦ ହୋଇଯିବ।",
+      startAuto: "ଶୁଣିବା ଆରମ୍ଭ କରନ୍ତୁ →",
+      startManual: "କଥାବାର୍ତ୍ତା ଆରମ୍ଭ କରନ୍ତୁ →",
+      walletTitle: "ୱାଲେଟ୍",
+      minutesRemaining: "ବଳକା ମିନିଟ୍",
+      minUnit: "ମିନିଟ୍",
+      lowBalance: "ମିନିଟ୍ କମ୍ ଅଛି — ପରବର୍ତ୍ତୀ କଥା ପୂର୍ବରୁ ଟପ୍-ଅପ୍ କରନ୍ତୁ",
+      walletInfo: "ପ୍ରାୟ 10 କଥାରେ 1 ମିନିଟ୍ ଖର୍ଚ୍ଚ ହୁଏ। ଯେକୌଣସି ସମୟରେ ପ୍ୟାକ୍ କିଣନ୍ତୁ — ମିନିଟ୍ କେବେ ଶେଷ ହୁଏ ନାହିଁ।",
+      buyMinutes: "ଅଧିକ ମିନିଟ୍ କିଣନ୍ତୁ",
+      logout: "ଲଗ୍ ଆଉଟ୍",
+      payTitle: "ମିନିଟ୍ ଟପ୍-ଅପ୍ କରନ୍ତୁ",
+      packStarter: "ଆରମ୍ଭିକ",
+      packPopular: "ସବୁଠାରୁ ଲୋକପ୍ରିୟ",
+      packValue: "ସବୁଠାରୁ ଲାଭଦାୟକ",
+      popularTag: "ଲୋକପ୍ରିୟ",
+      payWith: "ଦେୟ ପ୍ରଣାଳୀ",
+      methodCard: "କାର୍ଡ",
+      methodNet: "ନେଟ୍‌ବ୍ୟାଙ୍କିଂ",
+      secureNote: "Razorpay ମାଧ୍ୟମରେ ସୁରକ୍ଷିତ ଦେୟ",
+      paySoon: "ଦେୟ ଶୀଘ୍ର ଆରମ୍ଭ ହେବ — ଏହି ପ୍ୟାକ୍ ବର୍ତ୍ତମାନ କେବଳ ଝଲକ।",
+      payBtn: "ଦେୟ କରନ୍ତୁ",
+      paySuccess: "ଦେୟ ସଫଳ",
+      successDetail: "{m} ମିନିଟ୍ ଯୋଡ଼ାଗଲା · ₹{p} ଦିଆଗଲା",
+      backToChat: "କଥାବାର୍ତ୍ତାକୁ ଫେରନ୍ତୁ",
+      detecting: "ଶୁଣୁଛି — ଭାଷା ଚିହ୍ନଟ କରୁଛି…",
+      autoDetecting: "ଚିହ୍ନଟ ହେଉଛି…",
+      listening: "ଶୁଣୁଛି…",
+      listeningTap: "ଶୁଣୁଛି — ଅଟକାଇବାକୁ ପୁଣି ଦବାନ୍ତୁ",
+      translating: "ଅନୁବାଦ ହେଉଛି…",
+      holdLonger: "କହିବା ସମୟରେ ମାଇକ୍ ଦବାଇ ରଖନ୍ତୁ",
+      micDenied: "ମାଇକ୍ ବ୍ୟବହାର ହେଲା ନାହିଁ। ଆପ୍‌ର ମାଇକ୍ ଅନୁମତି ଯାଞ୍ଚ କରନ୍ତୁ।",
+      noSpeech: "ଶୁଣାଗଲା ନାହିଁ — ଟିକେ ଅଧିକ ସମୟ କହି ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ।",
+      lowMinsNotice: "କେବଳ {n} ମିନିଟ୍ ବାକି — ୱାଲେଟ୍ (₹) ରେ ଟପ୍-ଅପ୍ କରନ୍ତୁ",
+      historyTitle: "ପୁରୁଣା କଥାବାର୍ତ୍ତା",
+      historyEmpty: "ଏପର୍ଯ୍ୟନ୍ତ କୌଣସି କଥାବାର୍ତ୍ତା ନାହିଁ। ଏଗୁଡ଼ିକ କେବଳ ଏହି ଫୋନରେ ରହେ।",
+      exchangesWord: "କଥା",
+      phrasesTitle: "ପ୍ରସ୍ତୁତ ବାକ୍ୟ",
+      phrasesHint: "ଗୋଟିଏ ବାକ୍ୟ ଦବାନ୍ତୁ — ପ୍ରତ୍ୟେକ ପାଖରେ ସେହି ଭାଷାରେ ଦେଖାଯିବ। ଇଣ୍ଟରନେଟ୍ ନଥିଲେ ମଧ୍ୟ ଚାଲେ।",
+      packGreetings: "ନମସ୍କାର",
+      packBargaining: "ଦରଦାମ",
+      packHelp: "ସାହାଯ୍ୟ",
+      setLangs: "ଭାଷା ବାଛନ୍ତୁ",
+      pairHint: "ଭୁଲ ହେଲେ ଉପର ପଟି ଦବାଇ ବଦଳାନ୍ତୁ।",
+      backToAuto: "ପୁଣି ନିଜେ ଚିହ୍ନଟ",
+      langsUpdated: "ଭାଷା ବଦଳାଗଲା",
       tourNext: "ଆଗକୁ", tourStart: "ଆରମ୍ଭ କରନ୍ତୁ", tourSkip: "ବର୍ତ୍ତମାନ ନୁହେଁ",
       help: [
         ["ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍", "ସ୍କ୍ରିନ ଦୁଇ ଭାଗରେ ବିଭକ୍ତ। ଉପର ଭାଗ ଜାଣିଶୁଣି ଓଲଟା — ଫୋନକୁ ମଝିରେ ରଖନ୍ତୁ, ଦୁହେଁ ସିଧା ଦେଖିପାରିବେ।"],
@@ -1030,6 +1498,62 @@
       otpError: "SMS ਵਿੱਚ ਆਇਆ 6 ਅੰਕਾਂ ਦਾ OTP ਭਰੋ।",
       helpTitle: "ਕਿਵੇਂ ਚੱਲਦਾ ਹੈ?", close: "ਬੰਦ ਕਰੋ",
       micHold: "ਦਬਾ ਕੇ ਬੋਲੋ", micTap: "ਇੱਕ ਵਾਰ ਦਬਾਓ",
+      setupTitle: "ਨਵੀਂ ਗੱਲਬਾਤ",
+      setupSub: "ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ। ਬੱਸ ਬੋਲਣਾ ਸ਼ੁਰੂ ਕਰੋ — ਕੁਝ ਸੈੱਟ ਨਹੀਂ ਕਰਨਾ।",
+      autoOn: "ਭਾਸ਼ਾ ਆਪੇ ਪਛਾਣੀ ਜਾਵੇਗੀ",
+      autoCopy: "ਬੋਲਣਾ ਸ਼ੁਰੂ ਕਰੋ — BaatChiit ਸੁਣ ਕੇ ਹਰ ਪਾਸੇ ਦੀ ਭਾਸ਼ਾ ਆਪੇ ਪਛਾਣ ਲੈਂਦਾ ਹੈ। ਪਹਿਲੀ ਵਾਰ ਬੋਲਦੇ ਹੀ ਦੋਵੇਂ ਪਾਸੇ ਸੈੱਟ ਹੋ ਜਾਂਦੇ ਹਨ।",
+      autoBadge: "ਸਾਰੀਆਂ ਭਾਸ਼ਾਵਾਂ ਉਪਲਬਧ",
+      manualOpen: "ਭਾਸ਼ਾਵਾਂ ਆਪ ਚੁਣੋ",
+      manualClose: "ਆਪੇ ਪਛਾਣਨ ਦਿਓ",
+      youSpeak: "ਤੁਸੀਂ ਬੋਲਦੇ ਹੋ",
+      theySpeak: "ਉਹ ਬੋਲਦੇ ਹਨ",
+      sameLang: "ਦੋ ਵੱਖਰੀਆਂ ਭਾਸ਼ਾਵਾਂ ਚੁਣੋ",
+      openMicLbl: "ਓਪਨ ਮਾਈਕ (ਹੱਥ ਖਾਲੀ)",
+      openMicSub: "ਇੱਕ ਵਾਰ ਦਬਾਓ ਤੇ ਬੋਲੋ — ਰੁਕਦੇ ਹੀ ਰਿਕਾਰਡਿੰਗ ਆਪੇ ਬੰਦ।",
+      startAuto: "ਸੁਣਨਾ ਸ਼ੁਰੂ ਕਰੋ →",
+      startManual: "ਗੱਲਬਾਤ ਸ਼ੁਰੂ ਕਰੋ →",
+      walletTitle: "ਵਾਲਿਟ",
+      minutesRemaining: "ਬਾਕੀ ਮਿੰਟ",
+      minUnit: "ਮਿੰਟ",
+      lowBalance: "ਮਿੰਟ ਘੱਟ ਹਨ — ਅਗਲੀ ਗੱਲ ਤੋਂ ਪਹਿਲਾਂ ਟਾਪ-ਅੱਪ ਕਰੋ",
+      walletInfo: "ਲਗਭਗ 10 ਗੱਲਾਂ ਉੱਤੇ 1 ਮਿੰਟ ਲੱਗਦਾ ਹੈ। ਕਦੇ ਵੀ ਪੈਕ ਲਓ — ਮਿੰਟ ਕਦੇ ਖਤਮ ਨਹੀਂ ਹੁੰਦੇ।",
+      buyMinutes: "ਹੋਰ ਮਿੰਟ ਖਰੀਦੋ",
+      logout: "ਲਾਗ ਆਊਟ",
+      payTitle: "ਮਿੰਟ ਟਾਪ-ਅੱਪ ਕਰੋ",
+      packStarter: "ਸ਼ੁਰੂਆਤੀ",
+      packPopular: "ਸਭ ਤੋਂ ਪ੍ਰਸਿੱਧ",
+      packValue: "ਸਭ ਤੋਂ ਕਿਫ਼ਾਇਤੀ",
+      popularTag: "ਪ੍ਰਸਿੱਧ",
+      payWith: "ਭੁਗਤਾਨ ਦਾ ਤਰੀਕਾ",
+      methodCard: "ਕਾਰਡ",
+      methodNet: "ਨੈੱਟਬੈਂਕਿੰਗ",
+      secureNote: "Razorpay ਰਾਹੀਂ ਸੁਰੱਖਿਅਤ ਭੁਗਤਾਨ",
+      paySoon: "ਭੁਗਤਾਨ ਜਲਦੀ ਸ਼ੁਰੂ ਹੋਵੇਗਾ — ਇਹ ਪੈਕ ਹਾਲੇ ਸਿਰਫ਼ ਝਲਕ ਹਨ।",
+      payBtn: "ਭੁਗਤਾਨ ਕਰੋ",
+      paySuccess: "ਭੁਗਤਾਨ ਸਫਲ",
+      successDetail: "{m} ਮਿੰਟ ਜੁੜੇ · ₹{p} ਭੁਗਤਾਨ",
+      backToChat: "ਗੱਲਬਾਤ ਉੱਤੇ ਵਾਪਸ",
+      detecting: "ਸੁਣ ਰਹੇ ਹਾਂ — ਭਾਸ਼ਾ ਪਛਾਣ ਰਹੇ ਹਾਂ…",
+      autoDetecting: "ਪਛਾਣ ਰਹੇ ਹਾਂ…",
+      listening: "ਸੁਣ ਰਹੇ ਹਾਂ…",
+      listeningTap: "ਸੁਣ ਰਹੇ ਹਾਂ — ਰੋਕਣ ਲਈ ਫਿਰ ਦਬਾਓ",
+      translating: "ਅਨੁਵਾਦ ਹੋ ਰਿਹਾ ਹੈ…",
+      holdLonger: "ਬੋਲਦੇ ਸਮੇਂ ਮਾਈਕ ਦਬਾਈ ਰੱਖੋ",
+      micDenied: "ਮਾਈਕ ਨਹੀਂ ਚੱਲਿਆ। ਐਪ ਦੀ ਮਾਈਕ ਇਜਾਜ਼ਤ ਵੇਖੋ।",
+      noSpeech: "ਸੁਣਾਈ ਨਹੀਂ ਦਿੱਤਾ — ਥੋੜ੍ਹਾ ਲੰਮਾ ਬੋਲ ਕੇ ਫਿਰ ਕੋਸ਼ਿਸ਼ ਕਰੋ।",
+      lowMinsNotice: "ਸਿਰਫ਼ {n} ਮਿੰਟ ਬਾਕੀ — ਵਾਲਿਟ (₹) ਵਿੱਚ ਟਾਪ-ਅੱਪ ਕਰੋ",
+      historyTitle: "ਪੁਰਾਣੀ ਗੱਲਬਾਤ",
+      historyEmpty: "ਹਾਲੇ ਕੋਈ ਗੱਲਬਾਤ ਨਹੀਂ। ਇਹ ਸਿਰਫ਼ ਇਸੇ ਫੋਨ ਵਿੱਚ ਸੰਭਾਲੀਆਂ ਜਾਂਦੀਆਂ ਹਨ।",
+      exchangesWord: "ਗੱਲਾਂ",
+      phrasesTitle: "ਤਿਆਰ ਵਾਕ",
+      phrasesHint: "ਕੋਈ ਵਾਕ ਦਬਾਓ — ਹਰ ਪਾਸੇ ਉਸ ਦੀ ਭਾਸ਼ਾ ਵਿੱਚ ਦਿਸੇਗਾ। ਇੰਟਰਨੈੱਟ ਤੋਂ ਬਿਨਾਂ ਵੀ ਚੱਲਦਾ ਹੈ।",
+      packGreetings: "ਸਤਿ ਸ੍ਰੀ ਅਕਾਲ",
+      packBargaining: "ਮੁੱਲ-ਭਾਅ",
+      packHelp: "ਮਦਦ",
+      setLangs: "ਭਾਸ਼ਾਵਾਂ ਚੁਣੋ",
+      pairHint: "ਗਲਤ ਪਛਾਣ ਹੋਵੇ ਤਾਂ ਉੱਪਰਲੀ ਪੱਟੀ ਦਬਾ ਕੇ ਬਦਲੋ।",
+      backToAuto: "ਫਿਰ ਆਪੇ ਪਛਾਣ",
+      langsUpdated: "ਭਾਸ਼ਾਵਾਂ ਬਦਲ ਦਿੱਤੀਆਂ",
       tourNext: "ਅੱਗੇ", tourStart: "ਸ਼ੁਰੂ ਕਰੋ", tourSkip: "ਹੁਣੇ ਨਹੀਂ",
       help: [
         ["ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ", "ਸਕਰੀਨ ਦੋ ਹਿੱਸਿਆਂ ਵਿੱਚ ਹੈ। ਉੱਪਰਲਾ ਹਿੱਸਾ ਜਾਣ-ਬੁੱਝ ਕੇ ਉਲਟਾ ਹੈ — ਫੋਨ ਵਿਚਕਾਰ ਰੱਖੋ, ਦੋਹਾਂ ਨੂੰ ਸਿੱਧਾ ਦਿਸੇਗਾ।"],
@@ -1051,6 +1575,62 @@
       otpError: "SMS-ல் வந்த 6 இலக்க OTP-யை உள்ளிடுங்கள்.",
       helpTitle: "எப்படி வேலை செய்கிறது?", close: "மூடு",
       micHold: "அழுத்திப் பேசுங்கள்", micTap: "ஒரு முறை தட்டவும்",
+      setupTitle: "புதிய உரையாடல்",
+      setupSub: "இருவர், ஒரு ஃபோன். பேசத் தொடங்குங்கள் — எதுவும் அமைக்க வேண்டாம்.",
+      autoOn: "மொழி தானாகவே கண்டறியப்படும்",
+      autoCopy: "பேசத் தொடங்குங்கள் — BaatChiit கேட்டு ஒவ்வொரு பக்கத்தின் மொழியையும் தானே கண்டுபிடிக்கும். முதல் முறை பேசியவுடன் இரு பக்கமும் அமைந்துவிடும்.",
+      autoBadge: "அனைத்து மொழிகளும் உண்டு",
+      manualOpen: "மொழிகளை நீங்களே தேர்வு செய்யுங்கள்",
+      manualClose: "தானாகக் கண்டறியட்டும்",
+      youSpeak: "நீங்கள் பேசுவது",
+      theySpeak: "அவர்கள் பேசுவது",
+      sameLang: "இரண்டு வெவ்வேறு மொழிகளைத் தேர்வு செய்யுங்கள்",
+      openMicLbl: "ஓபன் மைக் (கை சுதந்திரம்)",
+      openMicSub: "ஒரு முறை தட்டிப் பேசுங்கள் — நிறுத்தியவுடன் பதிவு தானாக நிற்கும்.",
+      startAuto: "கேட்கத் தொடங்கு →",
+      startManual: "உரையாடலைத் தொடங்கு →",
+      walletTitle: "வாலட்",
+      minutesRemaining: "மீதமுள்ள நிமிடங்கள்",
+      minUnit: "நிமிடம்",
+      lowBalance: "நிமிடங்கள் குறைவு — அடுத்த உரையாடலுக்கு முன் டாப்-அப் செய்யுங்கள்",
+      walletInfo: "சுமார் 10 உரையாடல்களுக்கு 1 நிமிடம் செலவாகும். எப்போது வேண்டுமானாலும் பேக் வாங்கலாம் — நிமிடங்கள் காலாவதியாகாது.",
+      buyMinutes: "மேலும் நிமிடங்கள் வாங்கு",
+      logout: "வெளியேறு",
+      payTitle: "நிமிடங்கள் டாப்-அப்",
+      packStarter: "தொடக்கம்",
+      packPopular: "மிகவும் பிரபலம்",
+      packValue: "சிறந்த மதிப்பு",
+      popularTag: "பிரபலம்",
+      payWith: "பணம் செலுத்தும் முறை",
+      methodCard: "அட்டை",
+      methodNet: "நெட்பேங்கிங்",
+      secureNote: "Razorpay வழியாக பாதுகாப்பான பணப்பரிவர்த்தனை",
+      paySoon: "பணப்பரிவர்த்தனை விரைவில் — இந்த பேக்குகள் இப்போது முன்னோட்டம் மட்டுமே.",
+      payBtn: "செலுத்து",
+      paySuccess: "பணம் செலுத்தப்பட்டது",
+      successDetail: "{m} நிமிடங்கள் சேர்க்கப்பட்டன · ₹{p} செலுத்தப்பட்டது",
+      backToChat: "உரையாடலுக்குத் திரும்பு",
+      detecting: "கேட்கிறது — மொழியை கண்டறிகிறது…",
+      autoDetecting: "கண்டறியப்படுகிறது…",
+      listening: "கேட்கிறது…",
+      listeningTap: "கேட்கிறது — நிறுத்த மீண்டும் தட்டவும்",
+      translating: "மொழிபெயர்க்கிறது…",
+      holdLonger: "பேசும்போது மைக்கை அழுத்திப் பிடியுங்கள்",
+      micDenied: "மைக்கைப் பயன்படுத்த முடியவில்லை. ஆப்பின் மைக் அனுமதியைச் சரிபார்க்கவும்.",
+      noSpeech: "புரியவில்லை — சற்று நீளமாகப் பேசி மீண்டும் முயற்சிக்கவும்.",
+      lowMinsNotice: "{n} நிமிடம் மட்டுமே மீதம் — வாலட்டில் (₹) டாப்-அப் செய்யுங்கள்",
+      historyTitle: "பழைய உரையாடல்கள்",
+      historyEmpty: "இதுவரை உரையாடல்கள் இல்லை. இவை இந்த ஃபோனில் மட்டுமே சேமிக்கப்படும்.",
+      exchangesWord: "உரையாடல்கள்",
+      phrasesTitle: "தயார் வாக்கியங்கள்",
+      phrasesHint: "ஒரு வாக்கியத்தைத் தட்டுங்கள் — ஒவ்வொரு பக்கத்திலும் அந்த மொழியில் தெரியும். இணையம் இல்லாமலும் வேலை செய்யும்.",
+      packGreetings: "வணக்கம்",
+      packBargaining: "பேரம்",
+      packHelp: "உதவி",
+      setLangs: "மொழிகளைத் தேர்வு செய்யுங்கள்",
+      pairHint: "தவறாக இருந்தால் மேலே உள்ள பட்டையைத் தட்டி மாற்றுங்கள்.",
+      backToAuto: "மீண்டும் தானாகக் கண்டறி",
+      langsUpdated: "மொழிகள் மாற்றப்பட்டன",
       tourNext: "அடுத்து", tourStart: "தொடங்கு", tourSkip: "இப்போது வேண்டாம்",
       help: [
         ["இருவர், ஒரு ஃபோன்", "திரை இரண்டு பகுதிகளாக உள்ளது. மேல் பகுதி வேண்டுமென்றே தலைகீழாக உள்ளது — ஃபோனை நடுவில் வையுங்கள், இருவருக்கும் நேராகத் தெரியும்."],
@@ -1072,6 +1652,62 @@
       otpError: "SMS లో వచ్చిన 6 అంకెల OTP ఇవ్వండి.",
       helpTitle: "ఎలా పనిచేస్తుంది?", close: "మూసివేయండి",
       micHold: "నొక్కి మాట్లాడండి", micTap: "ఒకసారి నొక్కండి",
+      setupTitle: "కొత్త సంభాషణ",
+      setupSub: "ఇద్దరు, ఒక ఫోన్. మాట్లాడటం మొదలుపెట్టండి — ఏమీ సెట్ చేయనవసరం లేదు.",
+      autoOn: "భాష దానంతట అదే గుర్తించబడుతుంది",
+      autoCopy: "మాట్లాడటం మొదలుపెట్టండి — BaatChiit విని ప్రతి వైపు భాషను దానంతట అదే గుర్తిస్తుంది. మొదటిసారి మాట్లాడగానే రెండు వైపులా సెట్ అవుతుంది.",
+      autoBadge: "అన్ని భాషలు అందుబాటులో",
+      manualOpen: "భాషలను మీరే ఎంచుకోండి",
+      manualClose: "దానంతట అదే గుర్తించనివ్వండి",
+      youSpeak: "మీరు మాట్లాడేది",
+      theySpeak: "వారు మాట్లాడేది",
+      sameLang: "రెండు వేర్వేరు భాషలను ఎంచుకోండి",
+      openMicLbl: "ఓపెన్ మైక్ (చేతులు ఖాళీ)",
+      openMicSub: "ఒకసారి నొక్కి మాట్లాడండి — ఆగగానే రికార్డింగ్ దానంతట అదే ఆగుతుంది.",
+      startAuto: "వినడం ప్రారంభించండి →",
+      startManual: "సంభాషణ ప్రారంభించండి →",
+      walletTitle: "వాలెట్",
+      minutesRemaining: "మిగిలిన నిమిషాలు",
+      minUnit: "నిమిషాలు",
+      lowBalance: "నిమిషాలు తక్కువ — తదుపరి సంభాషణ ముందు టాప్-అప్ చేయండి",
+      walletInfo: "సుమారు 10 సంభాషణలకు 1 నిమిషం ఖర్చవుతుంది. ఎప్పుడైనా ప్యాక్ కొనండి — నిమిషాలు ఎప్పటికీ ముగియవు.",
+      buyMinutes: "మరిన్ని నిమిషాలు కొనండి",
+      logout: "లాగ్ అవుట్",
+      payTitle: "నిమిషాలు టాప్-అప్",
+      packStarter: "ప్రారంభ",
+      packPopular: "అత్యంత ప్రజాదరణ",
+      packValue: "ఉత్తమ విలువ",
+      popularTag: "ప్రజాదరణ",
+      payWith: "చెల్లింపు విధానం",
+      methodCard: "కార్డు",
+      methodNet: "నెట్‌బ్యాంకింగ్",
+      secureNote: "Razorpay ద్వారా సురక్షిత చెల్లింపు",
+      paySoon: "చెల్లింపులు త్వరలో — ఈ ప్యాక్‌లు ప్రస్తుతం కేవలం ఒక సూచన.",
+      payBtn: "చెల్లించండి",
+      paySuccess: "చెల్లింపు విజయవంతం",
+      successDetail: "{m} నిమిషాలు జోడించబడ్డాయి · ₹{p} చెల్లించారు",
+      backToChat: "సంభాషణకు తిరిగి",
+      detecting: "వింటోంది — భాషను గుర్తిస్తోంది…",
+      autoDetecting: "గుర్తిస్తోంది…",
+      listening: "వింటోంది…",
+      listeningTap: "వింటోంది — ఆపడానికి మళ్ళీ నొక్కండి",
+      translating: "అనువదిస్తోంది…",
+      holdLonger: "మాట్లాడేటప్పుడు మైక్ నొక్కి పట్టుకోండి",
+      micDenied: "మైక్ ఉపయోగించలేకపోయాం. యాప్ మైక్ అనుమతిని చూడండి.",
+      noSpeech: "వినిపించలేదు — కొంచెం ఎక్కువసేపు మాట్లాడి మళ్ళీ ప్రయత్నించండి.",
+      lowMinsNotice: "కేవలం {n} నిమిషాలే మిగిలాయి — వాలెట్‌లో (₹) టాప్-అప్ చేయండి",
+      historyTitle: "పాత సంభాషణలు",
+      historyEmpty: "ఇంకా సంభాషణలు లేవు. ఇవి ఈ ఫోన్‌లో మాత్రమే సేవ్ అవుతాయి.",
+      exchangesWord: "సంభాషణలు",
+      phrasesTitle: "సిద్ధ వాక్యాలు",
+      phrasesHint: "ఒక వాక్యాన్ని నొక్కండి — ప్రతి వైపు ఆ భాషలో కనిపిస్తుంది. ఇంటర్నెట్ లేకపోయినా పనిచేస్తుంది.",
+      packGreetings: "నమస్కారం",
+      packBargaining: "బేరం",
+      packHelp: "సహాయం",
+      setLangs: "భాషలను ఎంచుకోండి",
+      pairHint: "తప్పుగా ఉంటే పైన ఉన్న పిల్‌ను నొక్కి మార్చండి.",
+      backToAuto: "మళ్ళీ దానంతట గుర్తింపు",
+      langsUpdated: "భాషలు మార్చబడ్డాయి",
       tourNext: "తర్వాత", tourStart: "ప్రారంభించండి", tourSkip: "ఇప్పుడు వద్దు",
       help: [
         ["ఇద్దరు, ఒక ఫోన్", "స్క్రీన్ రెండు భాగాలుగా ఉంది. పై భాగం కావాలనే తలకిందులుగా ఉంది — ఫోన్‌ను మధ్యలో పెట్టండి, ఇద్దరికీ నేరుగా కనిపిస్తుంది."],
@@ -1087,14 +1723,14 @@
   };
 
   var PACKS = [
-    { id: "starter", price: 99, minutes: 60, label: "Starter" },
-    { id: "popular", price: 249, minutes: 180, label: "Most popular", popular: true },
-    { id: "value", price: 599, minutes: 500, label: "Best value" }
+    { id: "starter", price: 99, minutes: 60, key: "packStarter" },
+    { id: "popular", price: 249, minutes: 180, key: "packPopular", popular: true },
+    { id: "value", price: 599, minutes: 500, key: "packValue" }
   ];
   var METHODS = [
     { id: "upi", label: "UPI" },
-    { id: "card", label: "Card" },
-    { id: "netbanking", label: "Netbanking" }
+    { id: "card", key: "methodCard" },
+    { id: "netbanking", key: "methodNet" }
   ];
 
   var AUTH_TOKEN_KEY = "bc_session";
@@ -1481,7 +2117,7 @@
 
   function renderSetupValidation() {
     var same = state.manualOpen && state.hostSel === state.guestSel;
-    $("same-lang-error").textContent = same ? "Pick two different languages" : "";
+    $("same-lang-error").textContent = same ? t("sameLang") : "";
     $("btn-start").disabled = same;
   }
 
@@ -1489,8 +2125,8 @@
     state.manualOpen = !state.manualOpen;
     state.autoDetect = !state.manualOpen;
     $("manual-wrap").hidden = !state.manualOpen;
-    this.textContent = state.manualOpen ? "Use auto-detect instead" : "Set languages manually";
-    $("btn-start").textContent = state.autoDetect ? "Start listening →" : "Start conversation →";
+    this.textContent = state.manualOpen ? t("manualClose") : t("manualOpen");
+    $("btn-start").textContent = state.autoDetect ? t("startAuto") : t("startManual");
     renderSetupValidation();
   });
 
@@ -1516,7 +2152,7 @@
     // permission prompt must never race the first push-to-talk hold.
     ensureMicStream().catch(function (err) {
       console.error(err);
-      notice("host", "Couldn't access the microphone. Check the site's mic permission.");
+      notice("host", t("micDenied"));
     });
     maybeStartTour();
   });
@@ -1535,7 +2171,7 @@
       var label = $(side + "-label");
       dot.dataset.state = locked ? "locked" : "waiting";
       label.dataset.state = locked ? "locked" : "waiting";
-      label.textContent = locked ? langName(state[side].lang) : "Listening — detecting language…";
+      label.textContent = locked ? langName(state[side].lang) : t("detecting");
     });
     var pill = $("pair-pill");
     if (state.host.lang && state.guest.lang) {
@@ -1543,7 +2179,7 @@
       pill.textContent = langName(state.host.lang) + " ⇄ " + langName(state.guest.lang);
     } else {
       pill.dataset.waiting = "true";
-      pill.textContent = "Auto-detecting…";
+      pill.textContent = t("autoDetecting");
     }
   }
 
@@ -1637,7 +2273,7 @@
     var list = loadHistory();
     var wrap = $("history-list");
     if (!list.length) {
-      wrap.innerHTML = '<p class="hist-empty">No conversations yet. They\'re saved on this phone only.</p>';
+      wrap.innerHTML = '<p class="hist-empty">' + escapeHtml(t("historyEmpty")) + "</p>";
       return;
     }
     wrap.innerHTML = list.map(function (h) {
@@ -1647,7 +2283,7 @@
       return (
         '<div class="hist-card">' +
           '<div class="place">' + escapeHtml(title) + "</div>" +
-          '<div class="meta">' + escapeHtml(pair + " · " + whenLabel(h.startedAt) + " · " + h.count + " exchanges") + "</div>" +
+          '<div class="meta">' + escapeHtml(pair + " · " + whenLabel(h.startedAt) + " · " + h.count + " " + t("exchangesWord")) + "</div>" +
         "</div>"
       );
     }).join("");
@@ -1655,12 +2291,20 @@
 
   // A sheet is one history entry above the screen it covers, so the
   // back key closes it first instead of leaving the conversation.
+  var SHEETS = ["history", "phrases", "help", "langpair", "tour"];
+  function hideAllSheets() {
+    $("sheet-backdrop").classList.remove("open");
+    SHEETS.forEach(function (s) { $(s + "-sheet").classList.remove("open"); });
+  }
+
   function showSheet(which) {         // visual only (also used when replaying history)
+    hideAllSheets();                  // only ever one sheet at a time
     $("sheet-backdrop").classList.add("open");
     $(which + "-sheet").classList.add("open");
     if (which === "history") renderHistory();
     if (which === "phrases") renderPhrasePacks();
     if (which === "help") renderHelp();
+    if (which === "langpair") renderLangPair();
     // The tour dims the screen itself, so it doesn't want the backdrop.
     if (which === "tour") { $("sheet-backdrop").classList.remove("open"); renderTour(); }
   }
@@ -1672,11 +2316,7 @@
     // Dismissing the tour with the back key counts as having seen it,
     // otherwise it reappears on the next conversation.
     if ($("tour-sheet").classList.contains("open")) localStorage.setItem(TOUR_SEEN_KEY, "1");
-    $("sheet-backdrop").classList.remove("open");
-    $("history-sheet").classList.remove("open");
-    $("phrases-sheet").classList.remove("open");
-    $("help-sheet").classList.remove("open");
-    $("tour-sheet").classList.remove("open");
+    hideAllSheets();
   }
   function dismissSheet() {           // user-initiated close
     if ((history.state || {}).bcSheet) history.back();
@@ -1695,7 +2335,7 @@
     tabs.innerHTML = "";
     PHRASE_PACKS.forEach(function (pack, i) {
       var b = document.createElement("button");
-      b.textContent = pack.name;
+      b.textContent = t(pack.key);
       b.setAttribute("role", "tab");
       b.setAttribute("aria-pressed", i === state.activePack ? "true" : "false");
       b.addEventListener("click", function () { state.activePack = i; renderPhrasePacks(); });
@@ -1757,8 +2397,54 @@
     $("tour-skip").textContent = t("tourSkip");
     if (!$("btn-resend-otp").disabled) $("btn-resend-otp").textContent = t("resend");
 
+    // setup screen
+    $("t-setup-title").textContent = t("setupTitle");
+    $("t-setup-sub").textContent = t("setupSub");
+    $("t-auto-on").textContent = t("autoOn");
+    $("t-auto-copy").textContent = t("autoCopy");
+    $("t-auto-badge").textContent = t("autoBadge");
+    $("t-you-speak").textContent = t("youSpeak");
+    $("t-they-speak").textContent = t("theySpeak");
+    $("t-openmic-lbl").textContent = t("openMicLbl");
+    $("t-openmic-sub").textContent = t("openMicSub");
+    $("btn-toggle-manual").textContent = state.manualOpen ? t("manualClose") : t("manualOpen");
+    $("btn-start").textContent = state.autoDetect ? t("startAuto") : t("startManual");
+
+    // wallet
+    $("t-wallet-title").textContent = t("walletTitle");
+    $("t-minutes-remaining").textContent = t("minutesRemaining");
+    $("t-min-unit").textContent = t("minUnit");
+    $("wallet-low").textContent = t("lowBalance");
+    $("t-wallet-info").textContent = t("walletInfo");
+    $("btn-topup").textContent = t("buyMinutes");
+    $("btn-logout").textContent = t("logout");
+
+    // payment + success
+    $("t-pay-title").textContent = t("payTitle");
+    $("t-pay-with").textContent = t("payWith");
+    $("t-secure-note").textContent = t("secureNote");
+    $("payments-soon").textContent = t("paySoon");
+    $("t-pay-word").textContent = t("payBtn");
+    $("t-pay-success").textContent = t("paySuccess");
+    $("btn-success-back").textContent = t("backToChat");
+
+    // sheets
+    $("t-history-title").textContent = t("historyTitle");
+    $("t-phrases-title").textContent = t("phrasesTitle");
+    $("t-phrases-hint").textContent = t("phrasesHint");
+    $("t-setlangs-title").textContent = t("setLangs");
+    $("btn-close-langpair").textContent = t("close");
+    $("t-pair-hint").textContent = t("pairHint");
+    $("t-pair-you").textContent = t("youSpeak");
+    $("t-pair-they").textContent = t("theySpeak");
+    $("btn-pair-auto").textContent = t("backToAuto");
+
     renderUiLangChips();
     renderMicHints();
+    renderSideHeads();
+    if ($("history-sheet").classList.contains("open")) renderHistory();
+    if ($("phrases-sheet").classList.contains("open")) renderPhrasePacks();
+    if ($("langpair-sheet").classList.contains("open")) renderLangPair();
     if ($("help-sheet").classList.contains("open")) renderHelp();
     if ($("tour-sheet").classList.contains("open")) renderTour();
 
@@ -1773,6 +2459,50 @@
 
   // "↑ Press and speak" under each mic, in the language chosen on the
   // welcome screen, so the control is obvious without reading English.
+  // -----------------------------------------------------------------
+  // Language pair sheet: tapping the strip pill mid-conversation lets
+  // someone correct a wrong auto-detect guess (or set both languages
+  // up front) without leaving the conversation. Picking a language
+  // here marks that side manual, so detection stops overriding it.
+  // -----------------------------------------------------------------
+  function renderLangPair() {
+    ["host", "guest"].forEach(function (side) {
+      var wrap = $("pair-" + side + "-chips");
+      wrap.innerHTML = "";
+      LANGUAGES.forEach(function (lang) {
+        var b = document.createElement("button");
+        b.className = "lang-chip";
+        b.dataset.selected = state[side].lang === lang.code ? "true" : "false";
+        b.innerHTML = escapeHtml(lang.name) +
+          (lang.code === "en-IN" ? "" : '<span class="native">' + escapeHtml(lang.native) + "</span>");
+        b.addEventListener("click", function () {
+          state[side] = { lang: lang.code, manual: true };
+          // Both sides on one language would translate nothing; move the
+          // other side off it rather than silently doing nothing.
+          var other = otherSide(side);
+          if (state[other].lang === lang.code) {
+            state[other] = { lang: lang.code === "en-IN" ? "hi-IN" : "en-IN", manual: true };
+          }
+          renderLangPair();
+          renderSideHeads();
+          renderFeeds();          // bubbles show each side in its own language
+          toast(t("langsUpdated"));
+        });
+        wrap.appendChild(b);
+      });
+    });
+  }
+
+  $("pair-pill").addEventListener("click", function () { openSheet("langpair"); });
+  $("btn-close-langpair").addEventListener("click", dismissSheet);
+  $("btn-pair-auto").addEventListener("click", function () {
+    state.host = { lang: null, manual: false };
+    state.guest = { lang: null, manual: false };
+    renderLangPair();
+    renderSideHeads();
+    dismissSheet();
+  });
+
   function renderMicHints() {
     var label = "↑ " + (state.openMic ? t("micTap") : t("micHold"));
     $("mic-hint-host").textContent = label;
@@ -1873,9 +2603,9 @@
       b.innerHTML =
         "<div><div>" +
           '<span class="mins">' + p.minutes + " min</span>" +
-          (p.popular ? '<span class="tag">POPULAR</span>' : "") +
+          (p.popular ? '<span class="tag">' + escapeHtml(t("popularTag")) + "</span>" : "") +
         "</div>" +
-        '<div class="sub">' + escapeHtml(p.label) + "</div></div>" +
+        '<div class="sub">' + escapeHtml(t(p.key)) + "</div></div>" +
         '<div class="price">₹' + p.price + "</div>";
       b.addEventListener("click", function () { state.selectedPack = p.id; renderPayment(); });
       wrap.appendChild(b);
@@ -1885,7 +2615,7 @@
     methods.innerHTML = "";
     METHODS.forEach(function (m) {
       var b = document.createElement("button");
-      b.textContent = m.label;
+      b.textContent = m.key ? t(m.key) : m.label;
       b.setAttribute("aria-pressed", state.selectedMethod === m.id ? "true" : "false");
       b.addEventListener("click", function () { state.selectedMethod = m.id; renderPayment(); });
       methods.appendChild(b);
@@ -1978,7 +2708,7 @@
         state.recordingSide = null;
         renderSideHeads();
         if (heldMs < 300) {
-          notice(side, "Hold the mic while you speak");
+          notice(side, t("holdLonger"));
           return;
         }
         var blob = new Blob(chunks, { type: recorder.mimeType || mimeType || "audio/webm" });
@@ -1989,13 +2719,13 @@
       state.recordStartedAt = Date.now();
       recorder.start();
       micBtn.classList.add("is-recording");
-      $(side + "-label").textContent = state.openMic ? "Listening — tap again to stop" : "Listening…";
+      $(side + "-label").textContent = state.openMic ? t("listeningTap") : t("listening");
       if (state.openMic) startSilenceWatch(side);
       // Sarvam's sync STT takes clips under 30s -- stop a bit before.
       state.autoStopTimer = setTimeout(function () { stopRecording(side); }, 25000);
     }).catch(function (err) {
       console.error(err);
-      notice(side, "Couldn't access the microphone. Check the site's mic permission.");
+      notice(side, t("micDenied"));
     });
   }
 
@@ -2021,7 +2751,7 @@
     var listener = otherSide(side);
     var micBtn = $("mic-" + side);
     micBtn.classList.add("is-busy");
-    $(side + "-label").textContent = "Translating…";
+    $(side + "-label").textContent = t("translating");
 
     blobToBase64(blob).then(function (audioBase64) {
       return fetch("/api/pipeline", {
@@ -2049,7 +2779,7 @@
       renderSideHeads();
 
       if (!data.transcript) {
-        notice(side, data.note || "Didn't catch that — try again, a little longer.");
+        notice(side, data.note || t("noSpeech"));
         return;
       }
 
@@ -2073,7 +2803,7 @@
       if (typeof data.minutesLeft === "number" && state.account) {
         state.account.minutes = data.minutesLeft;
         renderWallet();
-        if (data.minutesLeft <= 2) notice(side, "Only " + data.minutesLeft + " min left — top up in the wallet (₹)");
+        if (data.minutesLeft <= 2) notice(side, t("lowMinsNotice").replace("{n}", data.minutesLeft));
       }
     }).catch(function (err) {
       micBtn.classList.remove("is-busy");
