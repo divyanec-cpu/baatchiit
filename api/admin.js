@@ -62,11 +62,18 @@ module.exports = async function handler(req, res) {
   try {
     // Login is the only action allowed without a session.
     if (body.action === "login") {
-      if (!safeEqual(body.password, process.env.ADMIN_PASSWORD)) {
+      // ADMIN_USER is optional: without it the panel falls back to
+      // password-only rather than locking itself out.
+      const expectedUser = (process.env.ADMIN_USER || "").trim();
+      const userOk = !expectedUser || safeEqual(String(body.username || "").trim().toLowerCase(), expectedUser.toLowerCase());
+      const passOk = safeEqual(body.password, process.env.ADMIN_PASSWORD);
+      // Check both before answering, and give one message for either
+      // failure, so a wrong username can't be told from a wrong password.
+      if (!userOk || !passOk) {
         // Slow a guessing loop down a little without holding the
         // function open long enough to matter for a real login.
         await new Promise((r) => setTimeout(r, 600));
-        return res.status(401).json({ error: "Wrong password." });
+        return res.status(401).json({ error: "Wrong ID or password." });
       }
       const token = await createAdminSession();
       res.setHeader("Set-Cookie",
@@ -374,24 +381,28 @@ function loginHtml(message) {
   .login .card { padding:22px; }
 </style></head><body><div class="login"><div class="card">
   <h1>BaatChiit admin</h1>
-  <p class="sub">Enter the admin password.</p>
+  <p class="sub">Sign in to manage accounts and app text.</p>
+  <input id="user" type="text" autocomplete="username" placeholder="ID" style="margin-bottom:8px;" />
   <input id="pw" type="password" autocomplete="current-password" placeholder="Password" />
   <p id="err" class="sub" style="color:var(--red);min-height:16px;margin:8px 0;">${message || ""}</p>
   <button class="btn" id="go" style="width:100%;">Log in</button>
 </div></div>
 <script>
-  var pw = document.getElementById("pw"), go = document.getElementById("go"), err = document.getElementById("err");
+  var user = document.getElementById("user"), pw = document.getElementById("pw"),
+      go = document.getElementById("go"), err = document.getElementById("err");
   function submit() {
     go.disabled = true; err.textContent = "";
     fetch("/api/admin", { method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ action:"login", password: pw.value }) })
+      body: JSON.stringify({ action:"login", username: user.value, password: pw.value }) })
       .then(function(r){ return r.json().then(function(d){ if(!r.ok) throw new Error(d.error||"Failed"); return d; }); })
       .then(function(){ location.reload(); })
       .catch(function(e){ go.disabled = false; err.textContent = e.message; pw.select(); });
   }
   go.addEventListener("click", submit);
+  // Enter submits from either field.
+  user.addEventListener("keydown", function(e){ if (e.key === "Enter") pw.focus(); });
   pw.addEventListener("keydown", function(e){ if (e.key === "Enter") submit(); });
-  pw.focus();
+  user.focus();
 <\/script></body></html>`;
 }
 

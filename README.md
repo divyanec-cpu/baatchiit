@@ -80,6 +80,25 @@ One-time setup, both in the Vercel dashboard:
 Until both exist, the Login drawer shows a clear "isn't configured" error and
 the rest of the app is unaffected.
 
+## Admin panel
+
+**baatchiit.vercel.app/api/admin** — sign in with an ID and password held
+in the `ADMIN_USER` and `ADMIN_PASSWORD` env vars. The password is
+exchanged for a 12-hour token kept in Redis and returned as an httpOnly
+cookie, so it never reaches localStorage or a URL. A wrong ID and a wrong
+password give the same message, so neither can be probed separately. If
+`ADMIN_USER` is unset the panel falls back to password-only rather than
+locking you out; without `ADMIN_PASSWORD` it refuses to run at all.
+
+Five tabs: **Overview** (accounts, active users, translations, weekly
+retention, a 21-day chart, top language pairs), **Accounts** (search,
+grant or deduct minutes with a reason, block/unblock, delete),
+**App text**, **Phrases** and **Pricing** — the last three edit what the
+app shows without a deploy, which is also the route for a native speaker
+to correct the translations.
+
+To change the credentials, edit those two env vars in Vercel and redeploy.
+
 ## Profile and onboarding
 
 After the first OTP login the app offers a short, skippable form: name,
