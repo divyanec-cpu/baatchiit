@@ -164,6 +164,21 @@
     background: var(--card);
   }
   .home-tab:active { background: var(--sand); }
+
+  /* Account entry on the setup screen: a person plus the minutes left,
+     so it reads as "my account" and still answers "how much have I
+     got?" at a glance. */
+  .profile-pill {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 12px 6px 10px;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--ink);
+    font-size: 13px; font-weight: 700;
+  }
+  .profile-pill:active { background: var(--sand); }
+  .profile-pill svg { color: var(--saffron-dk); flex-shrink: 0; }
   .phone-row {
     display: flex; align-items: center; gap: 8px;
     background: var(--card);
@@ -678,7 +693,12 @@
       <div class="title" id="t-setup-title">New conversation</div>
       <div class="strip-side" style="gap:8px;">
         <button class="icon-btn" id="btn-help-1" aria-label="Help">?</button>
-        <button class="icon-btn" id="btn-wallet-1" style="color:var(--saffron);" aria-label="Wallet">₹</button>
+        <!-- Person, not ₹: this opens the account (details, minutes,
+             sign out), and a rupee sign read as "payments only". -->
+        <button class="profile-pill" id="btn-profile-1" aria-label="Profile">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+          <span id="profile-mins">–</span>
+        </button>
       </div>
     </div>
     <div class="setup-sub" id="t-setup-sub">Two people, one phone. Just start talking — no setup.</div>
@@ -745,7 +765,9 @@
       </div>
       <button class="pair-pill" id="pair-pill" data-waiting="true" aria-label="Set languages">Auto-detecting…</button>
       <div class="strip-side">
-        <button class="icon-btn" id="btn-wallet-2" style="color:var(--saffron-dk);" aria-label="Wallet">₹</button>
+        <button class="icon-btn" id="btn-profile-2" aria-label="Profile">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 3.6-6 8-6s8 2 8 6"/></svg>
+        </button>
         <button class="icon-btn" id="btn-history" aria-label="History">
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/><path d="M12 8v4l3 2"/></svg>
         </button>
@@ -3084,6 +3106,8 @@
     var minutes = a ? a.minutes : null;
     $("wallet-balance").textContent = minutes === null ? "–" : minutes;
     $("wallet-low").hidden = !(minutes !== null && minutes < 15);
+    // Same number on the setup screen's account pill.
+    $("profile-mins").textContent = minutes === null ? "–" : minutes + " " + t("minUnit");
 
     setProfileRow("pv-name", a && a.name);
     setProfileRow("pv-city", a && a.city);
@@ -3154,8 +3178,8 @@
     renderProfile();
     showScreen("profile");
   }
-  $("btn-wallet-1").addEventListener("click", function () { openProfile("setup"); });
-  $("btn-wallet-2").addEventListener("click", function () { openProfile("main"); });
+  $("btn-profile-1").addEventListener("click", function () { openProfile("setup"); });
+  $("btn-profile-2").addEventListener("click", function () { openProfile("main"); });
   $("btn-profile-back").addEventListener("click", function () { history.back(); });
   $("btn-topup").addEventListener("click", function () { renderPayment(); showScreen("payment"); });
   $("btn-payment-back").addEventListener("click", function () { history.back(); });
