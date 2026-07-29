@@ -261,6 +261,11 @@
     color: var(--ink);
   }
   .lang-chip .native { font-family: var(--font-script); font-weight: 600; opacity: 0.75; font-size: 12px; margin-left: 5px; }
+  /* Base selected state for ANY chip row. Without this, rows that carry
+     no data-side — the onboarding "where will you use it" chips — showed
+     no response to a tap at all, so the choice looked impossible to make. */
+  .lang-chip[data-selected="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .lang-chip[data-selected="true"] .native { color: var(--cream); opacity: 0.75; }
   .chip-row[data-side="host"] .lang-chip[data-selected="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
   .chip-row[data-side="guest"] .lang-chip[data-selected="true"] { background: var(--saffron); color: #fff; border-color: var(--saffron); }
   .setting-row {
