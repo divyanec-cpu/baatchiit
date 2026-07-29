@@ -82,6 +82,8 @@ module.exports = async function handler(req, res) {
   body = body || {};
 
   const { audioBase64, mimeType, sourceLangHint, targetLangCode, token } = body;
+  // Older clients don't send the flag and still expect audio inline.
+  const wantAudio = body.wantAudio !== false;
 
   // ---------- Metering gate (login-first + minutes wallet) ----------
   // Every successful exchange costs 1 deciminute ("~1 minute per 10
@@ -112,9 +114,15 @@ module.exports = async function handler(req, res) {
     });
   }
 
+  // Timings are logged per stage: with three Sarvam calls chained, the
+  // only way to know which one is slow is to measure each.
+  const t0 = Date.now();
+  const timings = {};
+
   try {
     // ---------- Step 1: Speech to Text ----------
     const stt = await speechToText({ apiKey, audioBase64, mimeType, sourceLangHint });
+    timings.stt = Date.now() - t0;
 
     if (!stt.transcript || !stt.transcript.trim()) {
       // Nothing understandable was said (silence, noise, a very short tap).
@@ -136,19 +144,30 @@ module.exports = async function handler(req, res) {
     const sourceForTranslate = detectedLang === "unknown" ? "auto" : detectedLang;
 
     // ---------- Step 2: Translate ----------
+    const tTranslate = Date.now();
     const translation = await translateText({
       apiKey,
       input: stt.transcript,
       sourceLangCode: sourceForTranslate,
       targetLangCode,
     });
+    timings.translate = Date.now() - tTranslate;
 
     // ---------- Step 3: Text to Speech ----------
-    const ttsAudioBase64 = await textToSpeech({
-      apiKey,
-      text: translation.translatedText,
-      targetLangCode,
-    });
+    // Skippable: the client asks for the words first so the other person
+    // can start reading, then fetches the audio from /api/speak. Waiting
+    // for speech synthesis before showing anything was a large part of
+    // the delay people noticed.
+    let ttsAudioBase64 = null;
+    if (wantAudio) {
+      const tTts = Date.now();
+      ttsAudioBase64 = await textToSpeech({
+        apiKey,
+        text: translation.translatedText,
+        targetLangCode,
+      });
+      timings.tts = Date.now() - tTts;
+    }
 
     // Charge only for exchanges that actually produced a translation.
     let minutesLeft = null;
@@ -161,12 +180,16 @@ module.exports = async function handler(req, res) {
       minutesLeft = Math.floor(user.deciminutes / 10);
     }
 
+    timings.total = Date.now() - t0;
+    console.log("pipeline timings(ms):", JSON.stringify(timings));
+
     return res.status(200).json({
       transcript: stt.transcript,
       detectedLanguage: translation.sourceLangCode || detectedLang,
       translatedText: translation.translatedText,
       ttsAudioBase64,
       minutesLeft,
+      timings,
     });
   } catch (err) {
     console.error("pipeline error:", err);

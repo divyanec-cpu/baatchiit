@@ -5,6 +5,7 @@
       "maxDuration": 30
     }
   },
+  "regions": ["bom1"],
   "rewrites": [
     { "source": "/download", "destination": "/download.html" },
     { "source": "/about", "destination": "/about.html" },

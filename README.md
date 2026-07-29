@@ -116,6 +116,26 @@ here once Razorpay is live — nothing fake is shown before then.
 Profile fields are optional and length-capped server-side; they're stored
 on `user:<phone>` in Redis and visible in the admin panel.
 
+## Latency — why the server region matters
+
+Vercel put the functions in Washington by default, while Sarvam AI and
+the users are both in India. Every exchange therefore crossed the Pacific
+three times (speech-to-text, translate, speech), which cost seconds
+before Sarvam did any work. `vercel.json` now pins `"regions": ["bom1"]`
+(Mumbai) — confirm after a deploy with:
+
+    curl -sD - -o /dev/null https://baatchiit.vercel.app/api/auth -X POST       -H "Content-Type: application/json" -d '{"action":"config"}' | grep -i x-vercel-id
+
+The header should read `bom1::bom1::…`; `iad1` means it slipped back to
+Washington.
+
+The other half of the delay was waiting for speech synthesis before
+showing anything. `api/pipeline.js` now takes `wantAudio: false` and
+returns the words as soon as the translation is done; the client then
+asks `api/speak` for the voice and plays it when it arrives. Each stage
+is timed and logged (`pipeline timings(ms)`), so if it feels slow again,
+the function log says which call is responsible.
+
 ## Monitoring usage
 
 `/api/stats?key=<STATS_KEY>` serves a private dashboard: accounts total, new
