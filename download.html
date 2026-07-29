@@ -44,11 +44,21 @@
     border-left:3px solid var(--gold); padding-left:11px;
   }
   .meta { font-size:12px; color:var(--muted); text-align:center; margin-top:22px; }
+  .topbar { display:flex; align-items:center; margin-bottom:14px; }
+  .back-home {
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:13.5px; font-weight:700; color:var(--ink); text-decoration:none;
+    padding:8px 14px; border-radius:999px;
+    border:1.5px solid var(--line); background:var(--card);
+  }
   a { color:var(--saffron); }
 </style>
 </head>
 <body>
 <div class="wrap">
+  <div class="topbar">
+    <a class="back-home" href="/">← Back to the app</a>
+  </div>
   <div class="brand">
     <svg width="34" height="34" viewBox="0 0 32 32"><path d="M2 8a6 6 0 016-6h10a6 6 0 016 6v4a6 6 0 01-6 6h-8l-5 4v-4a6 6 0 01-3-5.2V8z" fill="#241C3D"/><path d="M10 18a6 6 0 016-6h6a6 6 0 016 6v3a6 6 0 01-4.2 5.7v4.1l-4.6-4.1H16a6 6 0 01-6-6v-2.7z" fill="#FF7A29"/></svg>
     <h1>BaatChiit.ai</h1>
