@@ -34,6 +34,9 @@ module.exports = async function handler(req, res) {
   }
   body = body || {};
 
+  // Warm-up poke from the client — see api/pipeline.js.
+  if (body.warmup) return res.status(200).json({ awake: true });
+
   const text = typeof body.text === "string" ? body.text.trim().slice(0, MAX_TEXT) : "";
   const langCode = body.langCode;
   if (!text) return res.status(400).json({ error: "Nothing to say." });

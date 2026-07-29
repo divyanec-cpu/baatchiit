@@ -81,6 +81,11 @@ module.exports = async function handler(req, res) {
   }
   body = body || {};
 
+  // The client pokes this when a conversation opens so the function is
+  // already booted by the time someone speaks. Answer immediately, before
+  // any auth or storage work.
+  if (body.warmup) return res.status(200).json({ awake: true });
+
   const { audioBase64, mimeType, sourceLangHint, targetLangCode, token } = body;
   // Older clients don't send the flag and still expect audio inline.
   const wantAudio = body.wantAudio !== false;

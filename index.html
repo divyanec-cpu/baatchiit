@@ -2672,6 +2672,7 @@
       console.error(err);
       notice("host", t("micDenied"));
     });
+    warmUpServer();
     maybeStartTour();
   });
 
@@ -2713,7 +2714,7 @@
           var code = state[side].lang || state[side + "Sel"] || "en-IN";
           var text = m.phrase[code] || m.phrase["en-IN"];
           html +=
-            '<div class="phrase-msg"><div class="main">' + withNumberChips(text) + "</div>" +
+            '<div class="phrase-msg" data-idx="' + idx + '"><div class="main">' + withNumberChips(text) + "</div>" +
             (code === "en-IN" ? "" : '<div class="gloss">' + escapeHtml(m.phrase["en-IN"]) + "</div>") +
             "</div>";
           return;
@@ -2730,8 +2731,8 @@
       feed.innerHTML = html;
       feed.scrollTop = feed.scrollHeight;
     });
-    // Tapping a received bubble replays its spoken translation.
-    document.querySelectorAll('.msg-row[data-mine="false"]').forEach(function (row) {
+    // Tapping a received bubble — or any phrase card — replays its audio.
+    document.querySelectorAll('.msg-row[data-mine="false"], .phrase-msg').forEach(function (row) {
       row.addEventListener("click", function () {
         var m = state.messages[Number(row.dataset.idx)];
         if (m && m.tts) playTts(m.tts);
@@ -2869,9 +2870,16 @@
         "<span>" + escapeHtml(phrase["en-IN"]) + "</span>" +
         '<span class="native-preview">' + escapeHtml(phrase[previewCode] || "") + "</span>";
       b.addEventListener("click", function () {
-        state.messages.push({ type: "phrase", phrase: phrase });
+        var message = { type: "phrase", phrase: phrase, tts: null };
+        state.messages.push(message);
         renderFeeds();
         dismissSheet();
+        // Say it out loud in the other person's language — a phrase you
+        // have to point at silently isn't much use across a stall. The
+        // phrase text itself needs no network; only the voice does.
+        var speakLang = state.guest.lang || state.guestSel || "hi-IN";
+        var text = phrase[speakLang] || phrase["en-IN"];
+        if (text) fetchSpeech(message, speakLang, text);
       });
       list.appendChild(b);
     });
@@ -3373,13 +3381,15 @@
   // plays it. Kept on the message so the replay tap still works. A
   // failure here is silent: the translation is readable either way, and
   // an error toast for missing audio would be worse than no audio.
-  function fetchSpeech(message, langCode) {
+  // `text` overrides message.translated — phrase cards carry their words
+  // in a per-language map rather than a translated field.
+  function fetchSpeech(message, langCode, text) {
     fetch("/api/speak", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         token: localStorage.getItem(AUTH_TOKEN_KEY),
-        text: message.translated,
+        text: text || message.translated,
         langCode: langCode
       })
     }).then(function (res) {
@@ -3390,6 +3400,22 @@
       renderFeeds();               // re-binds the tap-to-replay handler
       playTts(data.audioBase64);
     }).catch(function () { /* the text is already readable */ });
+  }
+
+  // An idle serverless function has to boot before it can do anything,
+  // and that boot lands on the very first sentence someone speaks — the
+  // worst possible moment. Opening the conversation screen pokes both
+  // endpoints so they're already awake by the time anyone talks. The
+  // calls deliberately carry nothing useful and are ignored.
+  function warmUpServer() {
+    var token = localStorage.getItem(AUTH_TOKEN_KEY);
+    ["/api/pipeline", "/api/speak"].forEach(function (url) {
+      fetch(url, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ warmup: true, token: token })
+      }).catch(function () { /* waking it up is the whole point */ });
+    });
   }
 
   function sendToPipeline(side, blob, mimeType) {
