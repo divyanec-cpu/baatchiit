@@ -2826,7 +2826,7 @@
     $("sheet-backdrop").classList.add("open");
     $(which + "-sheet").classList.add("open");
     if (which === "history") renderHistory();
-    if (which === "phrases") renderPhrasePacks();
+    if (which === "phrases") { preferPackForPurpose(); renderPhrasePacks(); }
     if (which === "help") renderHelp();
     if (which === "langpair") renderLangPair();
     // The tour dims the screen itself, so it doesn't want the backdrop.
@@ -2854,6 +2854,20 @@
   // -----------------------------------------------------------------
   // Phrases sheet
   // -----------------------------------------------------------------
+  // What someone said they'd use BaatChiit for decides which pack the
+  // sheet opens on — a shopkeeper lands on Bargaining, a hospital user
+  // on Help. Only until they pick a pack themselves: after that their
+  // own choice stands for the rest of the session.
+  var PURPOSE_PACK = { shop: 1, travel: 0, health: 2, work: 0, personal: 0 };
+  var packChosenByUser = false;
+
+  function preferPackForPurpose() {
+    if (packChosenByUser) return;
+    var purpose = state.account && state.account.purpose;
+    var index = purpose ? PURPOSE_PACK[purpose] : undefined;
+    if (typeof index === "number" && PHRASE_PACKS[index]) state.activePack = index;
+  }
+
   function renderPhrasePacks() {
     var tabs = $("pack-tabs");
     tabs.innerHTML = "";
@@ -2862,7 +2876,11 @@
       b.textContent = t(pack.key);
       b.setAttribute("role", "tab");
       b.setAttribute("aria-pressed", i === state.activePack ? "true" : "false");
-      b.addEventListener("click", function () { state.activePack = i; renderPhrasePacks(); });
+      b.addEventListener("click", function () {
+        state.activePack = i;
+        packChosenByUser = true;   // stop second-guessing them
+        renderPhrasePacks();
+      });
       tabs.appendChild(b);
     });
     var list = $("phrases-list");
