@@ -6,7 +6,9 @@
     }
   },
   "rewrites": [
-    { "source": "/download", "destination": "/download.html" }
+    { "source": "/download", "destination": "/download.html" },
+    { "source": "/about", "destination": "/about.html" },
+    { "source": "/privacy", "destination": "/about.html" }
   ],
   "headers": [
     {

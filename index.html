@@ -139,6 +139,9 @@
   }
   .install-btn:active { background: var(--sand); }
   .install-btn[hidden] { display: none; }
+  /* Quieter than the "get the app" controls — it's reference material,
+     not something we want people to tap instead of signing in. */
+  .about-link { font-size: 12px; color: var(--muted); text-decoration: underline; text-underline-offset: 3px; margin-top: 2px; }
   .phone-row {
     display: flex; align-items: center; gap: 8px;
     background: var(--card);
@@ -627,6 +630,7 @@
       <!-- Always available: the install button only appears when Chrome
            offers it, so without this there is no route to the APK. -->
       <a class="link-btn" id="t-get-android" href="/download">Download Android app</a>
+      <a class="about-link" id="t-about" href="/about">About &amp; privacy</a>
     </div>
   </section>
 
@@ -973,6 +977,7 @@
       otpError: "Enter the 6-digit OTP from the SMS.",
       helpTitle: "How it works", close: "Close",
       micHold: "Press and speak", micTap: "Tap to speak",
+      about: "About & privacy",
       obTitle: "A little about you",
       obSub: "All optional — you can skip and fill it later.",
       obNameLabel: "YOUR NAME",
@@ -1079,6 +1084,7 @@
       otpError: "SMS में आया 6 अंकों का OTP डालें।",
       helpTitle: "कैसे चलता है?", close: "बंद करें",
       micHold: "दबाकर बोलें", micTap: "एक बार दबाएँ",
+      about: "ऐप के बारे में",
       obTitle: "आपके बारे में थोड़ा",
       obSub: "सब वैकल्पिक है — छोड़कर बाद में भी भर सकते हैं।",
       obNameLabel: "आपका नाम",
@@ -1185,6 +1191,7 @@
       otpError: "SMS-এ আসা ৬ সংখ্যার OTP দিন।",
       helpTitle: "কীভাবে কাজ করে?", close: "বন্ধ করুন",
       micHold: "চেপে ধরে বলুন", micTap: "একবার চাপুন",
+      about: "অ্যাপ সম্পর্কে",
       obTitle: "আপনার সম্পর্কে একটু",
       obSub: "সবই ঐচ্ছিক — এড়িয়ে গিয়ে পরেও দিতে পারেন।",
       obNameLabel: "আপনার নাম",
@@ -1291,6 +1298,7 @@
       otpError: "SMS માં આવેલો 6 અંકનો OTP નાખો.",
       helpTitle: "કેવી રીતે ચાલે છે?", close: "બંધ કરો",
       micHold: "દબાવીને બોલો", micTap: "એક વાર દબાવો",
+      about: "એપ વિશે",
       obTitle: "તમારા વિશે થોડું",
       obSub: "બધું વૈકલ્પિક છે — છોડીને પછી પણ ભરી શકો.",
       obNameLabel: "તમારું નામ",
@@ -1397,6 +1405,7 @@
       otpError: "SMS ನಲ್ಲಿ ಬಂದ 6 ಅಂಕಿಯ OTP ನಮೂದಿಸಿ.",
       helpTitle: "ಹೇಗೆ ಕೆಲಸ ಮಾಡುತ್ತದೆ?", close: "ಮುಚ್ಚಿ",
       micHold: "ಒತ್ತಿ ಮಾತನಾಡಿ", micTap: "ಒಮ್ಮೆ ಒತ್ತಿ",
+      about: "ಆ್ಯಪ್ ಬಗ್ಗೆ",
       obTitle: "ನಿಮ್ಮ ಬಗ್ಗೆ ಸ್ವಲ್ಪ",
       obSub: "ಎಲ್ಲವೂ ಐಚ್ಛಿಕ — ಬಿಟ್ಟು ನಂತರವೂ ಭರ್ತಿ ಮಾಡಬಹುದು.",
       obNameLabel: "ನಿಮ್ಮ ಹೆಸರು",
@@ -1503,6 +1512,7 @@
       otpError: "SMS-ൽ വന്ന 6 അക്ക OTP നൽകൂ.",
       helpTitle: "എങ്ങനെ പ്രവർത്തിക്കുന്നു?", close: "അടയ്ക്കൂ",
       micHold: "അമർത്തി സംസാരിക്കൂ", micTap: "ഒരിക്കൽ അമർത്തൂ",
+      about: "ആപ്പിനെക്കുറിച്ച്",
       obTitle: "നിങ്ങളെക്കുറിച്ച് അല്പം",
       obSub: "എല്ലാം ഐച്ഛികം — ഒഴിവാക്കി പിന്നീടും നൽകാം.",
       obNameLabel: "നിങ്ങളുടെ പേര്",
@@ -1609,6 +1619,7 @@
       otpError: "SMS मध्ये आलेला 6 अंकी OTP टाका.",
       helpTitle: "कसे चालते?", close: "बंद करा",
       micHold: "दाबून बोला", micTap: "एकदा दाबा",
+      about: "अ‍ॅपविषयी",
       obTitle: "तुमच्याबद्दल थोडं",
       obSub: "सर्व ऐच्छिक — वगळून नंतरही भरू शकता.",
       obNameLabel: "तुमचं नाव",
@@ -1715,6 +1726,7 @@
       otpError: "SMS ରେ ଆସିଥିବା 6 ଅଙ୍କର OTP ଦିଅନ୍ତୁ।",
       helpTitle: "କିପରି କାମ କରେ?", close: "ବନ୍ଦ କରନ୍ତୁ",
       micHold: "ଦବାଇ କୁହନ୍ତୁ", micTap: "ଥରେ ଦବାନ୍ତୁ",
+      about: "ଆପ୍ ବିଷୟରେ",
       obTitle: "ଆପଣଙ୍କ ବିଷୟରେ ଟିକେ",
       obSub: "ସବୁ ଐଚ୍ଛିକ — ଛାଡ଼ି ପରେ ମଧ୍ୟ ଭରିପାରିବେ।",
       obNameLabel: "ଆପଣଙ୍କ ନାମ",
@@ -1821,6 +1833,7 @@
       otpError: "SMS ਵਿੱਚ ਆਇਆ 6 ਅੰਕਾਂ ਦਾ OTP ਭਰੋ।",
       helpTitle: "ਕਿਵੇਂ ਚੱਲਦਾ ਹੈ?", close: "ਬੰਦ ਕਰੋ",
       micHold: "ਦਬਾ ਕੇ ਬੋਲੋ", micTap: "ਇੱਕ ਵਾਰ ਦਬਾਓ",
+      about: "ਐਪ ਬਾਰੇ",
       obTitle: "ਤੁਹਾਡੇ ਬਾਰੇ ਥੋੜ੍ਹਾ",
       obSub: "ਸਭ ਵਿਕਲਪਿਕ — ਛੱਡ ਕੇ ਬਾਅਦ ਵਿੱਚ ਵੀ ਭਰ ਸਕਦੇ ਹੋ।",
       obNameLabel: "ਤੁਹਾਡਾ ਨਾਮ",
@@ -1927,6 +1940,7 @@
       otpError: "SMS-ல் வந்த 6 இலக்க OTP-யை உள்ளிடுங்கள்.",
       helpTitle: "எப்படி வேலை செய்கிறது?", close: "மூடு",
       micHold: "அழுத்திப் பேசுங்கள்", micTap: "ஒரு முறை தட்டவும்",
+      about: "ஆப் பற்றி",
       obTitle: "உங்களைப் பற்றி சிறிது",
       obSub: "அனைத்தும் விருப்பமானது — தவிர்த்து பின்னரும் நிரப்பலாம்.",
       obNameLabel: "உங்கள் பெயர்",
@@ -2033,6 +2047,7 @@
       otpError: "SMS లో వచ్చిన 6 అంకెల OTP ఇవ్వండి.",
       helpTitle: "ఎలా పనిచేస్తుంది?", close: "మూసివేయండి",
       micHold: "నొక్కి మాట్లాడండి", micTap: "ఒకసారి నొక్కండి",
+      about: "యాప్ గురించి",
       obTitle: "మీ గురించి కొంచెం",
       obSub: "అన్నీ ఐచ్ఛికం — దాటవేసి తర్వాత కూడా నింపవచ్చు.",
       obNameLabel: "మీ పేరు",
@@ -2822,6 +2837,7 @@
     $("btn-change-phone").textContent = t("changeNumber");
     $("t-install").textContent = t("installApp");
     $("t-get-android").textContent = t("getAndroid");
+    $("t-about").textContent = t("about");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
     $("tour-skip").textContent = t("tourSkip");
@@ -3383,10 +3399,20 @@
   // -----------------------------------------------------------------
   var deferredInstall = null;
 
+  // One "get the app" control at a time. When the browser can install
+  // the app that is always the better route (no warnings, self-updating),
+  // so the APK link steps aside; when it can't, the link is the only way
+  // and the button stays hidden.
+  function renderGetApp() {
+    var canInstall = Boolean(deferredInstall);
+    $("btn-install").hidden = !canInstall;
+    $("t-get-android").hidden = canInstall;
+  }
+
   window.addEventListener("beforeinstallprompt", function (e) {
     e.preventDefault();          // keep Chrome's own mini-bar from taking over
     deferredInstall = e;
-    $("btn-install").hidden = false;
+    renderGetApp();
   });
 
   $("btn-install").addEventListener("click", function () {
@@ -3396,14 +3422,17 @@
     $("btn-install").hidden = true;
     prompt.prompt();
     prompt.userChoice.then(function (choice) {
-      // Dismissed? Offer it again next visit rather than nagging now.
-      if (choice.outcome !== "accepted") $("btn-install").hidden = false;
-    }).catch(function () { $("btn-install").hidden = false; });
+      // Dismissed? Fall back to the APK link rather than nagging: the
+      // prompt is spent either way.
+      if (choice.outcome !== "accepted") $("t-get-android").hidden = false;
+    }).catch(function () { $("t-get-android").hidden = false; });
   });
 
   window.addEventListener("appinstalled", function () {
     deferredInstall = null;
+    // Installed: neither control has anything left to offer.
     $("btn-install").hidden = true;
+    $("t-get-android").hidden = true;
     toast(t("installed"));
   });
 
@@ -3463,6 +3492,12 @@
   function init() {
     applyUiLang(state.uiLang);   // also renders the language chips + speaking default
     applyOverrides();
+    // Already running as an installed app: hide both "get the app"
+    // controls, since there is nothing left to get.
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      $("btn-install").hidden = true;
+      $("t-get-android").hidden = true;
+    }
     renderSetupValidation();
     renderOpenMic();
     restoreSession();
