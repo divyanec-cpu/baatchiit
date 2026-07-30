@@ -3299,7 +3299,21 @@
 
   function ensureMicStream() {
     if (state.micStream) return Promise.resolve(state.micStream);
-    return navigator.mediaDevices.getUserMedia({ audio: true }).then(function (stream) {
+    // Mono, and the cleanup filters left on — they cost nothing here and
+    // give the recogniser a cleaner signal in a noisy market. Stereo
+    // would double the upload for no benefit: this is one person talking
+    // into one phone.
+    var constraints = {
+      audio: {
+        channelCount: 1,
+        echoCancellation: true,
+        noiseSuppression: true,
+        autoGainControl: true
+      }
+    };
+    return navigator.mediaDevices.getUserMedia(constraints).catch(function () {
+      return navigator.mediaDevices.getUserMedia({ audio: true });   // older browsers
+    }).then(function (stream) {
       state.micStream = stream;
       return stream;
     });
@@ -3350,7 +3364,18 @@
     ensureMicStream().then(function (stream) {
       if (state.recordingSide) return; // one mic, one recording at a time
       var mimeType = pickMimeType();
-      var recorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+      // Browsers default to music-grade bitrates (often 128 kbps). Speech
+      // through Opus is transparent far lower, and every byte here is
+      // uploaded over a phone connection before translation can even
+      // start — this is the single biggest cost the server timings don't
+      // show. 32 kbps keeps consonants crisp for the recogniser.
+      var opts = mimeType ? { mimeType: mimeType, audioBitsPerSecond: 32000 } : { audioBitsPerSecond: 32000 };
+      var recorder;
+      try {
+        recorder = new MediaRecorder(stream, opts);
+      } catch (e) {
+        recorder = mimeType ? new MediaRecorder(stream, { mimeType: mimeType }) : new MediaRecorder(stream);
+      }
       var chunks = [];
       recorder.ondataavailable = function (e) { if (e.data && e.data.size) chunks.push(e.data); };
       recorder.onstop = function () {

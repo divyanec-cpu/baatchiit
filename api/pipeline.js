@@ -275,7 +275,8 @@ async function textToSpeech({ apiKey, text, targetLangCode }) {
       target_language_code: targetLangCode,
       model: "bulbul:v3",
       speaker: "priya",
-      speech_sample_rate: 22050,
+      speech_sample_rate: 16000,   // speech is clear at 16k; the reply is
+        // uncompressed WAV over base64, so this is ~27% less to download
     }),
   });
 
