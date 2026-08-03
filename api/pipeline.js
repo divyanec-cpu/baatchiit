@@ -37,6 +37,16 @@ const SARVAM_BASE = "https://api.sarvam.ai";
 
 const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser, recordActivity } = require("./_lib.js");
 
+// Hinglish is not a language Sarvam knows -- it's Hindi asked for in a
+// particular shape: English words left where people actually say them
+// (mode "code-mixed") and written in Latin letters (output_script
+// "roman"). The app carries it as its own code so it can be picked like
+// any other language; everything sent to Sarvam is still hi-IN.
+const HINGLISH = "hi-Latn-IN";
+function sarvamLang(code) {
+  return code === HINGLISH ? "hi-IN" : code;
+}
+
 // These 11 codes are the ones Sarvam's translation model (mayura:v1)
 // supports today, and every one of them also works with the
 // speech-to-text and text-to-speech models used below -- so the app's
@@ -53,6 +63,7 @@ const SUPPORTED_LANGUAGES = new Set([
   "ta-IN", // Tamil
   "te-IN", // Telugu
   "en-IN", // English
+  HINGLISH, // Hinglish -- see below; not a Sarvam language code
 ]);
 
 module.exports = async function handler(req, res) {
@@ -126,7 +137,7 @@ module.exports = async function handler(req, res) {
 
   try {
     // ---------- Step 1: Speech to Text ----------
-    const stt = await speechToText({ apiKey, audioBase64, mimeType, sourceLangHint });
+    const stt = await speechToText({ apiKey, audioBase64, mimeType, sourceLangHint: sarvamLang(sourceLangHint) });
     timings.stt = Date.now() - t0;
 
     if (!stt.transcript || !stt.transcript.trim()) {
@@ -150,12 +161,47 @@ module.exports = async function handler(req, res) {
 
     // ---------- Step 2: Translate ----------
     const tTranslate = Date.now();
-    const translation = await translateText({
-      apiKey,
-      input: stt.transcript,
-      sourceLangCode: sourceForTranslate,
-      targetLangCode,
-    });
+    let translation;
+    let speechText;
+
+    if (targetLangCode === HINGLISH) {
+      // The same sentence twice: Latin letters to read, Devanagari to
+      // speak. Sarvam documents no behaviour for feeding romanised text
+      // to the voice model, and a mispronounced reply is worse than
+      // none. Both calls go out together, so this costs a request but no
+      // extra waiting.
+      const [roman, native] = await Promise.all([
+        translateText({
+          apiKey,
+          input: stt.transcript,
+          sourceLangCode: sourceForTranslate,
+          targetLangCode,
+          outputScript: "roman",
+        }).catch((err) => {
+          // Losing the Latin letters is a disappointment; losing the
+          // conversation is a failure. Fall back to Devanagari.
+          console.error("Hinglish translate (roman) failed:", err.message);
+          return null;
+        }),
+        translateText({
+          apiKey,
+          input: stt.transcript,
+          sourceLangCode: sourceForTranslate,
+          targetLangCode,
+          outputScript: null,
+        }),
+      ]);
+      translation = roman || native;
+      speechText = native.translatedText;
+    } else {
+      translation = await translateText({
+        apiKey,
+        input: stt.transcript,
+        sourceLangCode: sourceForTranslate,
+        targetLangCode,
+      });
+      speechText = translation.translatedText;
+    }
     timings.translate = Date.now() - tTranslate;
 
     // ---------- Step 3: Text to Speech ----------
@@ -168,8 +214,8 @@ module.exports = async function handler(req, res) {
       const tTts = Date.now();
       ttsAudioBase64 = await textToSpeech({
         apiKey,
-        text: translation.translatedText,
-        targetLangCode,
+        text: speechText,
+        targetLangCode: sarvamLang(targetLangCode),
       });
       timings.tts = Date.now() - tTts;
     }
@@ -192,6 +238,9 @@ module.exports = async function handler(req, res) {
       transcript: stt.transcript,
       detectedLanguage: translation.sourceLangCode || detectedLang,
       translatedText: translation.translatedText,
+      // The client asks /api/speak for the audio separately, so it needs
+      // to know which words to have spoken.
+      speechText,
       ttsAudioBase64,
       minutesLeft,
       timings,
@@ -239,7 +288,7 @@ async function speechToText({ apiKey, audioBase64, mimeType, sourceLangHint }) {
 // ---------------------------------------------------------------------
 // Step 2: Translate  --  POST https://api.sarvam.ai/translate
 // ---------------------------------------------------------------------
-async function translateText({ apiKey, input, sourceLangCode, targetLangCode }) {
+async function translateText({ apiKey, input, sourceLangCode, targetLangCode, outputScript }) {
   const res = await fetch(`${SARVAM_BASE}/translate`, {
     method: "POST",
     headers: {
@@ -248,10 +297,14 @@ async function translateText({ apiKey, input, sourceLangCode, targetLangCode }) 
     },
     body: JSON.stringify({
       input,
-      source_language_code: sourceLangCode,
-      target_language_code: targetLangCode,
+      source_language_code: sarvamLang(sourceLangCode),
+      target_language_code: sarvamLang(targetLangCode),
       model: "mayura:v1",
-      mode: "modern-colloquial", // natural, casual phrasing -- fits a live conversation better than "formal"
+      // "code-mixed" keeps the English words Hinglish speakers actually
+      // use; everyone else gets natural casual phrasing, which fits a
+      // live conversation better than "formal".
+      mode: targetLangCode === HINGLISH ? "code-mixed" : "modern-colloquial",
+      ...(outputScript ? { output_script: outputScript } : {}),
       numerals_format: "international", // plain 0-9 digits, so the app's on-screen "number chips" can spot them
     }),
   });

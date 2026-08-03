@@ -6,7 +6,8 @@ Live any-to-any Indian language translator: two people share one phone (Host/Gue
 
 - Single-file vanilla-JS PWA: all UI + logic in `index.html` (no framework, no build step).
 - One Vercel serverless function `api/pipeline.js`: Sarvam AI chain — STT `saaras:v3` (mode `transcribe`) → translate `mayura:v1` → TTS `bulbul:v3` (speaker `priya`). Key lives in Vercel env var `SARVAM_API_KEY`, never client-side.
-- 11 languages only (the set mayura:v1 supports; picker + server both enforce it).
+- 11 languages only (the set mayura:v1 supports; picker + server both enforce it), plus **Hinglish** as a 12th *conversation* language: app code `hi-Latn-IN`, sent to Sarvam as `hi-IN` with `mode:"code-mixed"` + `output_script:"roman"`. It is deliberately NOT a UI language (no Hinglish screens — `renderUiLangChips` filters to codes that exist in `UI_STRINGS`). Because Sarvam documents nothing about romanised text going into bulbul, pipeline.js translates twice in parallel for Hinglish — roman to read, Devanagari to speak — and returns `speechText` alongside `translatedText`.
+- **Sanskrit is not possible** as a conversation language and the answer won't change without a new voice model: saaras:v3 can *hear* it (`sa-IN`) and `sarvam-translate:v1` can translate it, but bulbul:v3 (TTS) is 11 languages only, so the app could never speak it. Don't re-research this; the blocker is TTS.
 - Deploy: Vercel → then pwabuilder.com wraps the live URL into an Android APK.
 - Demo mode was removed 2026-07-21 (user's call, after live mode was verified on-device). To check UI changes without an API key, use the phrase packs (fully offline) or a local static server; the live pipeline needs the deployed function.
 

@@ -18,7 +18,14 @@ const MAX_TEXT = 1000;
 const SUPPORTED_LANGUAGES = new Set([
   "hi-IN", "bn-IN", "gu-IN", "kn-IN", "ml-IN", "mr-IN",
   "od-IN", "pa-IN", "ta-IN", "te-IN", "en-IN",
+  "hi-Latn-IN", // Hinglish -- spoken as Hindi; see api/pipeline.js
 ]);
+
+// The voice model only knows hi-IN. The pipeline sends Devanagari for a
+// Hinglish listener, so only the code needs mapping here.
+function sarvamLang(code) {
+  return code === "hi-Latn-IN" ? "hi-IN" : code;
+}
 
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") {
@@ -56,7 +63,7 @@ module.exports = async function handler(req, res) {
       headers: { "api-subscription-key": apiKey, "Content-Type": "application/json" },
       body: JSON.stringify({
         text,
-        target_language_code: langCode,
+        target_language_code: sarvamLang(langCode),
         model: "bulbul:v3",
         speaker: "priya",
         speech_sample_rate: 16000,   // speech is clear at 16k; the reply is
