@@ -10,3 +10,6 @@ android-package/
 *.keystore
 # Generated TWA project — rebuilt from twa-manifest.json, see README
 android-build/
+
+# Throwaway harness written next to index.html when verifying in a browser
+__navtest.html
