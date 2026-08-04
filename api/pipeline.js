@@ -35,7 +35,7 @@
 
 const SARVAM_BASE = "https://api.sarvam.ai";
 
-const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser, recordActivity } = require("./_lib.js");
+const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser, recordActivity, boostWavLoudness } = require("./_lib.js");
 
 // Hinglish is not a language Sarvam knows -- it's Hindi asked for in a
 // particular shape: English words left where people actually say them
@@ -217,6 +217,7 @@ module.exports = async function handler(req, res) {
         text: speechText,
         targetLangCode: sarvamLang(targetLangCode),
       });
+      if (ttsAudioBase64) ttsAudioBase64 = boostWavLoudness(ttsAudioBase64).base64;
       timings.tts = Date.now() - tTts;
     }
 

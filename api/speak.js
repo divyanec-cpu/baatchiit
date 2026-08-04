@@ -10,7 +10,7 @@
 // returned, so it does not touch the minutes balance. It still requires
 // a valid session, so it can't be used as a free TTS service.
 
-const { redisConfigured, getSession } = require("./_lib.js");
+const { redisConfigured, getSession, boostWavLoudness } = require("./_lib.js");
 
 const SARVAM_BASE = "https://api.sarvam.ai";
 const MAX_TEXT = 1000;
@@ -81,8 +81,16 @@ module.exports = async function handler(req, res) {
       throw new Error(`Text-to-speech failed (HTTP ${response.status}): ${message}`);
     }
 
-    console.log("speak timing(ms):", Date.now() - started);
-    return res.status(200).json({ audioBase64: (data.audios && data.audios[0]) || null });
+    const audio = (data.audios && data.audios[0]) || null;
+    const boosted = audio ? boostWavLoudness(audio) : { base64: null, gain: 1 };
+    console.log("speak timing(ms):", Date.now() - started, "gain:", boosted.gain, boosted.note || "");
+    return res.status(200).json({
+      audioBase64: boosted.base64,
+      // Reported so ?debug=1 can show it: a gain near 1 would mean the
+      // voice arrived loud and the quietness is somewhere else.
+      gain: boosted.gain,
+      srcPeak: boosted.peak ? Math.round(boosted.peak / 32767 * 100) : null,
+    });
   } catch (err) {
     console.error("speak error:", err);
     // The words are already on screen, so a failure here is a missing

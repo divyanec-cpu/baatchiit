@@ -172,6 +172,66 @@ async function saveOverrides(next) {
   await redis(["SET", "cfg:overrides", JSON.stringify(next)]);
 }
 
+// ---------------------------------------------------------------------
+// Loudness. Sarvam returns 16-bit PCM WAV, and its speech comes back
+// well below full scale -- on a phone lying on a table, in a market,
+// that is the difference between heard and not heard. iOS ignores the
+// HTMLMediaElement volume property entirely (hardware volume only), so
+// this cannot be fixed in the browser: the samples themselves have to
+// come out louder.
+//
+// Peak normalisation, not compression: find the loudest sample, scale
+// so it just reaches full scale. Speech keeps its shape and nothing
+// clips. The gain applied is returned so the client can report it --
+// a gain near 1 would mean the source was already loud and the
+// quietness is somewhere else entirely.
+// ---------------------------------------------------------------------
+const TARGET_PEAK = 0.97 * 32767;   // a whisker below clipping
+const MAX_GAIN = 8;                 // past this we would only amplify hiss
+
+function boostWavLoudness(base64) {
+  try {
+    const buf = Buffer.from(base64, "base64");
+    if (buf.length < 44 || buf.toString("ascii", 0, 4) !== "RIFF" || buf.toString("ascii", 8, 12) !== "WAVE") {
+      return { base64, gain: 1, note: "not a WAV" };
+    }
+
+    // Walk the chunks rather than assuming a 44-byte header: WAVs in the
+    // wild carry LIST/fact chunks before the data.
+    let pos = 12, fmt = null, dataStart = 0, dataLength = 0;
+    while (pos + 8 <= buf.length) {
+      const id = buf.toString("ascii", pos, pos + 4);
+      const size = buf.readUInt32LE(pos + 4);
+      const body = pos + 8;
+      if (id === "fmt ") fmt = { format: buf.readUInt16LE(body), bits: buf.readUInt16LE(body + 14) };
+      else if (id === "data") { dataStart = body; dataLength = Math.min(size, buf.length - body); break; }
+      pos = body + size + (size % 2);   // chunks are word-aligned
+    }
+    if (!fmt || fmt.format !== 1 || fmt.bits !== 16 || !dataLength) {
+      return { base64, gain: 1, note: "unsupported WAV encoding" };
+    }
+
+    let peak = 0;
+    for (let i = dataStart; i + 1 < dataStart + dataLength; i += 2) {
+      const v = Math.abs(buf.readInt16LE(i));
+      if (v > peak) peak = v;
+    }
+    if (!peak) return { base64, gain: 1, note: "silent" };
+
+    const gain = Math.min(TARGET_PEAK / peak, MAX_GAIN);
+    if (gain <= 1.02) return { base64, gain: 1, note: "already loud" };
+
+    for (let i = dataStart; i + 1 < dataStart + dataLength; i += 2) {
+      const scaled = Math.round(buf.readInt16LE(i) * gain);
+      buf.writeInt16LE(scaled > 32767 ? 32767 : scaled < -32768 ? -32768 : scaled, i);
+    }
+    return { base64: buf.toString("base64"), gain: Math.round(gain * 100) / 100, peak };
+  } catch (err) {
+    // A voice that is too quiet still beats no voice.
+    return { base64, gain: 1, note: "boost failed: " + err.message };
+  }
+}
+
 module.exports = {
   SESSION_TTL_SECONDS,
   WELCOME_DECIMINUTES,
@@ -193,4 +253,5 @@ module.exports = {
   readCookie,
   getOverrides,
   saveOverrides,
+  boostWavLoudness,
 };
