@@ -173,21 +173,33 @@ async function saveOverrides(next) {
 }
 
 // ---------------------------------------------------------------------
-// Loudness. Sarvam returns 16-bit PCM WAV, and its speech comes back
-// well below full scale -- on a phone lying on a table, in a market,
-// that is the difference between heard and not heard. iOS ignores the
-// HTMLMediaElement volume property entirely (hardware volume only), so
-// this cannot be fixed in the browser: the samples themselves have to
-// come out louder.
+// Loudness. Sarvam's speech arrives quiet, and it cannot be fixed in the
+// browser: iOS ignores the HTMLMediaElement volume property entirely
+// (hardware volume only), so the samples themselves have to be louder.
 //
-// Peak normalisation, not compression: find the loudest sample, scale
-// so it just reaches full scale. Speech keeps its shape and nothing
-// clips. The gain applied is returned so the client can report it --
-// a gain near 1 would mean the source was already loud and the
-// quietness is somewhere else entirely.
+// This normalises AVERAGE level (RMS), not peak. Peak normalisation was
+// the first attempt and it barely moved: a clip with one brief transient
+// already touches full scale, so peak-scaling decides it is "loud" and
+// leaves the speech underneath just as quiet. Perceived loudness follows
+// the average, which for speech sits far below the peaks.
+//
+// Gain is therefore set from RMS, and the peaks that overshoot are eased
+// down with a soft knee rather than clipped square -- hard clipping on
+// speech sounds like crackle, which is worse than quiet.
 // ---------------------------------------------------------------------
-const TARGET_PEAK = 0.97 * 32767;   // a whisker below clipping
-const MAX_GAIN = 8;                 // past this we would only amplify hiss
+const TARGET_RMS = 0.16 * 32767;   // about -16 dBFS, a normal speech level
+const KNEE = 0.85;                 // above this fraction of full scale, ease off
+const MAX_GAIN = 12;               // past this we would only amplify hiss
+
+function softClip(x) {
+  // x is -1..1. Below the knee it passes through untouched; above it,
+  // the remaining headroom is compressed smoothly into what is left.
+  const a = Math.abs(x);
+  if (a <= KNEE) return x;
+  const over = (a - KNEE) / (1 - KNEE);
+  const eased = KNEE + (1 - KNEE) * Math.tanh(over);
+  return x < 0 ? -eased : eased;
+}
 
 function boostWavLoudness(base64) {
   try {
@@ -211,21 +223,30 @@ function boostWavLoudness(base64) {
       return { base64, gain: 1, note: "unsupported WAV encoding" };
     }
 
-    let peak = 0;
+    let sum = 0, peak = 0, n = 0;
     for (let i = dataStart; i + 1 < dataStart + dataLength; i += 2) {
-      const v = Math.abs(buf.readInt16LE(i));
-      if (v > peak) peak = v;
+      const v = buf.readInt16LE(i);
+      sum += v * v; n++;
+      const a = v < 0 ? -v : v;
+      if (a > peak) peak = a;
     }
-    if (!peak) return { base64, gain: 1, note: "silent" };
+    if (!n || !peak) return { base64, gain: 1, note: "silent" };
+    const rms = Math.sqrt(sum / n);
 
-    const gain = Math.min(TARGET_PEAK / peak, MAX_GAIN);
-    if (gain <= 1.02) return { base64, gain: 1, note: "already loud" };
+    const gain = Math.min(TARGET_RMS / rms, MAX_GAIN);
+    if (gain <= 1.02) return { base64, gain: 1, rms: Math.round(rms / 327.67), peak, note: "already loud" };
 
     for (let i = dataStart; i + 1 < dataStart + dataLength; i += 2) {
-      const scaled = Math.round(buf.readInt16LE(i) * gain);
-      buf.writeInt16LE(scaled > 32767 ? 32767 : scaled < -32768 ? -32768 : scaled, i);
+      const scaled = softClip((buf.readInt16LE(i) * gain) / 32767) * 32767;
+      const rounded = Math.round(scaled);
+      buf.writeInt16LE(rounded > 32767 ? 32767 : rounded < -32768 ? -32768 : rounded, i);
     }
-    return { base64: buf.toString("base64"), gain: Math.round(gain * 100) / 100, peak };
+    return {
+      base64: buf.toString("base64"),
+      gain: Math.round(gain * 100) / 100,
+      rms: Math.round(rms / 327.67),     // as a percentage of full scale
+      peak,
+    };
   } catch (err) {
     // A voice that is too quiet still beats no voice.
     return { base64, gain: 1, note: "boost failed: " + err.message };

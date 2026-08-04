@@ -3674,7 +3674,8 @@
       if (DEBUG) {
         notice(message.speaker ? otherSide(message.speaker) : "host",
           "voice " + secs(Date.now() - askedAt) + " (" + Math.round(data.audioBase64.length / 1365) + " KB)" +
-          " · source peak " + (data.srcPeak == null ? "?" : data.srcPeak + "%") +
+          " · source avg " + (data.srcRms == null ? "?" : data.srcRms + "%") +
+          " peak " + (data.srcPeak == null ? "?" : data.srcPeak + "%") +
           " · boost x" + (data.gain == null ? "?" : data.gain), 6000);
       }
       playTts(data.audioBase64);

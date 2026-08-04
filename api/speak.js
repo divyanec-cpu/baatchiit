@@ -90,6 +90,7 @@ module.exports = async function handler(req, res) {
       // voice arrived loud and the quietness is somewhere else.
       gain: boosted.gain,
       srcPeak: boosted.peak ? Math.round(boosted.peak / 32767 * 100) : null,
+      srcRms: boosted.rms == null ? null : boosted.rms,
     });
   } catch (err) {
     console.error("speak error:", err);
