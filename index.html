@@ -2874,6 +2874,15 @@
     if (!state.player) {
       state.player = new Audio();
       state.player.setAttribute("playsinline", "");  // iOS: don't take over the screen
+      // Take the mic back the moment the reply stops, so the next press
+      // doesn't wait on getUserMedia. Only while a conversation is open —
+      // grabbing the mic on any other screen would light the recording
+      // indicator for no reason.
+      state.player.addEventListener("ended", function () {
+        if ($("screen-main").classList.contains("active")) {
+          ensureMicStream().catch(function () { /* asked again on the next press */ });
+        }
+      });
     }
     return state.player;
   }
@@ -2911,8 +2920,26 @@
     document.removeEventListener("pointerdown", once, true);
   }, true);
 
+  // iOS keeps the audio session in record mode for as long as a capture
+  // stream is alive, and a record-mode session plays out of the earpiece
+  // no matter what type we ask for. This app used to hold the mic open
+  // for the whole conversation, so every reply came out quiet. Letting
+  // the mic go before speaking is what actually moves the sound to the
+  // loudspeaker; it is re-taken as soon as the reply has finished, so
+  // the next press still has a warm mic.
+  function releaseMic() {
+    if (state.recordingSide) return;          // never mid-recording
+    if (!state.micStream) return;
+    try {
+      state.micStream.getTracks().forEach(function (t) { t.stop(); });
+    } catch (e) { /* already gone */ }
+    state.micStream = null;
+    state.analyser = null;                    // it was wired to that stream
+  }
+
   function playTts(audioBase64) {
     try {
+      releaseMic();
       claimAudioSession("playback");   // loudspeaker, not the earpiece
       // A blob: URL rather than a data: URI. Safari parses the whole
       // base64 string on the main thread for data:, which stalls a phone
@@ -2928,6 +2955,11 @@
       p.play().catch(function () {
         /* Blocked before any interaction -- fine, the words are on screen. */
       });
+      if (DEBUG) {
+        notice("host", "session " + (navigator.audioSession
+          ? navigator.audioSession.type : "unsupported") + " · mic " +
+          (state.micStream ? "held" : "released"), 5000);
+      }
     } catch (e) { /* ignore playback errors */ }
   }
 
