@@ -661,6 +661,36 @@
     text-align: center;
   }
   .half--guest .notice { background: rgba(255, 247, 234, 0.92); color: var(--ink); }
+
+  /* ============== WIDE SCREENS (laptop / desktop browser) ==============
+     This is a two-people-one-phone layout: stretched across a laptop the
+     split screen becomes two enormous fields with a mic marooned in the
+     middle, and the rotated guest half stops making any sense. So on a
+     wide window the app stays a phone-width column in the centre.
+
+     The column runs the full height on purpose. The sheets below are
+     position:fixed, so bottom:0 has to mean the bottom of the column —
+     centring it vertically would leave them stranded at the window edge. */
+  @media (min-width: 620px) {
+    :root { --app-w: 430px; }
+    body { background: #E8DCC8; }
+    #app {
+      max-width: var(--app-w);
+      margin: 0 auto;
+      box-shadow: 0 0 0 1px rgba(33, 26, 20, 0.08), 0 18px 50px rgba(33, 26, 20, 0.18);
+    }
+    /* Fixed elements are positioned against the window, not the column,
+       so each one has to be pulled back into it by hand. */
+    /* Centred with auto margins, not a transform: these sheets animate
+       in with bcFade, which owns `transform` and would cancel it. */
+    .phrases-sheet {
+      max-width: var(--app-w);
+      margin-left: auto; margin-right: auto;
+    }
+    .history-sheet { right: calc(50% - var(--app-w) / 2); }
+    /* The backdrop and the tour still dim the whole window — a modal
+       that only greys out part of the screen looks like a bug. */
+  }
 </style>
 </head>
 <body>
@@ -745,20 +775,14 @@
         <span class="badge" id="t-auto-badge">All languages supported</span>
       </div>
 
-      <div style="padding:0 20px;">
-        <button class="link-btn" id="btn-toggle-manual">Set languages manually</button>
-      </div>
-
-      <div class="manual-wrap" id="manual-wrap" hidden>
+      <!-- One language to pick, always visible: your own. The other
+           person's is detected the first time they speak, so there is
+           no second list to get wrong. -->
+      <div class="manual-wrap">
         <div>
           <div class="chip-group-label" id="t-you-speak">YOU SPEAK</div>
           <div class="chip-row" data-side="host" id="host-chips"></div>
         </div>
-        <div>
-          <div class="chip-group-label" id="t-they-speak">THEY SPEAK</div>
-          <div class="chip-row" data-side="guest" id="guest-chips"></div>
-        </div>
-        <p class="field-error" id="same-lang-error"></p>
       </div>
 
       <div class="setting-row">
@@ -942,8 +966,9 @@
   </div>
   <p class="phrase-hint" id="t-pair-hint">Tap the pill any time to fix a wrong guess.</p>
   <div class="phrases-list">
-    <div class="chip-group-label" id="t-pair-you">YOU SPEAK</div>
-    <div class="chip-row" data-side="host" id="pair-host-chips" style="margin-bottom:14px;"></div>
+    <!-- Only the other person's language. Yours was set on the setup
+         screen and changing it mid-conversation, with half the messages
+         already translated the old way, was the confusing part. -->
     <div class="chip-group-label" id="t-pair-they">THEY SPEAK</div>
     <div class="chip-row" data-side="guest" id="pair-guest-chips"></div>
     <button class="link-btn" id="btn-pair-auto" style="margin-top:16px;align-self:flex-start;">Back to auto-detect</button>
@@ -1121,14 +1146,14 @@
       installed: "Installed — open it from your home screen",
       setupTitle: "New conversation",
       setupSub: "Two people, one phone. Just start talking — no setup.",
-      autoOn: "Auto-detect is on",
-      autoCopy: "Start talking — BaatChiit listens and works out each language by itself. Both sides are set the moment each person speaks.",
+      autoOn: "One language to pick",
+      autoCopy: "Choose the language you speak. The other person's is worked out by itself the first time they talk.",
       autoBadge: "All languages supported",
       manualOpen: "Set languages manually",
       manualClose: "Use auto-detect instead",
       youSpeak: "YOU SPEAK",
       theySpeak: "THEY SPEAK",
-      sameLang: "Pick two different languages",
+      sameLang: "That's your language — pick theirs",
       openMicLbl: "Open mic (hands-free)",
       openMicSub: "Tap once to talk — recording stops by itself when you pause.",
       startAuto: "Start listening →",
@@ -1154,7 +1179,7 @@
       paySuccess: "Payment successful",
       successDetail: "{m} minutes added · ₹{p} paid",
       backToChat: "Back to conversation",
-      detecting: "Listening — detecting language…",
+      detecting: "Detected when they speak",
       autoDetecting: "Auto-detecting…",
       listening: "Listening…",
       listeningTap: "Listening — tap again to stop",
@@ -1174,7 +1199,7 @@
       packHome: "Household",
       packSchool: "Kids & school",
       setLangs: "Set languages",
-      pairHint: "Tap the pill any time to fix a wrong guess.",
+      pairHint: "Only their language is here — yours is set on the previous screen.",
       backToAuto: "Back to auto-detect",
       langsUpdated: "Languages updated",
       tourNext: "Next", tourStart: "Start", tourSkip: "Not now",
@@ -1230,14 +1255,14 @@
       installed: "इंस्टॉल हो गया — होम स्क्रीन से खोलें",
       setupTitle: "नई बातचीत",
       setupSub: "दो लोग, एक फ़ोन। बस बोलना शुरू करें — कुछ सेट नहीं करना।",
-      autoOn: "भाषा अपने आप पहचानी जाएगी",
-      autoCopy: "बस बोलना शुरू करें — BaatChiit सुनकर हर तरफ़ की भाषा खुद पहचान लेता है। दोनों तरफ़ पहली बार बोलते ही सेट हो जाती है।",
+      autoOn: "बस एक भाषा चुननी है",
+      autoCopy: "आप जो भाषा बोलते हैं वह चुनिए। सामने वाले की भाषा उनके पहली बार बोलते ही अपने आप पहचान ली जाएगी।",
       autoBadge: "सभी भाषाएँ उपलब्ध",
       manualOpen: "भाषाएँ खुद चुनें",
       manualClose: "अपने आप पहचानने दें",
       youSpeak: "आप बोलते हैं",
       theySpeak: "वे बोलते हैं",
-      sameLang: "दो अलग भाषाएँ चुनें",
+      sameLang: "यह आपकी भाषा है — उनकी चुनिए",
       openMicLbl: "ओपन माइक (हाथ खाली)",
       openMicSub: "एक बार दबाएँ और बोलें — रुकते ही रिकॉर्डिंग अपने आप बंद।",
       startAuto: "सुनना शुरू करें →",
@@ -1263,7 +1288,7 @@
       paySuccess: "भुगतान सफल",
       successDetail: "{m} मिनट जुड़े · ₹{p} भुगतान",
       backToChat: "बातचीत पर वापस",
-      detecting: "सुन रहे हैं — भाषा पहचान रहे हैं…",
+      detecting: "बोलने पर पहचानी जाएगी",
       autoDetecting: "पहचान रहे हैं…",
       listening: "सुन रहे हैं…",
       listeningTap: "सुन रहे हैं — रोकने के लिए फिर दबाएँ",
@@ -1283,7 +1308,7 @@
       packHome: "घर का काम",
       packSchool: "बच्चे, स्कूल",
       setLangs: "भाषाएँ चुनें",
-      pairHint: "गलत पहचान हो तो ऊपर वाली पट्टी दबाकर बदल दें।",
+      pairHint: "यहाँ सिर्फ़ सामने वाले की भाषा है — आपकी भाषा पिछली स्क्रीन पर तय होती है।",
       backToAuto: "फिर से अपने आप पहचानें",
       langsUpdated: "भाषाएँ बदल दी गईं",
       tourNext: "आगे", tourStart: "शुरू करें", tourSkip: "अभी नहीं",
@@ -1339,14 +1364,14 @@
       installed: "ইনস্টল হয়েছে — হোম স্ক্রিন থেকে খুলুন",
       setupTitle: "নতুন কথোপকথন",
       setupSub: "দুজন, একটি ফোন। শুধু বলা শুরু করুন — কিছু সেট করতে হবে না।",
-      autoOn: "ভাষা নিজে থেকেই শনাক্ত হবে",
-      autoCopy: "বলা শুরু করুন — BaatChiit শুনে দুই দিকের ভাষা নিজেই বুঝে নেয়। প্রথমবার বলার সঙ্গে সঙ্গেই ঠিক হয়ে যায়।",
+      autoOn: "শুধু একটি ভাষা বাছুন",
+      autoCopy: "আপনি যে ভাষায় কথা বলেন সেটি বাছুন। অন্যজনের ভাষা তিনি প্রথমবার কথা বললেই নিজে থেকে বোঝা যাবে।",
       autoBadge: "সব ভাষা সমর্থিত",
       manualOpen: "ভাষা নিজে বেছে নিন",
       manualClose: "নিজে থেকে শনাক্ত হতে দিন",
       youSpeak: "আপনি বলেন",
       theySpeak: "তাঁরা বলেন",
-      sameLang: "দুটি আলাদা ভাষা বেছে নিন",
+      sameLang: "এটি আপনার ভাষা — ওঁরটি বাছুন",
       openMicLbl: "ওপেন মাইক (হাত ফাঁকা)",
       openMicSub: "একবার চাপুন আর বলুন — থামলেই রেকর্ডিং নিজে বন্ধ হবে।",
       startAuto: "শোনা শুরু করুন →",
@@ -1372,7 +1397,7 @@
       paySuccess: "পেমেন্ট সফল",
       successDetail: "{m} মিনিট যোগ হয়েছে · ₹{p} পেমেন্ট",
       backToChat: "কথায় ফিরে যান",
-      detecting: "শুনছি — ভাষা বুঝছি…",
+      detecting: "কথা বললেই বোঝা যাবে",
       autoDetecting: "শনাক্ত হচ্ছে…",
       listening: "শুনছি…",
       listeningTap: "শুনছি — থামাতে আবার চাপুন",
@@ -1392,7 +1417,7 @@
       packHome: "ঘরের কাজ",
       packSchool: "বাচ্চা, স্কুল",
       setLangs: "ভাষা বেছে নিন",
-      pairHint: "ভুল হলে উপরের পিল চেপে বদলে নিন।",
+      pairHint: "এখানে শুধু ওঁর ভাষা — আপনার ভাষা আগের স্ক্রিনে ঠিক হয়।",
       backToAuto: "আবার নিজে থেকে শনাক্ত",
       langsUpdated: "ভাষা বদলে গেছে",
       tourNext: "পরবর্তী", tourStart: "শুরু করুন", tourSkip: "এখন নয়",
@@ -1448,14 +1473,14 @@
       installed: "ઇન્સ્ટોલ થયું — હોમ સ્ક્રીનથી ખોલો",
       setupTitle: "નવી વાતચીત",
       setupSub: "બે વ્યક્તિ, એક ફોન. બસ બોલવાનું શરૂ કરો — કંઈ સેટ કરવાનું નથી.",
-      autoOn: "ભાષા આપોઆપ ઓળખાશે",
-      autoCopy: "બોલવાનું શરૂ કરો — BaatChiit સાંભળીને દરેક બાજુની ભાષા જાતે ઓળખી લે છે. પહેલી વાર બોલતાં જ બંને બાજુ સેટ થઈ જાય છે.",
+      autoOn: "ફક્ત એક ભાષા પસંદ કરો",
+      autoCopy: "તમે જે ભાષા બોલો છો તે પસંદ કરો. સામેની વ્યક્તિની ભાષા તે પહેલી વાર બોલે કે તરત જ આપોઆપ ઓળખાઈ જશે.",
       autoBadge: "બધી ભાષાઓ ઉપલબ્ધ",
       manualOpen: "ભાષાઓ જાતે પસંદ કરો",
       manualClose: "આપોઆપ ઓળખવા દો",
       youSpeak: "તમે બોલો છો",
       theySpeak: "તેઓ બોલે છે",
-      sameLang: "બે અલગ ભાષાઓ પસંદ કરો",
+      sameLang: "આ તમારી ભાષા છે — તેમની પસંદ કરો",
       openMicLbl: "ઓપન માઇક (હાથ ફ્રી)",
       openMicSub: "એક વાર દબાવો અને બોલો — અટકતાં જ રેકોર્ડિંગ આપોઆપ બંધ.",
       startAuto: "સાંભળવાનું શરૂ કરો →",
@@ -1481,7 +1506,7 @@
       paySuccess: "ચુકવણી સફળ",
       successDetail: "{m} મિનિટ ઉમેરાઈ · ₹{p} ચૂકવ્યા",
       backToChat: "વાતચીત પર પાછા",
-      detecting: "સાંભળી રહ્યા છીએ — ભાષા ઓળખી રહ્યા છીએ…",
+      detecting: "બોલશે એટલે ઓળખાશે",
       autoDetecting: "ઓળખાઈ રહ્યું છે…",
       listening: "સાંભળી રહ્યા છીએ…",
       listeningTap: "સાંભળી રહ્યા છીએ — રોકવા ફરી દબાવો",
@@ -1501,7 +1526,7 @@
       packHome: "ઘરકામ",
       packSchool: "બાળકો, શાળા",
       setLangs: "ભાષાઓ પસંદ કરો",
-      pairHint: "ખોટું ઓળખાય તો ઉપરની પટ્ટી દબાવીને બદલો.",
+      pairHint: "અહીં ફક્ત તેમની ભાષા છે — તમારી ભાષા પાછલી સ્ક્રીન પર નક્કી થાય છે.",
       backToAuto: "ફરી આપોઆપ ઓળખ",
       langsUpdated: "ભાષાઓ બદલાઈ",
       tourNext: "આગળ", tourStart: "શરૂ કરો", tourSkip: "હમણાં નહીં",
@@ -1557,14 +1582,14 @@
       installed: "ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿದೆ — ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ ತೆರೆಯಿರಿ",
       setupTitle: "ಹೊಸ ಸಂಭಾಷಣೆ",
       setupSub: "ಇಬ್ಬರು, ಒಂದು ಫೋನ್. ಸುಮ್ಮನೆ ಮಾತು ಶುರು ಮಾಡಿ — ಏನೂ ಸಿದ್ಧಪಡಿಸಬೇಕಿಲ್ಲ.",
-      autoOn: "ಭಾಷೆ ತಾನಾಗಿ ಗುರುತಿಸಲ್ಪಡುತ್ತದೆ",
-      autoCopy: "ಮಾತು ಶುರು ಮಾಡಿ — BaatChiit ಕೇಳಿ ಪ್ರತಿ ಕಡೆಯ ಭಾಷೆಯನ್ನು ತಾನಾಗಿ ಗುರುತಿಸುತ್ತದೆ. ಮೊದಲ ಬಾರಿ ಮಾತನಾಡಿದ ತಕ್ಷಣ ಎರಡೂ ಕಡೆ ಸೆಟ್ ಆಗುತ್ತದೆ.",
+      autoOn: "ಒಂದೇ ಭಾಷೆ ಆಯ್ಕೆ ಮಾಡಿ",
+      autoCopy: "ನೀವು ಮಾತನಾಡುವ ಭಾಷೆಯನ್ನು ಆರಿಸಿ. ಎದುರಿನವರ ಭಾಷೆ ಅವರು ಮೊದಲ ಬಾರಿ ಮಾತನಾಡಿದಾಗಲೇ ತಾನಾಗಿ ಗುರುತಾಗುತ್ತದೆ.",
       autoBadge: "ಎಲ್ಲಾ ಭಾಷೆಗಳು ಲಭ್ಯ",
       manualOpen: "ಭಾಷೆಗಳನ್ನು ನೀವೇ ಆಯ್ಕೆ ಮಾಡಿ",
       manualClose: "ತಾನಾಗಿ ಗುರುತಿಸಲಿ",
       youSpeak: "ನೀವು ಮಾತನಾಡುವ ಭಾಷೆ",
       theySpeak: "ಅವರು ಮಾತನಾಡುವ ಭಾಷೆ",
-      sameLang: "ಎರಡು ಬೇರೆ ಭಾಷೆಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
+      sameLang: "ಅದು ನಿಮ್ಮ ಭಾಷೆ — ಅವರದನ್ನು ಆರಿಸಿ",
       openMicLbl: "ಓಪನ್ ಮೈಕ್ (ಕೈ ಮುಕ್ತ)",
       openMicSub: "ಒಮ್ಮೆ ಒತ್ತಿ ಮಾತನಾಡಿ — ನಿಲ್ಲಿಸಿದ ತಕ್ಷಣ ರೆಕಾರ್ಡಿಂಗ್ ತಾನಾಗಿ ನಿಲ್ಲುತ್ತದೆ.",
       startAuto: "ಕೇಳಲು ಪ್ರಾರಂಭಿಸಿ →",
@@ -1590,7 +1615,7 @@
       paySuccess: "ಪಾವತಿ ಯಶಸ್ವಿ",
       successDetail: "{m} ನಿಮಿಷ ಸೇರಿಸಲಾಗಿದೆ · ₹{p} ಪಾವತಿ",
       backToChat: "ಸಂಭಾಷಣೆಗೆ ಹಿಂತಿರುಗಿ",
-      detecting: "ಕೇಳುತ್ತಿದೆ — ಭಾಷೆ ಗುರುತಿಸುತ್ತಿದೆ…",
+      detecting: "ಮಾತನಾಡಿದಾಗ ಗುರುತಾಗುತ್ತದೆ",
       autoDetecting: "ಗುರುತಿಸಲಾಗುತ್ತಿದೆ…",
       listening: "ಕೇಳುತ್ತಿದೆ…",
       listeningTap: "ಕೇಳುತ್ತಿದೆ — ನಿಲ್ಲಿಸಲು ಮತ್ತೆ ಒತ್ತಿ",
@@ -1610,7 +1635,7 @@
       packHome: "ಮನೆಕೆಲಸ",
       packSchool: "ಮಕ್ಕಳು, ಶಾಲೆ",
       setLangs: "ಭಾಷೆಗಳನ್ನು ಆಯ್ಕೆ ಮಾಡಿ",
-      pairHint: "ತಪ್ಪಾಗಿ ಗುರುತಿಸಿದರೆ ಮೇಲಿನ ಪಟ್ಟಿ ಒತ್ತಿ ಬದಲಾಯಿಸಿ.",
+      pairHint: "ಇಲ್ಲಿ ಅವರ ಭಾಷೆ ಮಾತ್ರ — ನಿಮ್ಮದು ಹಿಂದಿನ ಪರದೆಯಲ್ಲಿ ನಿಗದಿಯಾಗುತ್ತದೆ.",
       backToAuto: "ಮತ್ತೆ ತಾನಾಗಿ ಗುರುತಿಸಲಿ",
       langsUpdated: "ಭಾಷೆಗಳು ಬದಲಾಗಿವೆ",
       tourNext: "ಮುಂದೆ", tourStart: "ಪ್ರಾರಂಭಿಸಿ", tourSkip: "ಈಗ ಬೇಡ",
@@ -1666,14 +1691,14 @@
       installed: "ഇൻസ്റ്റാൾ ആയി — ഹോം സ്ക്രീനിൽ നിന്ന് തുറക്കൂ",
       setupTitle: "പുതിയ സംഭാഷണം",
       setupSub: "രണ്ടു പേർ, ഒരു ഫോൺ. സംസാരിച്ചു തുടങ്ങൂ — ഒന്നും സെറ്റ് ചെയ്യേണ്ട.",
-      autoOn: "ഭാഷ തനിയെ തിരിച്ചറിയും",
-      autoCopy: "സംസാരിച്ചു തുടങ്ങൂ — BaatChiit കേട്ട് ഓരോ ഭാഗത്തെയും ഭാഷ സ്വയം കണ്ടെത്തും. ആദ്യം സംസാരിക്കുമ്പോൾ തന്നെ ഇരുഭാഗവും സെറ്റ് ആകും.",
+      autoOn: "ഒരു ഭാഷ മാത്രം തിരഞ്ഞെടുക്കൂ",
+      autoCopy: "നിങ്ങൾ സംസാരിക്കുന്ന ഭാഷ തിരഞ്ഞെടുക്കൂ. മറ്റേയാളുടെ ഭാഷ അവർ ആദ്യം സംസാരിക്കുമ്പോൾത്തന്നെ സ്വയം തിരിച്ചറിയും.",
       autoBadge: "എല്ലാ ഭാഷകളും ലഭ്യം",
       manualOpen: "ഭാഷകൾ സ്വയം തിരഞ്ഞെടുക്കൂ",
       manualClose: "തനിയെ തിരിച്ചറിയട്ടെ",
       youSpeak: "നിങ്ങൾ സംസാരിക്കുന്നത്",
       theySpeak: "അവർ സംസാരിക്കുന്നത്",
-      sameLang: "രണ്ട് വ്യത്യസ്ത ഭാഷകൾ തിരഞ്ഞെടുക്കൂ",
+      sameLang: "അത് നിങ്ങളുടെ ഭാഷയാണ് — അവരുടേത് തിരഞ്ഞെടുക്കൂ",
       openMicLbl: "ഓപ്പൺ മൈക്ക് (കൈ സ്വതന്ത്രം)",
       openMicSub: "ഒരിക്കൽ അമർത്തി സംസാരിക്കൂ — നിർത്തുമ്പോൾ റെക്കോർഡിംഗ് തനിയെ നിൽക്കും.",
       startAuto: "കേൾക്കാൻ തുടങ്ങൂ →",
@@ -1699,7 +1724,7 @@
       paySuccess: "പണമടയ്ക്കൽ വിജയകരം",
       successDetail: "{m} മിനിറ്റ് ചേർത്തു · ₹{p} അടച്ചു",
       backToChat: "സംഭാഷണത്തിലേക്ക് മടങ്ങൂ",
-      detecting: "കേൾക്കുന്നു — ഭാഷ തിരിച്ചറിയുന്നു…",
+      detecting: "സംസാരിക്കുമ്പോൾ തിരിച്ചറിയും",
       autoDetecting: "തിരിച്ചറിയുന്നു…",
       listening: "കേൾക്കുന്നു…",
       listeningTap: "കേൾക്കുന്നു — നിർത്താൻ വീണ്ടും അമർത്തൂ",
@@ -1719,7 +1744,7 @@
       packHome: "വീട്ടുജോലി",
       packSchool: "കുട്ടികൾ, സ്കൂൾ",
       setLangs: "ഭാഷകൾ തിരഞ്ഞെടുക്കൂ",
-      pairHint: "തെറ്റിയാൽ മുകളിലെ പട്ട അമർത്തി മാറ്റാം.",
+      pairHint: "ഇവിടെ അവരുടെ ഭാഷ മാത്രം — നിങ്ങളുടേത് മുൻ സ്ക്രീനിൽ തീരുമാനിക്കുന്നു.",
       backToAuto: "വീണ്ടും തനിയെ തിരിച്ചറിയട്ടെ",
       langsUpdated: "ഭാഷകൾ മാറ്റി",
       tourNext: "അടുത്തത്", tourStart: "തുടങ്ങാം", tourSkip: "ഇപ്പോൾ വേണ്ട",
@@ -1775,14 +1800,14 @@
       installed: "इन्स्टॉल झालं — होम स्क्रीनवरून उघडा",
       setupTitle: "नवीन संवाद",
       setupSub: "दोन माणसं, एक फोन. फक्त बोलायला सुरुवात करा — काही सेट करायचं नाही.",
-      autoOn: "भाषा आपोआप ओळखली जाईल",
-      autoCopy: "बोलायला सुरुवात करा — BaatChiit ऐकून दोन्ही बाजूंची भाषा स्वतः ओळखतो. पहिल्यांदा बोलताच दोन्ही बाजू सेट होतात.",
+      autoOn: "फक्त एक भाषा निवडा",
+      autoCopy: "तुम्ही बोलता ती भाषा निवडा. समोरच्याची भाषा ते पहिल्यांदा बोलताच आपोआप ओळखली जाईल.",
       autoBadge: "सर्व भाषा उपलब्ध",
       manualOpen: "भाषा स्वतः निवडा",
       manualClose: "आपोआप ओळखू द्या",
       youSpeak: "तुम्ही बोलता",
       theySpeak: "ते बोलतात",
-      sameLang: "दोन वेगळ्या भाषा निवडा",
+      sameLang: "ही तुमची भाषा आहे — त्यांची निवडा",
       openMicLbl: "ओपन माइक (हात मोकळे)",
       openMicSub: "एकदा दाबा आणि बोला — थांबताच रेकॉर्डिंग आपोआप बंद.",
       startAuto: "ऐकायला सुरुवात करा →",
@@ -1808,7 +1833,7 @@
       paySuccess: "पेमेंट यशस्वी",
       successDetail: "{m} मिनिटं जोडली · ₹{p} भरले",
       backToChat: "संवादाकडे परत",
-      detecting: "ऐकत आहोत — भाषा ओळखत आहोत…",
+      detecting: "बोलल्यावर ओळखली जाईल",
       autoDetecting: "ओळखत आहोत…",
       listening: "ऐकत आहोत…",
       listeningTap: "ऐकत आहोत — थांबवण्यासाठी पुन्हा दाबा",
@@ -1828,7 +1853,7 @@
       packHome: "घरकाम",
       packSchool: "मुलं, शाळा",
       setLangs: "भाषा निवडा",
-      pairHint: "चुकीचं ओळखलं तर वरची पट्टी दाबून बदला.",
+      pairHint: "इथे फक्त त्यांची भाषा — तुमची भाषा मागच्या स्क्रीनवर ठरते.",
       backToAuto: "पुन्हा आपोआप ओळख",
       langsUpdated: "भाषा बदलल्या",
       tourNext: "पुढे", tourStart: "सुरू करा", tourSkip: "आत्ता नको",
@@ -1884,14 +1909,14 @@
       installed: "ଇନଷ୍ଟଲ୍ ହୋଇଛି — ହୋମ୍ ସ୍କ୍ରିନରୁ ଖୋଲନ୍ତୁ",
       setupTitle: "ନୂଆ କଥାବାର୍ତ୍ତା",
       setupSub: "ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍। କେବଳ କହିବା ଆରମ୍ଭ କରନ୍ତୁ — କିଛି ସେଟ୍ କରିବାକୁ ନାହିଁ।",
-      autoOn: "ଭାଷା ନିଜେ ଚିହ୍ନଟ ହେବ",
-      autoCopy: "କହିବା ଆରମ୍ଭ କରନ୍ତୁ — BaatChiit ଶୁଣି ପ୍ରତ୍ୟେକ ପାଖର ଭାଷା ନିଜେ ଜାଣିଯାଏ। ପ୍ରଥମ ଥର କହିବା ମାତ୍ରେ ଦୁଇ ପାଖ ସେଟ୍ ହୋଇଯାଏ।",
+      autoOn: "କେବଳ ଗୋଟିଏ ଭାଷା ବାଛନ୍ତୁ",
+      autoCopy: "ଆପଣ ଯେଉଁ ଭାଷାରେ କୁହନ୍ତି ତାହା ବାଛନ୍ତୁ। ସାମ୍ନାରେ ଥିବା ବ୍ୟକ୍ତିଙ୍କ ଭାଷା ସେ ପ୍ରଥମ ଥର କହିବା ମାତ୍ରେ ନିଜେ ଚିହ୍ନଟ ହୋଇଯିବ।",
       autoBadge: "ସବୁ ଭାଷା ଉପଲବ୍ଧ",
       manualOpen: "ଭାଷା ନିଜେ ବାଛନ୍ତୁ",
       manualClose: "ନିଜେ ଚିହ୍ନଟ ହେବାକୁ ଦିଅନ୍ତୁ",
       youSpeak: "ଆପଣ କୁହନ୍ତି",
       theySpeak: "ସେମାନେ କୁହନ୍ତି",
-      sameLang: "ଦୁଇଟି ଅଲଗା ଭାଷା ବାଛନ୍ତୁ",
+      sameLang: "ଏହା ଆପଣଙ୍କ ଭାଷା — ତାଙ୍କର ବାଛନ୍ତୁ",
       openMicLbl: "ଓପନ୍ ମାଇକ୍ (ହାତ ଖାଲି)",
       openMicSub: "ଥରେ ଦବାଇ କୁହନ୍ତୁ — ଅଟକିଲେ ରେକର୍ଡିଂ ନିଜେ ବନ୍ଦ ହୋଇଯିବ।",
       startAuto: "ଶୁଣିବା ଆରମ୍ଭ କରନ୍ତୁ →",
@@ -1917,7 +1942,7 @@
       paySuccess: "ଦେୟ ସଫଳ",
       successDetail: "{m} ମିନିଟ୍ ଯୋଡ଼ାଗଲା · ₹{p} ଦିଆଗଲା",
       backToChat: "କଥାବାର୍ତ୍ତାକୁ ଫେରନ୍ତୁ",
-      detecting: "ଶୁଣୁଛି — ଭାଷା ଚିହ୍ନଟ କରୁଛି…",
+      detecting: "କହିଲେ ଚିହ୍ନଟ ହେବ",
       autoDetecting: "ଚିହ୍ନଟ ହେଉଛି…",
       listening: "ଶୁଣୁଛି…",
       listeningTap: "ଶୁଣୁଛି — ଅଟକାଇବାକୁ ପୁଣି ଦବାନ୍ତୁ",
@@ -1937,7 +1962,7 @@
       packHome: "ଘର କାମ",
       packSchool: "ପିଲା, ସ୍କୁଲ",
       setLangs: "ଭାଷା ବାଛନ୍ତୁ",
-      pairHint: "ଭୁଲ ହେଲେ ଉପର ପଟି ଦବାଇ ବଦଳାନ୍ତୁ।",
+      pairHint: "ଏଠାରେ କେବଳ ତାଙ୍କ ଭାଷା — ଆପଣଙ୍କ ଭାଷା ପୂର୍ବ ପରଦାରେ ସ୍ଥିର ହୁଏ।",
       backToAuto: "ପୁଣି ନିଜେ ଚିହ୍ନଟ",
       langsUpdated: "ଭାଷା ବଦଳାଗଲା",
       tourNext: "ଆଗକୁ", tourStart: "ଆରମ୍ଭ କରନ୍ତୁ", tourSkip: "ବର୍ତ୍ତମାନ ନୁହେଁ",
@@ -1993,14 +2018,14 @@
       installed: "ਇੰਸਟਾਲ ਹੋ ਗਿਆ — ਹੋਮ ਸਕਰੀਨ ਤੋਂ ਖੋਲ੍ਹੋ",
       setupTitle: "ਨਵੀਂ ਗੱਲਬਾਤ",
       setupSub: "ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ। ਬੱਸ ਬੋਲਣਾ ਸ਼ੁਰੂ ਕਰੋ — ਕੁਝ ਸੈੱਟ ਨਹੀਂ ਕਰਨਾ।",
-      autoOn: "ਭਾਸ਼ਾ ਆਪੇ ਪਛਾਣੀ ਜਾਵੇਗੀ",
-      autoCopy: "ਬੋਲਣਾ ਸ਼ੁਰੂ ਕਰੋ — BaatChiit ਸੁਣ ਕੇ ਹਰ ਪਾਸੇ ਦੀ ਭਾਸ਼ਾ ਆਪੇ ਪਛਾਣ ਲੈਂਦਾ ਹੈ। ਪਹਿਲੀ ਵਾਰ ਬੋਲਦੇ ਹੀ ਦੋਵੇਂ ਪਾਸੇ ਸੈੱਟ ਹੋ ਜਾਂਦੇ ਹਨ।",
+      autoOn: "ਸਿਰਫ਼ ਇੱਕ ਭਾਸ਼ਾ ਚੁਣੋ",
+      autoCopy: "ਤੁਸੀਂ ਜੋ ਭਾਸ਼ਾ ਬੋਲਦੇ ਹੋ ਉਹ ਚੁਣੋ। ਸਾਹਮਣੇ ਵਾਲੇ ਦੀ ਭਾਸ਼ਾ ਉਹਨਾਂ ਦੇ ਪਹਿਲੀ ਵਾਰ ਬੋਲਦਿਆਂ ਹੀ ਆਪਣੇ ਆਪ ਪਛਾਣੀ ਜਾਵੇਗੀ।",
       autoBadge: "ਸਾਰੀਆਂ ਭਾਸ਼ਾਵਾਂ ਉਪਲਬਧ",
       manualOpen: "ਭਾਸ਼ਾਵਾਂ ਆਪ ਚੁਣੋ",
       manualClose: "ਆਪੇ ਪਛਾਣਨ ਦਿਓ",
       youSpeak: "ਤੁਸੀਂ ਬੋਲਦੇ ਹੋ",
       theySpeak: "ਉਹ ਬੋਲਦੇ ਹਨ",
-      sameLang: "ਦੋ ਵੱਖਰੀਆਂ ਭਾਸ਼ਾਵਾਂ ਚੁਣੋ",
+      sameLang: "ਇਹ ਤੁਹਾਡੀ ਭਾਸ਼ਾ ਹੈ — ਉਹਨਾਂ ਦੀ ਚੁਣੋ",
       openMicLbl: "ਓਪਨ ਮਾਈਕ (ਹੱਥ ਖਾਲੀ)",
       openMicSub: "ਇੱਕ ਵਾਰ ਦਬਾਓ ਤੇ ਬੋਲੋ — ਰੁਕਦੇ ਹੀ ਰਿਕਾਰਡਿੰਗ ਆਪੇ ਬੰਦ।",
       startAuto: "ਸੁਣਨਾ ਸ਼ੁਰੂ ਕਰੋ →",
@@ -2026,7 +2051,7 @@
       paySuccess: "ਭੁਗਤਾਨ ਸਫਲ",
       successDetail: "{m} ਮਿੰਟ ਜੁੜੇ · ₹{p} ਭੁਗਤਾਨ",
       backToChat: "ਗੱਲਬਾਤ ਉੱਤੇ ਵਾਪਸ",
-      detecting: "ਸੁਣ ਰਹੇ ਹਾਂ — ਭਾਸ਼ਾ ਪਛਾਣ ਰਹੇ ਹਾਂ…",
+      detecting: "ਬੋਲਣ 'ਤੇ ਪਛਾਣੀ ਜਾਵੇਗੀ",
       autoDetecting: "ਪਛਾਣ ਰਹੇ ਹਾਂ…",
       listening: "ਸੁਣ ਰਹੇ ਹਾਂ…",
       listeningTap: "ਸੁਣ ਰਹੇ ਹਾਂ — ਰੋਕਣ ਲਈ ਫਿਰ ਦਬਾਓ",
@@ -2046,7 +2071,7 @@
       packHome: "ਘਰ ਦਾ ਕੰਮ",
       packSchool: "ਬੱਚੇ, ਸਕੂਲ",
       setLangs: "ਭਾਸ਼ਾਵਾਂ ਚੁਣੋ",
-      pairHint: "ਗਲਤ ਪਛਾਣ ਹੋਵੇ ਤਾਂ ਉੱਪਰਲੀ ਪੱਟੀ ਦਬਾ ਕੇ ਬਦਲੋ।",
+      pairHint: "ਇੱਥੇ ਸਿਰਫ਼ ਉਹਨਾਂ ਦੀ ਭਾਸ਼ਾ ਹੈ — ਤੁਹਾਡੀ ਪਿਛਲੀ ਸਕਰੀਨ 'ਤੇ ਤੈਅ ਹੁੰਦੀ ਹੈ।",
       backToAuto: "ਫਿਰ ਆਪੇ ਪਛਾਣ",
       langsUpdated: "ਭਾਸ਼ਾਵਾਂ ਬਦਲ ਦਿੱਤੀਆਂ",
       tourNext: "ਅੱਗੇ", tourStart: "ਸ਼ੁਰੂ ਕਰੋ", tourSkip: "ਹੁਣੇ ਨਹੀਂ",
@@ -2102,14 +2127,14 @@
       installed: "நிறுவப்பட்டது — முகப்புத் திரையிலிருந்து திறக்கவும்",
       setupTitle: "புதிய உரையாடல்",
       setupSub: "இருவர், ஒரு ஃபோன். பேசத் தொடங்குங்கள் — எதுவும் அமைக்க வேண்டாம்.",
-      autoOn: "மொழி தானாகவே கண்டறியப்படும்",
-      autoCopy: "பேசத் தொடங்குங்கள் — BaatChiit கேட்டு ஒவ்வொரு பக்கத்தின் மொழியையும் தானே கண்டுபிடிக்கும். முதல் முறை பேசியவுடன் இரு பக்கமும் அமைந்துவிடும்.",
+      autoOn: "ஒரே ஒரு மொழி தேர்ந்தெடுங்கள்",
+      autoCopy: "நீங்கள் பேசும் மொழியைத் தேர்ந்தெடுங்கள். எதிரில் இருப்பவரின் மொழி அவர் முதல் முறை பேசியவுடன் தானாகவே கண்டறியப்படும்.",
       autoBadge: "அனைத்து மொழிகளும் உண்டு",
       manualOpen: "மொழிகளை நீங்களே தேர்வு செய்யுங்கள்",
       manualClose: "தானாகக் கண்டறியட்டும்",
       youSpeak: "நீங்கள் பேசுவது",
       theySpeak: "அவர்கள் பேசுவது",
-      sameLang: "இரண்டு வெவ்வேறு மொழிகளைத் தேர்வு செய்யுங்கள்",
+      sameLang: "அது உங்கள் மொழி — அவருடையதைத் தேர்ந்தெடுங்கள்",
       openMicLbl: "ஓபன் மைக் (கை சுதந்திரம்)",
       openMicSub: "ஒரு முறை தட்டிப் பேசுங்கள் — நிறுத்தியவுடன் பதிவு தானாக நிற்கும்.",
       startAuto: "கேட்கத் தொடங்கு →",
@@ -2135,7 +2160,7 @@
       paySuccess: "பணம் செலுத்தப்பட்டது",
       successDetail: "{m} நிமிடங்கள் சேர்க்கப்பட்டன · ₹{p} செலுத்தப்பட்டது",
       backToChat: "உரையாடலுக்குத் திரும்பு",
-      detecting: "கேட்கிறது — மொழியை கண்டறிகிறது…",
+      detecting: "பேசியவுடன் கண்டறியப்படும்",
       autoDetecting: "கண்டறியப்படுகிறது…",
       listening: "கேட்கிறது…",
       listeningTap: "கேட்கிறது — நிறுத்த மீண்டும் தட்டவும்",
@@ -2155,7 +2180,7 @@
       packHome: "வீட்டு வேலை",
       packSchool: "குழந்தைகள், பள்ளி",
       setLangs: "மொழிகளைத் தேர்வு செய்யுங்கள்",
-      pairHint: "தவறாக இருந்தால் மேலே உள்ள பட்டையைத் தட்டி மாற்றுங்கள்.",
+      pairHint: "இங்கே அவரது மொழி மட்டும் — உங்கள் மொழி முந்தைய திரையில் அமைக்கப்படுகிறது.",
       backToAuto: "மீண்டும் தானாகக் கண்டறி",
       langsUpdated: "மொழிகள் மாற்றப்பட்டன",
       tourNext: "அடுத்து", tourStart: "தொடங்கு", tourSkip: "இப்போது வேண்டாம்",
@@ -2211,14 +2236,14 @@
       installed: "ఇన్‌స్టాల్ అయ్యింది — హోమ్ స్క్రీన్ నుండి తెరవండి",
       setupTitle: "కొత్త సంభాషణ",
       setupSub: "ఇద్దరు, ఒక ఫోన్. మాట్లాడటం మొదలుపెట్టండి — ఏమీ సెట్ చేయనవసరం లేదు.",
-      autoOn: "భాష దానంతట అదే గుర్తించబడుతుంది",
-      autoCopy: "మాట్లాడటం మొదలుపెట్టండి — BaatChiit విని ప్రతి వైపు భాషను దానంతట అదే గుర్తిస్తుంది. మొదటిసారి మాట్లాడగానే రెండు వైపులా సెట్ అవుతుంది.",
+      autoOn: "ఒక్క భాష ఎంచుకోండి",
+      autoCopy: "మీరు మాట్లాడే భాషను ఎంచుకోండి. ఎదుటివారి భాష వారు మొదటిసారి మాట్లాడగానే దానంతట అదే గుర్తించబడుతుంది.",
       autoBadge: "అన్ని భాషలు అందుబాటులో",
       manualOpen: "భాషలను మీరే ఎంచుకోండి",
       manualClose: "దానంతట అదే గుర్తించనివ్వండి",
       youSpeak: "మీరు మాట్లాడేది",
       theySpeak: "వారు మాట్లాడేది",
-      sameLang: "రెండు వేర్వేరు భాషలను ఎంచుకోండి",
+      sameLang: "అది మీ భాష — వారిది ఎంచుకోండి",
       openMicLbl: "ఓపెన్ మైక్ (చేతులు ఖాళీ)",
       openMicSub: "ఒకసారి నొక్కి మాట్లాడండి — ఆగగానే రికార్డింగ్ దానంతట అదే ఆగుతుంది.",
       startAuto: "వినడం ప్రారంభించండి →",
@@ -2244,7 +2269,7 @@
       paySuccess: "చెల్లింపు విజయవంతం",
       successDetail: "{m} నిమిషాలు జోడించబడ్డాయి · ₹{p} చెల్లించారు",
       backToChat: "సంభాషణకు తిరిగి",
-      detecting: "వింటోంది — భాషను గుర్తిస్తోంది…",
+      detecting: "మాట్లాడగానే గుర్తించబడుతుంది",
       autoDetecting: "గుర్తిస్తోంది…",
       listening: "వింటోంది…",
       listeningTap: "వింటోంది — ఆపడానికి మళ్ళీ నొక్కండి",
@@ -2264,7 +2289,7 @@
       packHome: "ఇంటి పని",
       packSchool: "పిల్లలు, స్కూల్",
       setLangs: "భాషలను ఎంచుకోండి",
-      pairHint: "తప్పుగా ఉంటే పైన ఉన్న పిల్‌ను నొక్కి మార్చండి.",
+      pairHint: "ఇక్కడ వారి భాష మాత్రమే — మీది ముందటి స్క్రీన్‌లో నిర్ణయమవుతుంది.",
       backToAuto: "మళ్ళీ దానంతట గుర్తింపు",
       langsUpdated: "భాషలు మార్చబడ్డాయి",
       tourNext: "తర్వాత", tourStart: "ప్రారంభించండి", tourSkip: "ఇప్పుడు వద్దు",
@@ -2307,10 +2332,8 @@
     pendingPhone: null,
     profileFrom: "setup",       // which screen Profile was opened from
 
-    autoDetect: true,
-    manualOpen: false,
-    hostSel: "hi-IN",           // manual-picker selections
-    guestSel: "en-IN",
+    hostSel: "hi-IN",           // your language, chosen on the setup screen
+    guestSel: "en-IN",          // only a fallback for phrase previews
     host: { lang: null, manual: false },
     guest: { lang: null, manual: false },
 
@@ -2673,39 +2696,24 @@
   // -----------------------------------------------------------------
   // Setup screen (auto-detect vs manual languages, open mic)
   // -----------------------------------------------------------------
+  // Setup asks for one language only: the phone owner's. There's no
+  // "they speak" list here — nobody knows yet, and guessing on a
+  // stranger's behalf is what made this screen confusing.
   function renderLangChips() {
-    ["host", "guest"].forEach(function (side) {
-      var wrap = $(side + "-chips");
-      wrap.innerHTML = "";
-      LANGUAGES.forEach(function (lang) {
-        var b = document.createElement("button");
-        b.className = "lang-chip";
-        b.dataset.selected = state[side + "Sel"] === lang.code ? "true" : "false";
-        b.innerHTML = escapeHtml(lang.name) + (lang.code === "en-IN" ? "" : '<span class="native">' + escapeHtml(lang.native) + "</span>");
-        b.addEventListener("click", function () {
-          state[side + "Sel"] = lang.code;
-          renderLangChips();
-          renderSetupValidation();
-        });
-        wrap.appendChild(b);
+    var wrap = $("host-chips");
+    wrap.innerHTML = "";
+    LANGUAGES.forEach(function (lang) {
+      var b = document.createElement("button");
+      b.className = "lang-chip";
+      b.dataset.selected = state.hostSel === lang.code ? "true" : "false";
+      b.innerHTML = escapeHtml(lang.name) + (lang.code === "en-IN" ? "" : '<span class="native">' + escapeHtml(lang.native) + "</span>");
+      b.addEventListener("click", function () {
+        state.hostSel = lang.code;
+        renderLangChips();
       });
+      wrap.appendChild(b);
     });
   }
-
-  function renderSetupValidation() {
-    var same = state.manualOpen && state.hostSel === state.guestSel;
-    $("same-lang-error").textContent = same ? t("sameLang") : "";
-    $("btn-start").disabled = same;
-  }
-
-  $("btn-toggle-manual").addEventListener("click", function () {
-    state.manualOpen = !state.manualOpen;
-    state.autoDetect = !state.manualOpen;
-    $("manual-wrap").hidden = !state.manualOpen;
-    this.textContent = state.manualOpen ? t("manualClose") : t("manualOpen");
-    $("btn-start").textContent = state.autoDetect ? t("startAuto") : t("startManual");
-    renderSetupValidation();
-  });
 
   function renderOpenMic() {
     $("openmic-switch").setAttribute("aria-pressed", state.openMic ? "true" : "false");
@@ -2718,8 +2726,10 @@
   });
 
   $("btn-start").addEventListener("click", function () {
-    state.host = { lang: state.autoDetect ? null : state.hostSel, manual: !state.autoDetect };
-    state.guest = { lang: state.autoDetect ? null : state.guestSel, manual: !state.autoDetect };
+    // Your language is known from this screen; theirs is detected the
+    // first time they speak, and only theirs ever changes by itself.
+    state.host = { lang: state.hostSel, manual: true };
+    state.guest = { lang: null, manual: false };
     state.messages = [];
     state.sessionRec = null;
     renderFeeds();
@@ -2749,12 +2759,24 @@
       var label = $(side + "-label");
       dot.dataset.state = locked ? "locked" : "waiting";
       label.dataset.state = locked ? "locked" : "waiting";
+      // Don't overwrite the live "Listening…" of a mic that's actually
+      // open — this runs on every render, including mid-recording.
+      if (state.recordingSide === side) return;
+      // The app is NOT listening until a mic is held, so the waiting
+      // label says what will happen instead of claiming to hear you.
       label.textContent = locked ? langName(state[side].lang) : t("detecting");
     });
     var pill = $("pair-pill");
     if (state.host.lang && state.guest.lang) {
       pill.dataset.waiting = "false";
       pill.textContent = langName(state.host.lang) + " ⇄ " + langName(state.guest.lang);
+    } else if (state.host.lang) {
+      // Half known from setup: show it, so the pill isn't pretending
+      // both sides are a mystery. The unknown half is an ellipsis, not
+      // the word "detecting" — that ran off the end of the pill, and
+      // the other person's side of the screen says it in full anyway.
+      pill.dataset.waiting = "true";
+      pill.textContent = langName(state.host.lang) + " ⇄ …";
     } else {
       pill.dataset.waiting = "true";
       pill.textContent = t("autoDetecting");
@@ -3013,11 +3035,11 @@
     $("t-auto-copy").textContent = t("autoCopy");
     $("t-auto-badge").textContent = t("autoBadge");
     $("t-you-speak").textContent = t("youSpeak");
-    $("t-they-speak").textContent = t("theySpeak");
     $("t-openmic-lbl").textContent = t("openMicLbl");
     $("t-openmic-sub").textContent = t("openMicSub");
-    $("btn-toggle-manual").textContent = state.manualOpen ? t("manualClose") : t("manualOpen");
-    $("btn-start").textContent = state.autoDetect ? t("startAuto") : t("startManual");
+    // "Start conversation", not "Start listening": nothing is recorded
+    // until a mic is actually held.
+    $("btn-start").textContent = t("startManual");
 
     // onboarding
     $("t-ob-title").textContent = t("obTitle");
@@ -3064,7 +3086,6 @@
     $("t-setlangs-title").textContent = t("setLangs");
     $("btn-close-langpair").textContent = t("close");
     $("t-pair-hint").textContent = t("pairHint");
-    $("t-pair-you").textContent = t("youSpeak");
     $("t-pair-they").textContent = t("theySpeak");
     $("btn-pair-auto").textContent = t("backToAuto");
 
@@ -3078,54 +3099,47 @@
     if ($("tour-sheet").classList.contains("open")) renderTour();
 
     // The app language is almost always the language this person speaks,
-    // so pre-select it for the conversation — auto-detect still wins the
-    // moment either side actually talks.
+    // so pre-select it as their conversation language too.
     state.hostSel = code;
     if (state.guestSel === code) state.guestSel = code === "en-IN" ? "hi-IN" : "en-IN";
     renderLangChips();
-    renderSetupValidation();
   }
 
   // "↑ Press and speak" under each mic, in the language chosen on the
   // welcome screen, so the control is obvious without reading English.
   // -----------------------------------------------------------------
-  // Language pair sheet: tapping the strip pill mid-conversation lets
-  // someone correct a wrong auto-detect guess (or set both languages
-  // up front) without leaving the conversation. Picking a language
-  // here marks that side manual, so detection stops overriding it.
+  // Language pair sheet: tapping the strip pill mid-conversation fixes
+  // a wrong guess about the OTHER person. Your own language isn't here
+  // — it was settled on the setup screen, and letting both sides move
+  // mid-conversation (while detection also moved one of them) is what
+  // made this confusing. To change your own, go back and start again.
   // -----------------------------------------------------------------
   function renderLangPair() {
-    ["host", "guest"].forEach(function (side) {
-      var wrap = $("pair-" + side + "-chips");
-      wrap.innerHTML = "";
-      LANGUAGES.forEach(function (lang) {
-        var b = document.createElement("button");
-        b.className = "lang-chip";
-        b.dataset.selected = state[side].lang === lang.code ? "true" : "false";
-        b.innerHTML = escapeHtml(lang.name) +
-          (lang.code === "en-IN" ? "" : '<span class="native">' + escapeHtml(lang.native) + "</span>");
-        b.addEventListener("click", function () {
-          state[side] = { lang: lang.code, manual: true };
-          // Both sides on one language would translate nothing; move the
-          // other side off it rather than silently doing nothing.
-          var other = otherSide(side);
-          if (state[other].lang === lang.code) {
-            state[other] = { lang: lang.code === "en-IN" ? "hi-IN" : "en-IN", manual: true };
-          }
-          renderLangPair();
-          renderSideHeads();
-          renderFeeds();          // bubbles show each side in its own language
-          toast(t("langsUpdated"));
-        });
-        wrap.appendChild(b);
+    var wrap = $("pair-guest-chips");
+    wrap.innerHTML = "";
+    LANGUAGES.forEach(function (lang) {
+      var b = document.createElement("button");
+      b.className = "lang-chip";
+      b.dataset.selected = state.guest.lang === lang.code ? "true" : "false";
+      b.innerHTML = escapeHtml(lang.name) +
+        (lang.code === "en-IN" ? "" : '<span class="native">' + escapeHtml(lang.native) + "</span>");
+      b.addEventListener("click", function () {
+        // Both sides on one language would translate nothing.
+        if (state.host.lang === lang.code) { toast(t("sameLang")); return; }
+        state.guest = { lang: lang.code, manual: true };
+        renderLangPair();
+        renderSideHeads();
+        renderFeeds();          // bubbles show each side in its own language
+        toast(t("langsUpdated"));
       });
+      wrap.appendChild(b);
     });
   }
 
   $("pair-pill").addEventListener("click", function () { openSheet("langpair"); });
   $("btn-close-langpair").addEventListener("click", dismissSheet);
   $("btn-pair-auto").addEventListener("click", function () {
-    state.host = { lang: null, manual: false };
+    // Only theirs goes back to being detected; yours stays as you set it.
     state.guest = { lang: null, manual: false };
     renderLangPair();
     renderSideHeads();
@@ -3743,7 +3757,7 @@
       $("btn-install").hidden = true;
       $("t-get-android").hidden = true;
     }
-    renderSetupValidation();
+    renderLangChips();
     renderOpenMic();
     restoreSession();
 
