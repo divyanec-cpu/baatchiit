@@ -2866,20 +2866,25 @@
     }
     return state.player;
   }
-  // Safari puts every page in the "ambient" audio session, which the
-  // iPhone's ring/silent switch mutes outright — an app whose entire
-  // output is speech falls silent with no error to catch. This app both
-  // listens and talks, which is exactly what "play-and-record" is for.
-  // Safari-only today; elsewhere navigator.audioSession is undefined and
-  // this does nothing.
-  function claimAudioSession() {
+  // iOS audio sessions, the short version:
+  //   "ambient"          — the default, and the ring/silent switch mutes
+  //                        it outright. Speech-only app, no sound, no error.
+  //   "play-and-record"  — needed while the mic is open, but it routes
+  //                        output to the earpiece: audible only if you
+  //                        hold the phone to your ear. On a phone lying
+  //                        between two people that reads as "no volume".
+  //   "playback"         — loudspeaker, and the switch doesn't silence it.
+  // Push-to-talk never records and plays at the same moment, so the app
+  // claims whichever it needs and hands it back.
+  // Safari-only; elsewhere navigator.audioSession is undefined, no-op.
+  function claimAudioSession(type) {
     try {
-      if (navigator.audioSession) navigator.audioSession.type = "play-and-record";
+      if (navigator.audioSession) navigator.audioSession.type = type;
     } catch (e) { /* older Safari, or not supported */ }
   }
 
   function unlockAudio() {
-    claimAudioSession();
+    claimAudioSession("playback");
     if (state.audioUnlocked) return;
     try {
       var p = player();
@@ -2897,6 +2902,7 @@
 
   function playTts(audioBase64) {
     try {
+      claimAudioSession("playback");   // loudspeaker, not the earpiece
       // A blob: URL rather than a data: URI. Safari parses the whole
       // base64 string on the main thread for data:, which stalls a phone
       // noticeably for a few hundred KB of WAV.
@@ -3447,8 +3453,16 @@
   }
 
   function ensureMicStream() {
-    claimAudioSession();   // before the mic is taken, or Safari picks for us
-    if (state.micStream) return Promise.resolve(state.micStream);
+    claimAudioSession("play-and-record");   // before the mic is taken, or Safari picks for us
+    // Handing the session to "playback" for a reply can end the capture
+    // on iOS, so a cached stream is only good while its track is live.
+    // The analyser is wired to that exact stream and has to go with it.
+    var live = state.micStream && state.micStream.getAudioTracks().some(function (t) {
+      return t.readyState === "live";
+    });
+    if (live) return Promise.resolve(state.micStream);
+    state.micStream = null;
+    state.analyser = null;
     // Mono, and the cleanup filters left on — they cost nothing here and
     // give the recogniser a cleaner signal in a noisy market. Stereo
     // would double the upload for no benefit: this is one person talking
@@ -3746,6 +3760,7 @@
     mic.addEventListener("pointerdown", function (e) {
       e.preventDefault();
       unlockAudio();
+      claimAudioSession("play-and-record");   // taking the mic back from playback
       primeAudioContext();
       if (state.openMic && state.recordingSide === side) {
         stopRecording(side);
