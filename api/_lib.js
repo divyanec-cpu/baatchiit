@@ -187,7 +187,12 @@ async function saveOverrides(next) {
 // down with a soft knee rather than clipped square -- hard clipping on
 // speech sounds like crackle, which is worse than quiet.
 // ---------------------------------------------------------------------
-const TARGET_RMS = 0.16 * 32767;   // about -16 dBFS, a normal speech level
+// About -14 dBFS. Louder than the -16 that broadcast speech aims for,
+// because this is a phone speaker on a table in a market rather than a
+// pair of headphones, and Sarvam's own output measured 4% average (about
+// -28 dBFS) on a real device. Going much past this makes the soft knee
+// work hard enough to hear.
+const TARGET_RMS = 0.20 * 32767;
 const KNEE = 0.85;                 // above this fraction of full scale, ease off
 const MAX_GAIN = 12;               // past this we would only amplify hiss
 
