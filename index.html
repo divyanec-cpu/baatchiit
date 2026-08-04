@@ -2852,7 +2852,20 @@
     }
     return state.player;
   }
+  // Safari puts every page in the "ambient" audio session, which the
+  // iPhone's ring/silent switch mutes outright — an app whose entire
+  // output is speech falls silent with no error to catch. This app both
+  // listens and talks, which is exactly what "play-and-record" is for.
+  // Safari-only today; elsewhere navigator.audioSession is undefined and
+  // this does nothing.
+  function claimAudioSession() {
+    try {
+      if (navigator.audioSession) navigator.audioSession.type = "play-and-record";
+    } catch (e) { /* older Safari, or not supported */ }
+  }
+
   function unlockAudio() {
+    claimAudioSession();
     if (state.audioUnlocked) return;
     try {
       var p = player();
@@ -3420,6 +3433,7 @@
   }
 
   function ensureMicStream() {
+    claimAudioSession();   // before the mic is taken, or Safari picks for us
     if (state.micStream) return Promise.resolve(state.micStream);
     // Mono, and the cleanup filters left on — they cost nothing here and
     // give the recogniser a cleaner signal in a noisy market. Stereo
