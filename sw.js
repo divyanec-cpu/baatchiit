@@ -1,6 +1,6 @@
 // Minimal service worker: makes the app installable and caches the shell.
 // Pipeline calls are always network-only (live translation cannot be cached).
-const CACHE = "baatchiit-v4";
+const CACHE = "baatchiit-v5";
 const SHELL = ["/", "/index.html", "/manifest.json", "/icon-192.png", "/icon-512.png"];
 self.addEventListener("install", (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
