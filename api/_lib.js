@@ -187,14 +187,28 @@ async function saveOverrides(next) {
 // down with a soft knee rather than clipped square -- hard clipping on
 // speech sounds like crackle, which is worse than quiet.
 // ---------------------------------------------------------------------
-// About -14 dBFS. Louder than the -16 that broadcast speech aims for,
-// because this is a phone speaker on a table in a market rather than a
-// pair of headphones, and Sarvam's own output measured 4% average (about
-// -28 dBFS) on a real device. Going much past this makes the soft knee
-// work hard enough to hear.
-const TARGET_RMS = 0.20 * 32767;
-const KNEE = 0.85;                 // above this fraction of full scale, ease off
-const MAX_GAIN = 12;               // past this we would only amplify hiss
+// How loud the reply ends up. This is RMS as a fraction of full scale,
+// and the physics matter when picking it: a full-scale SINE wave has an
+// RMS of 0.707, so anything approaching that is no longer a waveform
+// with peaks and troughs — it's a square wave. Speech processed that
+// hard is louder but buzzy and harder to understand, which for a
+// translator is the wrong trade.
+//
+// 0.45 is past what any broadcaster would use and about as far as this
+// can go while a voice still sounds like a voice — Divya asked for it
+// loud, and on a phone speaker in a market that beats fidelity. Set
+// TTS_TARGET_RMS in the Vercel environment to go further without a code
+// change (clamped to 0.9); 0.78 is reachable and will buzz.
+const TARGET_RMS = (function () {
+  const asked = parseFloat(process.env.TTS_TARGET_RMS || "");
+  const fraction = Number.isFinite(asked) ? Math.min(Math.max(asked, 0.05), 0.9) : 0.45;
+  return fraction * 32767;
+})();
+// A lower knee means the limiter starts working sooner, which is what
+// buys loudness once the peaks are already at full scale: the quiet
+// parts come up while the loud parts are held down.
+const KNEE = 0.6;
+const MAX_GAIN = 40;   // high enough that the target above is what limits, not this
 
 function softClip(x) {
   // x is -1..1. Below the knee it passes through untouched; above it,
