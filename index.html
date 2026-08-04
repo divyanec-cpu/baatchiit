@@ -50,6 +50,20 @@
      without it, the download link and the manual-language picker both
      stayed on screen after being "hidden". */
   [hidden] { display: none !important; }
+  /* iOS pops the Copy / Look Up callout and starts selecting text on any
+     long press — and holding the mic IS a long press, so the menu stole
+     the gesture halfway through a sentence. Nothing in this app is meant
+     to be selected except what you type into it. */
+  html, body {
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    user-select: none;
+  }
+  input, textarea {
+    -webkit-touch-callout: default;
+    -webkit-user-select: text;
+    user-select: text;
+  }
   html, body {
     margin: 0;
     height: 100%;
@@ -3667,9 +3681,14 @@
         return;
       }
 
-      // Language lock: auto-detect fills a side's language the first
-      // time that side speaks (manual picks always win).
-      if (!state[side].manual && data.detectedLanguage && langByCode(data.detectedLanguage)) {
+      // Language lock: detection fills a side in the first time that side
+      // speaks, and then leaves it alone. It used to re-run on every
+      // utterance, so one bad guess mid-conversation silently switched
+      // the target language — the label said Punjabi while the bubbles
+      // were still being translated into Telugu. A wrong first guess is
+      // corrected through the pill, which marks the side manual.
+      if (!state[side].manual && !state[side].lang &&
+          data.detectedLanguage && langByCode(data.detectedLanguage)) {
         state[side].lang = data.detectedLanguage;
       }
       renderSideHeads();
