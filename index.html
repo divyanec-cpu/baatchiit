@@ -96,14 +96,20 @@
   .btn-primary {
     width: 100%;
     padding: 15px;
-    border-radius: 14px;
+    border-radius: 12px;
     background: var(--saffron);
     color: #fff;
     font-family: var(--font-display);
     font-weight: 700;
     font-size: 16px;
+    box-shadow: 0 6px 18px rgba(255, 122, 41, 0.26);
   }
-  .btn-primary:disabled { background: #E8DCC8; cursor: default; }
+  .btn-primary:disabled { box-shadow: none; }
+  .btn-primary:disabled {
+    background: #EDE3D2;
+    color: rgba(33, 26, 20, 0.38);
+    cursor: default;
+  }
   .link-btn {
     display: inline-block;
     font-size: 13px;
@@ -140,7 +146,7 @@
     justify-content: safe center;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 24px 28px 36px; gap: 18px;
+    padding: 30px 26px 40px; gap: 0;
   }
   .auth-wrap .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 26px; }
   .auth-wrap .tagline { color: var(--muted); font-size: 14px; text-align: center; margin: 0 0 10px; }
@@ -149,13 +155,13 @@
      it reads for someone who can't read the English UI yet. */
   .ui-lang-grid { display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
   .ui-lang-chip {
-    padding: 6px 11px;
+    padding: 6px 12px;
     border-radius: 999px;
-    border: 1.5px solid var(--border-strong);
-    background: var(--card);
-    color: var(--ink);
-    font-size: 13px;
-    font-weight: 700;
+    border: 1px solid rgba(33, 26, 20, 0.13);
+    background: transparent;
+    color: var(--muted);
+    font-size: 12.5px;
+    font-weight: 600;
     font-family: var(--font-script);
   }
   .ui-lang-chip[aria-pressed="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
@@ -225,8 +231,13 @@
     display: flex; align-items: center; gap: 8px;
     background: var(--card);
     border: 1.5px solid var(--border-strong);
-    border-radius: 14px;
+    border-radius: 12px;
     padding: 14px 16px;
+    transition: border-color 0.12s ease, box-shadow 0.12s ease;
+  }
+  .phone-row:focus-within {
+    border-color: var(--ink);
+    box-shadow: 0 0 0 3px rgba(33, 26, 20, 0.07);
   }
   .phone-row .prefix { font-weight: 700; }
   .phone-row input {
@@ -702,128 +713,117 @@
   }
   .half--guest .notice { background: rgba(255, 247, 234, 0.92); color: var(--ink); }
 
-  /* ============== WELCOME SCREEN: CREDIBILITY + PLATFORMS ==============
-     The first screen has to do three jobs at once: sign you in, say what
-     this is, and answer "will it work on my phone?" — asked constantly,
-     because half of India is on iPhone and half on Android and the answer
-     differs. Kept in that order: the login stays the primary action and
-     everything below it is there for the person who scrolls. */
+  /* ============== WELCOME SCREEN ==============
+     One page, three acts, in falling weight: who we are, the one thing
+     we ask you to do, and the reassurance for whoever wants it. The
+     first version gave all three the same volume — two full-strength
+     orange buttons competing, a wall of chips, one flat 18px gap
+     between everything — and it read as a form, not a front door.
 
-  /* Small pills of fact directly under the tagline — the claims a
-     stranger needs before typing their number in. */
-  .trust-row {
-    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+     The discipline here: exactly one saturated element on the screen
+     (Continue). Everything else is ink, muted ink, or a hairline. */
+
+  /* --- Act one: the mark --- */
+  .hero-mark { margin-bottom: 16px; }
+  .auth-wrap .brand-name {
+    font-family: var(--font-display); font-weight: 800;
+    font-size: 32px; letter-spacing: -0.015em;
+    line-height: 1.1;
   }
-  .trust-pill {
-    font-size: 11.5px; font-weight: 700;
+  .auth-wrap .tagline {
     color: var(--muted);
-    background: var(--card);
-    border: 1.5px solid var(--border-strong);
-    border-radius: 999px;
-    padding: 5px 11px;
-  }
-
-  /* The one dark block on a cream screen. It carries the "this is built
-     on Indian AI" story, and the contrast is what makes it read as a
-     statement rather than a footnote. */
-  .sarvam-card {
-    width: 100%;
-    background: linear-gradient(160deg, #2E2450 0%, var(--indigo) 55%, #1B1430 100%);
-    color: var(--cream);
-    border-radius: 18px;
-    padding: 16px 18px;
-    box-shadow: 0 10px 26px rgba(36, 28, 61, 0.28);
-    position: relative;
-    overflow: hidden;
-  }
-  /* A gold hairline along the top: the cheapest way to make a dark card
-     look considered rather than merely dark. */
-  .sarvam-card::before {
-    content: "";
-    position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--saffron), var(--gold), var(--saffron));
-  }
-  .sarvam-kicker {
-    font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em;
-    color: var(--gold);
-    margin-bottom: 6px;
-  }
-  .sarvam-copy {
-    font-size: 13px; line-height: 1.5;
-    color: rgba(255, 247, 234, 0.86);
-    margin: 0 0 12px;
-  }
-  /* The three models, in the order the words actually travel through
-     them. Named because the names are the credential. */
-  .chain {
-    display: flex; gap: 8px;
-  }
-  .chain-step {
-    flex: 1;
-    background: rgba(255, 247, 234, 0.07);
-    border: 1px solid rgba(255, 247, 234, 0.14);
-    border-radius: 11px;
-    padding: 8px 6px;
+    font-size: 14.5px; line-height: 1.5;
     text-align: center;
+    max-width: 27ch;                 /* a measure, so it breaks where it should */
+    margin: 8px 0 0;
   }
-  .chain-step .what {
-    display: block;
-    font-size: 11.5px; font-weight: 800;
-    color: var(--cream);
-  }
-  .chain-step .model {
-    display: block;
-    font-size: 10px; font-weight: 700;
-    color: var(--gold);
-    margin-top: 2px;
-    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  /* The facts, as one quiet line rather than three competing pills. */
+  .hero-meta {
+    font-size: 12px; font-weight: 600;
+    color: var(--muted); opacity: 0.85;
+    text-align: center;
+    margin-top: 10px;
   }
 
-  /* "Will it work on my phone?" — one card per answer. */
-  .platform-card {
-    width: 100%;
-    display: flex; align-items: flex-start; gap: 12px;
-    background: var(--card);
-    border: 1.5px solid var(--border-strong);
-    border-radius: 16px;
-    padding: 13px 14px;
-    text-align: left;
-  }
-  .platform-icon {
-    flex: 0 0 auto;
-    width: 34px; height: 34px;
-    border-radius: 11px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 17px;
-    background: var(--sand);
-  }
-  .platform-body { flex: 1; min-width: 0; }
-  /* Both are spans (a card is not a heading), so they need making blocks
-     or the platform name runs into its own description. */
-  .platform-title {
-    display: block;
-    font-size: 13.5px; font-weight: 800; color: var(--ink);
-  }
-  .platform-copy {
-    display: block;
-    font-size: 12px; line-height: 1.45; color: var(--muted);
-    margin-top: 3px;
-  }
-  .section-label {
-    font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em;
+  /* --- Act two: the ask --- */
+  .eyebrow {
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.16em;
     color: var(--muted);
     text-align: center;
   }
-  /* A hairline with the section name sitting in it, so the lower half of
-     the screen is visibly a different act from the login. */
-  .rule {
-    display: flex; align-items: center; gap: 10px;
-    width: 100%;
+  .lang-block { width: 100%; margin-top: 30px; }
+  .lang-block .eyebrow { margin-bottom: 11px; }
+  .signin-block { width: 100%; margin-top: 26px; }
+  /* Same label treatment as the language eyebrow above it — two sizes of
+     small-caps label on one screen just looks like an oversight. Left
+     aligned because it labels a full-width field, where the eyebrow
+     above centres over centred chips. */
+  .signin-block .field-label {
+    font-size: 10px; font-weight: 800;
+    letter-spacing: 0.16em;
+    color: var(--muted);
+    margin-bottom: 9px;
   }
-  .rule::before, .rule::after {
-    content: ""; flex: 1; height: 1px;
+  .signin-block .btn-primary { margin-top: 10px; }
+
+  /* --- Act three: the reassurance, deliberately quiet --- */
+  .meta-divider {
+    width: 100%; height: 1px;
     background: var(--border-strong);
+    margin: 34px 0 24px;
+    flex: 0 0 auto;
   }
+  .meta { width: 100%; display: flex; flex-direction: column; gap: 22px; }
+  .meta-sarvam { text-align: center; }
+  .meta-kicker {
+    font-size: 10px; font-weight: 800; letter-spacing: 0.16em;
+    color: var(--saffron-dk);
+  }
+  .meta-copy {
+    font-size: 12.5px; line-height: 1.55;
+    color: var(--muted);
+    margin: 8px 0 0;
+  }
+  /* The three models, named. Mono because they are identifiers, and
+     small because the point is that they exist, not that they shout. */
+  .model-row { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+  .model-chip {
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+    font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
+    color: var(--indigo);
+    background: rgba(36, 28, 61, 0.06);
+    border-radius: 7px;
+    padding: 5px 9px;
+  }
+  /* Platform guidance as two lines of prose, not two boxes: it is an
+     answer to a question, and an answer does not need a card. */
+  .platform-line {
+    display: flex; gap: 10px;
+    font-size: 12.5px; line-height: 1.5;
+    color: var(--muted);
+  }
+  .platform-line + .platform-line { margin-top: 10px; }
+  .platform-line b {
+    flex: 0 0 54px;
+    color: var(--ink); font-weight: 800;
+  }
+  /* Secondary by construction: bordered, not filled. The screen already
+     has one orange button and a second would halve its meaning. */
+  .btn-ghost {
+    display: flex; align-items: center; justify-content: center; gap: 8px;
+    width: 100%;
+    margin-top: 16px;
+    padding: 13px;
+    border: 1.5px solid var(--border-strong);
+    border-radius: 12px;
+    background: var(--card);
+    color: var(--ink);
+    font-size: 14px; font-weight: 800;
+    text-decoration: none;
+  }
+  .btn-ghost:active { background: var(--sand); }
+  .btn-ghost svg { color: var(--saffron-dk); }
 
   /* ============== WIDE SCREENS (laptop / desktop browser) ==============
      This is a two-people-one-phone layout: stretched across a laptop the
@@ -867,81 +867,64 @@
       <a class="home-tab" id="t-about" href="/about">About</a>
     </div>
     <div class="auth-wrap">
-      <svg width="56" height="56" viewBox="0 0 32 32"><path d="M2 8a6 6 0 016-6h10a6 6 0 016 6v4a6 6 0 01-6 6h-8l-5 4v-4a6 6 0 01-3-5.2V8z" fill="#241C3D"/><path d="M10 18a6 6 0 016-6h6a6 6 0 016 6v3a6 6 0 01-4.2 5.7v4.1l-4.6-4.1H16a6 6 0 01-6-6v-2.7z" fill="#FF7A29"/></svg>
+      <span class="hero-mark">
+        <svg width="60" height="60" viewBox="0 0 32 32"><path d="M2 8a6 6 0 016-6h10a6 6 0 016 6v4a6 6 0 01-6 6h-8l-5 4v-4a6 6 0 01-3-5.2V8z" fill="#241C3D"/><path d="M10 18a6 6 0 016-6h6a6 6 0 016 6v3a6 6 0 01-4.2 5.7v4.1l-4.6-4.1H16a6 6 0 01-6-6v-2.7z" fill="#FF7A29"/></svg>
+      </span>
       <div class="brand-name">BaatChiit</div>
-      <p class="tagline" id="t-tagline">Bol ke dekho, samajh sabko aayega. Talk to anyone, in any Indian language.</p>
+      <p class="tagline" id="t-tagline">Talk to anyone, in any Indian language.</p>
+      <!-- The two facts worth knowing before you type a number in, as
+           one quiet line. They were three pills and read as clutter. -->
+      <div class="hero-meta"><span id="t-pill-langs">11 Indian languages</span> · <span id="t-pill-india">Built for Indian voices</span></div>
 
-      <div class="trust-row">
-        <span class="trust-pill" id="t-pill-langs">11 Indian languages</span>
-        <span class="trust-pill" id="t-pill-india">Built for Indian voices</span>
-        <span class="trust-pill" id="t-pill-mic">Mic runs only while held</span>
-      </div>
-
-      <div style="width:100%;">
-        <div class="field-label" id="t-lang-label">APP LANGUAGE</div>
+      <div class="lang-block">
+        <div class="eyebrow" id="t-lang-label">APP LANGUAGE</div>
         <div class="ui-lang-grid" id="ui-lang-grid" role="group" aria-label="App language"></div>
       </div>
 
-      <div style="width:100%;">
+      <div class="signin-block">
         <div class="field-label" id="t-mobile-label">MOBILE NUMBER</div>
         <div class="phone-row">
           <span class="prefix">+91</span>
           <input id="phone-input" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="98765 43210" />
         </div>
-      </div>
-      <button class="btn-primary" id="btn-send-otp" disabled>Send OTP</button>
-      <p class="field-error" id="phone-error" aria-live="polite"></p>
-      <!-- Only shown when the browser actually offers installation; on
-           an already-installed app or an unsupported browser it stays
-           hidden rather than promising something that won't happen. -->
-      <button class="download-box" id="btn-install" hidden>
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <span id="t-install">Install app</span>
-      </button>
-      <!-- Always available: the install button only appears when Chrome
-           offers it, so without this there is no route to the APK. -->
-      <!-- Same block, so whichever route is on offer looks identical. -->
-      <a class="download-box" id="t-get-android" href="/download">
-        <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
-        <span id="t-get-android-label">Download</span>
-      </a>
-
-      <div class="rule"><span class="section-label" id="t-getapp">ON YOUR PHONE</span></div>
-
-      <!-- Both platforms, always both shown. Someone handing their phone
-           to a friend needs to know the answer for a phone that isn't
-           theirs, so hiding the irrelevant one would be wrong. -->
-      <div class="platform-card">
-        <span class="platform-icon">🤖</span>
-        <span class="platform-body">
-          <span class="platform-title" id="t-android-title">Android</span>
-          <span class="platform-copy" id="t-android-copy">Works in Chrome straight away. Install it from the Download button above to get an icon on your home screen.</span>
-        </span>
-      </div>
-      <div class="platform-card">
-        <span class="platform-icon">🍎</span>
-        <span class="platform-body">
-          <span class="platform-title" id="t-iphone-title">iPhone</span>
-          <span class="platform-copy" id="t-iphone-copy">Works in Safari right now — nothing to install. For an icon on your home screen, tap Share, then Add to Home Screen.</span>
-        </span>
+        <button class="btn-primary" id="btn-send-otp" disabled>Send OTP</button>
+        <p class="field-error" id="phone-error" aria-live="polite"></p>
       </div>
 
-      <div class="sarvam-card">
-        <div class="sarvam-kicker" id="t-sarvam-kicker">POWERED BY SARVAM AI</div>
-        <p class="sarvam-copy" id="t-sarvam-copy">Every word runs through language models built in India, by an Indian company, for the way Indian languages are actually spoken — accents, mixed speech and all.</p>
-        <div class="chain">
-          <span class="chain-step">
-            <span class="what" id="t-chain-hear">Hears</span>
-            <span class="model">saaras</span>
-          </span>
-          <span class="chain-step">
-            <span class="what" id="t-chain-translate">Translates</span>
-            <span class="model">mayura</span>
-          </span>
-          <span class="chain-step">
-            <span class="what" id="t-chain-speak">Speaks</span>
-            <span class="model">bulbul</span>
-          </span>
+      <div class="meta-divider"></div>
+
+      <div class="meta">
+        <div class="meta-sarvam">
+          <div class="meta-kicker" id="t-sarvam-kicker">POWERED BY SARVAM AI</div>
+          <p class="meta-copy" id="t-sarvam-copy">Every word runs through language models built in India, for the way Indian languages are actually spoken.</p>
+          <div class="model-row">
+            <span class="model-chip">saaras</span>
+            <span class="model-chip">mayura</span>
+            <span class="model-chip">bulbul</span>
+          </div>
+        </div>
+
+        <div>
+          <div class="eyebrow" style="text-align:left;margin-bottom:11px;" id="t-getapp">ON YOUR PHONE</div>
+          <!-- Both platforms, always both shown: someone handing their
+               phone to a friend needs the answer for a phone that isn't
+               theirs. Prose, not cards — it's an answer to a question. -->
+          <div class="platform-line"><b id="t-android-title">Android</b><span id="t-android-copy">Works in Chrome straight away. Install it below for an icon on your home screen.</span></div>
+          <div class="platform-line"><b id="t-iphone-title">iPhone</b><span id="t-iphone-copy">Works in Safari right now — nothing to install. Tap Share, then Add to Home Screen.</span></div>
+
+          <!-- Only shown when the browser actually offers installation; on
+               an already-installed app or an unsupported browser it stays
+               hidden rather than promising something that won't happen. -->
+          <button class="btn-ghost" id="btn-install" hidden>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span id="t-install">Install app</span>
+          </button>
+          <!-- Always available: the install button only appears when Chrome
+               offers it, so without this there is no route to the APK. -->
+          <a class="btn-ghost" id="t-get-android" href="/download">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
+            <span id="t-get-android-label">Download</span>
+          </a>
         </div>
       </div>
     </div>
@@ -1355,7 +1338,7 @@
       pillMic: "Mic runs only while held",
       onYourPhone: "ON YOUR PHONE",
       androidTitle: "Android",
-      androidCopy: "Works in Chrome straight away. Install it from the Download button above to get an icon on your home screen.",
+      androidCopy: "Works in Chrome straight away. Install it with the Download button for an icon on your home screen.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Works in Safari right now — nothing to install. For an icon on your home screen, tap Share, then Add to Home Screen.",
       sarvamKicker: "POWERED BY SARVAM AI",
@@ -1477,7 +1460,7 @@
       pillMic: "माइक तभी चलता है जब दबाए रखें",
       onYourPhone: "आपके फ़ोन पर",
       androidTitle: "Android",
-      androidCopy: "Chrome में तुरंत चलता है। होम स्क्रीन पर आइकन के लिए ऊपर दिए Download बटन से इंस्टॉल कीजिए।",
+      androidCopy: "Chrome में तुरंत चलता है। होम स्क्रीन पर आइकन के लिए Download बटन से इंस्टॉल कीजिए।",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari में अभी चलता है — कुछ इंस्टॉल करने की ज़रूरत नहीं। होम स्क्रीन पर आइकन के लिए Share दबाकर Add to Home Screen चुनिए।",
       sarvamKicker: "सर्वम एआई से संचालित",
@@ -1599,7 +1582,7 @@
       pillMic: "ধরে রাখলেই মাইক চলে",
       onYourPhone: "আপনার ফোনে",
       androidTitle: "Android",
-      androidCopy: "Chrome-এ সঙ্গে সঙ্গে চলে। হোম স্ক্রিনে আইকনের জন্য উপরের Download বোতাম থেকে ইনস্টল করুন।",
+      androidCopy: "Chrome-এ সঙ্গে সঙ্গে চলে। হোম স্ক্রিনে আইকনের জন্য Download বোতাম থেকে ইনস্টল করুন।",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari-তে এখনই চলে — কিছু ইনস্টল করার দরকার নেই। হোম স্ক্রিনে আইকনের জন্য Share চেপে Add to Home Screen বাছুন।",
       sarvamKicker: "সার্বম এআই দ্বারা চালিত",
@@ -1721,7 +1704,7 @@
       pillMic: "માઇક ફક્ત દબાવી રાખો ત્યારે ચાલે",
       onYourPhone: "તમારા ફોન પર",
       androidTitle: "Android",
-      androidCopy: "Chrome માં તરત ચાલે છે. હોમ સ્ક્રીન પર આઇકન માટે ઉપરના Download બટનથી ઇન્સ્ટોલ કરો.",
+      androidCopy: "Chrome માં તરત ચાલે છે. હોમ સ્ક્રીન પર આઇકન માટે Download બટનથી ઇન્સ્ટોલ કરો.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari માં અત્યારે જ ચાલે છે — કંઈ ઇન્સ્ટોલ કરવાની જરૂર નથી. હોમ સ્ક્રીન પર આઇકન માટે Share દબાવીને Add to Home Screen પસંદ કરો.",
       sarvamKicker: "સર્વમ એઆઈ દ્વારા સંચાલિત",
@@ -1843,7 +1826,7 @@
       pillMic: "ಒತ್ತಿ ಹಿಡಿದಾಗ ಮಾತ್ರ ಮೈಕ್ ಚಾಲನೆ",
       onYourPhone: "ನಿಮ್ಮ ಫೋನಿನಲ್ಲಿ",
       androidTitle: "Android",
-      androidCopy: "Chrome ನಲ್ಲಿ ತಕ್ಷಣ ಕೆಲಸ ಮಾಡುತ್ತದೆ. ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿ ಐಕಾನ್ ಬೇಕಿದ್ದರೆ ಮೇಲಿನ Download ಬಟನ್‌ನಿಂದ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ.",
+      androidCopy: "Chrome ನಲ್ಲಿ ತಕ್ಷಣ ಕೆಲಸ ಮಾಡುತ್ತದೆ. ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿ ಐಕಾನ್ ಬೇಕಿದ್ದರೆ Download ಬಟನ್‌ನಿಂದ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari ನಲ್ಲಿ ಈಗಲೇ ಕೆಲಸ ಮಾಡುತ್ತದೆ — ಏನೂ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಬೇಕಿಲ್ಲ. ಹೋಮ್ ಸ್ಕ್ರೀನ್ ಐಕಾನ್‌ಗಾಗಿ Share ಒತ್ತಿ, ನಂತರ Add to Home Screen ಆಯ್ಕೆ ಮಾಡಿ.",
       sarvamKicker: "ಸರ್ವಂ ಎಐ ಚಾಲಿತ",
@@ -1965,7 +1948,7 @@
       pillMic: "അമർത്തിപ്പിടിക്കുമ്പോൾ മാത്രം മൈക്ക്",
       onYourPhone: "നിങ്ങളുടെ ഫോണിൽ",
       androidTitle: "Android",
-      androidCopy: "Chrome-ൽ ഉടനെ പ്രവർത്തിക്കും. ഹോം സ്ക്രീനിൽ ഐക്കൺ വേണമെങ്കിൽ മുകളിലെ Download ബട്ടണിൽ നിന്ന് ഇൻസ്റ്റാൾ ചെയ്യൂ.",
+      androidCopy: "Chrome-ൽ ഉടനെ പ്രവർത്തിക്കും. ഹോം സ്ക്രീനിൽ ഐക്കൺ വേണമെങ്കിൽ Download ബട്ടണിൽ നിന്ന് ഇൻസ്റ്റാൾ ചെയ്യൂ.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari-യിൽ ഇപ്പോൾത്തന്നെ പ്രവർത്തിക്കും — ഒന്നും ഇൻസ്റ്റാൾ ചെയ്യേണ്ട. ഹോം സ്ക്രീൻ ഐക്കണിന് Share അമർത്തി Add to Home Screen തിരഞ്ഞെടുക്കൂ.",
       sarvamKicker: "സർവം എഐ പിന്തുണയോടെ",
@@ -2087,7 +2070,7 @@
       pillMic: "दाबून धरल्यावरच माइक चालतो",
       onYourPhone: "तुमच्या फोनवर",
       androidTitle: "Android",
-      androidCopy: "Chrome मध्ये लगेच चालतं. होम स्क्रीनवर आयकॉनसाठी वरच्या Download बटणातून इन्स्टॉल करा.",
+      androidCopy: "Chrome मध्ये लगेच चालतं. होम स्क्रीनवर आयकॉनसाठी Download बटणातून इन्स्टॉल करा.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari मध्ये आत्ताच चालतं — काही इन्स्टॉल करायची गरज नाही. होम स्क्रीन आयकॉनसाठी Share दाबा आणि Add to Home Screen निवडा.",
       sarvamKicker: "सर्वम एआयवर आधारित",
@@ -2209,7 +2192,7 @@
       pillMic: "ଦବାଇ ଧରିଲେ ହିଁ ମାଇକ୍ ଚାଲେ",
       onYourPhone: "ଆପଣଙ୍କ ଫୋନରେ",
       androidTitle: "Android",
-      androidCopy: "Chrome ରେ ସଙ୍ଗେ ସଙ୍ଗେ ଚାଲେ। ହୋମ୍ ସ୍କ୍ରିନରେ ଆଇକନ୍ ପାଇଁ ଉପରର Download ବଟନରୁ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ।",
+      androidCopy: "Chrome ରେ ସଙ୍ଗେ ସଙ୍ଗେ ଚାଲେ। ହୋମ୍ ସ୍କ୍ରିନରେ ଆଇକନ୍ ପାଇଁ Download ବଟନରୁ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ।",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari ରେ ବର୍ତ୍ତମାନ ହିଁ ଚାଲେ — କିଛି ଇନଷ୍ଟଲ୍ କରିବାକୁ ପଡ଼ିବ ନାହିଁ। ହୋମ୍ ସ୍କ୍ରିନ୍ ଆଇକନ୍ ପାଇଁ Share ଦବାଇ Add to Home Screen ବାଛନ୍ତୁ।",
       sarvamKicker: "ସର୍ବମ୍ ଏଆଇ ଦ୍ୱାରା ଚାଳିତ",
@@ -2331,7 +2314,7 @@
       pillMic: "ਦਬਾਈ ਰੱਖਣ 'ਤੇ ਹੀ ਮਾਈਕ ਚੱਲਦਾ",
       onYourPhone: "ਤੁਹਾਡੇ ਫ਼ੋਨ 'ਤੇ",
       androidTitle: "Android",
-      androidCopy: "Chrome ਵਿੱਚ ਤੁਰੰਤ ਚੱਲਦਾ ਹੈ। ਹੋਮ ਸਕਰੀਨ 'ਤੇ ਆਈਕਨ ਲਈ ਉੱਪਰਲੇ Download ਬਟਨ ਤੋਂ ਇੰਸਟਾਲ ਕਰੋ।",
+      androidCopy: "Chrome ਵਿੱਚ ਤੁਰੰਤ ਚੱਲਦਾ ਹੈ। ਹੋਮ ਸਕਰੀਨ 'ਤੇ ਆਈਕਨ ਲਈ Download ਬਟਨ ਤੋਂ ਇੰਸਟਾਲ ਕਰੋ।",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari ਵਿੱਚ ਹੁਣੇ ਚੱਲਦਾ ਹੈ — ਕੁਝ ਇੰਸਟਾਲ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ। ਹੋਮ ਸਕਰੀਨ ਆਈਕਨ ਲਈ Share ਦਬਾਓ, ਫਿਰ Add to Home Screen ਚੁਣੋ।",
       sarvamKicker: "ਸਰਵਮ ਏਆਈ ਨਾਲ ਚੱਲਦਾ",
@@ -2453,7 +2436,7 @@
       pillMic: "அழுத்திப் பிடிக்கும்போது மட்டுமே மைக்",
       onYourPhone: "உங்கள் ஃபோனில்",
       androidTitle: "Android",
-      androidCopy: "Chrome-இல் உடனே வேலை செய்யும். ஹோம் ஸ்கிரீனில் ஐகான் வேண்டுமெனில் மேலே உள்ள Download பொத்தானில் இருந்து நிறுவுங்கள்.",
+      androidCopy: "Chrome-இல் உடனே வேலை செய்யும். ஹோம் ஸ்கிரீனில் ஐகான் வேண்டுமெனில் Download பொத்தானில் இருந்து நிறுவுங்கள்.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari-இல் இப்போதே வேலை செய்யும் — எதுவும் நிறுவ வேண்டாம். ஹோம் ஸ்கிரீன் ஐகானுக்கு Share அழுத்தி, Add to Home Screen தேர்வு செய்யுங்கள்.",
       sarvamKicker: "சர்வம் ஏஐ மூலம்",
@@ -2575,7 +2558,7 @@
       pillMic: "నొక్కి పట్టుకున్నప్పుడే మైక్",
       onYourPhone: "మీ ఫోన్‌లో",
       androidTitle: "Android",
-      androidCopy: "Chrome లో వెంటనే పనిచేస్తుంది. హోమ్ స్క్రీన్‌పై ఐకాన్ కావాలంటే పైన ఉన్న Download బటన్ నుండి ఇన్‌స్టాల్ చేయండి.",
+      androidCopy: "Chrome లో వెంటనే పనిచేస్తుంది. హోమ్ స్క్రీన్‌పై ఐకాన్ కావాలంటే Download బటన్ నుండి ఇన్‌స్టాల్ చేయండి.",
       iphoneTitle: "iPhone",
       iphoneCopy: "Safari లో ఇప్పుడే పనిచేస్తుంది — ఏమీ ఇన్‌స్టాల్ చేయనవసరం లేదు. హోమ్ స్క్రీన్ ఐకాన్ కోసం Share నొక్కి, Add to Home Screen ఎంచుకోండి.",
       sarvamKicker: "సర్వం ఏఐ ఆధారంగా",
@@ -3474,7 +3457,6 @@
     $("t-get-android-label").textContent = t("getAndroid");
     $("t-pill-langs").textContent = t("pillLangs");
     $("t-pill-india").textContent = t("pillIndia");
-    $("t-pill-mic").textContent = t("pillMic");
     $("t-getapp").textContent = t("onYourPhone");
     $("t-android-title").textContent = t("androidTitle");
     $("t-android-copy").textContent = t("androidCopy");
@@ -3482,9 +3464,6 @@
     $("t-iphone-copy").textContent = t("iphoneCopy");
     $("t-sarvam-kicker").textContent = t("sarvamKicker");
     $("t-sarvam-copy").textContent = t("sarvamCopy");
-    $("t-chain-hear").textContent = t("chainHear");
-    $("t-chain-translate").textContent = t("chainTranslate");
-    $("t-chain-speak").textContent = t("chainSpeak");
     $("t-about").textContent = t("about");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
