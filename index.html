@@ -687,6 +687,129 @@
   }
   .half--guest .notice { background: rgba(255, 247, 234, 0.92); color: var(--ink); }
 
+  /* ============== WELCOME SCREEN: CREDIBILITY + PLATFORMS ==============
+     The first screen has to do three jobs at once: sign you in, say what
+     this is, and answer "will it work on my phone?" — asked constantly,
+     because half of India is on iPhone and half on Android and the answer
+     differs. Kept in that order: the login stays the primary action and
+     everything below it is there for the person who scrolls. */
+
+  /* Small pills of fact directly under the tagline — the claims a
+     stranger needs before typing their number in. */
+  .trust-row {
+    display: flex; flex-wrap: wrap; gap: 6px; justify-content: center;
+  }
+  .trust-pill {
+    font-size: 11.5px; font-weight: 700;
+    color: var(--muted);
+    background: var(--card);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 999px;
+    padding: 5px 11px;
+  }
+
+  /* The one dark block on a cream screen. It carries the "this is built
+     on Indian AI" story, and the contrast is what makes it read as a
+     statement rather than a footnote. */
+  .sarvam-card {
+    width: 100%;
+    background: linear-gradient(160deg, #2E2450 0%, var(--indigo) 55%, #1B1430 100%);
+    color: var(--cream);
+    border-radius: 18px;
+    padding: 16px 18px;
+    box-shadow: 0 10px 26px rgba(36, 28, 61, 0.28);
+    position: relative;
+    overflow: hidden;
+  }
+  /* A gold hairline along the top: the cheapest way to make a dark card
+     look considered rather than merely dark. */
+  .sarvam-card::before {
+    content: "";
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    background: linear-gradient(90deg, var(--saffron), var(--gold), var(--saffron));
+  }
+  .sarvam-kicker {
+    font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .sarvam-copy {
+    font-size: 13px; line-height: 1.5;
+    color: rgba(255, 247, 234, 0.86);
+    margin: 0 0 12px;
+  }
+  /* The three models, in the order the words actually travel through
+     them. Named because the names are the credential. */
+  .chain {
+    display: flex; gap: 8px;
+  }
+  .chain-step {
+    flex: 1;
+    background: rgba(255, 247, 234, 0.07);
+    border: 1px solid rgba(255, 247, 234, 0.14);
+    border-radius: 11px;
+    padding: 8px 6px;
+    text-align: center;
+  }
+  .chain-step .what {
+    display: block;
+    font-size: 11.5px; font-weight: 800;
+    color: var(--cream);
+  }
+  .chain-step .model {
+    display: block;
+    font-size: 10px; font-weight: 700;
+    color: var(--gold);
+    margin-top: 2px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  }
+
+  /* "Will it work on my phone?" — one card per answer. */
+  .platform-card {
+    width: 100%;
+    display: flex; align-items: flex-start; gap: 12px;
+    background: var(--card);
+    border: 1.5px solid var(--border-strong);
+    border-radius: 16px;
+    padding: 13px 14px;
+    text-align: left;
+  }
+  .platform-icon {
+    flex: 0 0 auto;
+    width: 34px; height: 34px;
+    border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 17px;
+    background: var(--sand);
+  }
+  .platform-body { flex: 1; min-width: 0; }
+  /* Both are spans (a card is not a heading), so they need making blocks
+     or the platform name runs into its own description. */
+  .platform-title {
+    display: block;
+    font-size: 13.5px; font-weight: 800; color: var(--ink);
+  }
+  .platform-copy {
+    display: block;
+    font-size: 12px; line-height: 1.45; color: var(--muted);
+    margin-top: 3px;
+  }
+  .section-label {
+    font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em;
+    color: var(--muted);
+    text-align: center;
+  }
+  /* A hairline with the section name sitting in it, so the lower half of
+     the screen is visibly a different act from the login. */
+  .rule {
+    display: flex; align-items: center; gap: 10px;
+    width: 100%;
+  }
+  .rule::before, .rule::after {
+    content: ""; flex: 1; height: 1px;
+    background: var(--border-strong);
+  }
+
   /* ============== WIDE SCREENS (laptop / desktop browser) ==============
      This is a two-people-one-phone layout: stretched across a laptop the
      split screen becomes two enormous fields with a mic marooned in the
@@ -733,6 +856,12 @@
       <div class="brand-name">BaatChiit</div>
       <p class="tagline" id="t-tagline">Bol ke dekho, samajh sabko aayega. Talk to anyone, in any Indian language.</p>
 
+      <div class="trust-row">
+        <span class="trust-pill" id="t-pill-langs">11 Indian languages</span>
+        <span class="trust-pill" id="t-pill-india">Built for Indian voices</span>
+        <span class="trust-pill" id="t-pill-mic">Mic runs only while held</span>
+      </div>
+
       <div style="width:100%;">
         <div class="field-label" id="t-lang-label">APP LANGUAGE</div>
         <div class="ui-lang-grid" id="ui-lang-grid" role="group" aria-label="App language"></div>
@@ -761,6 +890,45 @@
         <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
         <span id="t-get-android-label">Download</span>
       </a>
+
+      <div class="rule"><span class="section-label" id="t-getapp">ON YOUR PHONE</span></div>
+
+      <!-- Both platforms, always both shown. Someone handing their phone
+           to a friend needs to know the answer for a phone that isn't
+           theirs, so hiding the irrelevant one would be wrong. -->
+      <div class="platform-card">
+        <span class="platform-icon">🤖</span>
+        <span class="platform-body">
+          <span class="platform-title" id="t-android-title">Android</span>
+          <span class="platform-copy" id="t-android-copy">Works in Chrome straight away. Install it from the Download button above to get an icon on your home screen.</span>
+        </span>
+      </div>
+      <div class="platform-card">
+        <span class="platform-icon">🍎</span>
+        <span class="platform-body">
+          <span class="platform-title" id="t-iphone-title">iPhone</span>
+          <span class="platform-copy" id="t-iphone-copy">Works in Safari right now — nothing to install. For an icon on your home screen, tap Share, then Add to Home Screen.</span>
+        </span>
+      </div>
+
+      <div class="sarvam-card">
+        <div class="sarvam-kicker" id="t-sarvam-kicker">POWERED BY SARVAM AI</div>
+        <p class="sarvam-copy" id="t-sarvam-copy">Every word runs through language models built in India, by an Indian company, for the way Indian languages are actually spoken — accents, mixed speech and all.</p>
+        <div class="chain">
+          <span class="chain-step">
+            <span class="what" id="t-chain-hear">Hears</span>
+            <span class="model">saaras</span>
+          </span>
+          <span class="chain-step">
+            <span class="what" id="t-chain-translate">Translates</span>
+            <span class="model">mayura</span>
+          </span>
+          <span class="chain-step">
+            <span class="what" id="t-chain-speak">Speaks</span>
+            <span class="model">bulbul</span>
+          </span>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -1167,6 +1335,19 @@
       signOutConfirm: "Sign out of BaatChiit? Your minutes stay safe on this number.",
       profileSaved: "Saved",
       getAndroid: "Download app",
+      pillLangs: "11 Indian languages",
+      pillIndia: "Built for Indian voices",
+      pillMic: "Mic runs only while held",
+      onYourPhone: "ON YOUR PHONE",
+      androidTitle: "Android",
+      androidCopy: "Works in Chrome straight away. Install it from the Download button above to get an icon on your home screen.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Works in Safari right now — nothing to install. For an icon on your home screen, tap Share, then Add to Home Screen.",
+      sarvamKicker: "POWERED BY SARVAM AI",
+      sarvamCopy: "Every word runs through language models built in India, by an Indian company, for the way Indian languages are actually spoken — accents, mixed speech and all.",
+      chainHear: "Hears",
+      chainTranslate: "Translates",
+      chainSpeak: "Speaks",
       installApp: "Download app",
       installed: "Installed — open it from your home screen",
       setupTitle: "New conversation",
@@ -1276,6 +1457,19 @@
       signOutConfirm: "BaatChiit से साइन आउट करें? आपके मिनट इसी नंबर पर सुरक्षित रहेंगे।",
       profileSaved: "सेव हो गया",
       getAndroid: "डाउनलोड करें",
+      pillLangs: "11 भारतीय भाषाएँ",
+      pillIndia: "भारतीय आवाज़ों के लिए बना",
+      pillMic: "माइक तभी चलता है जब दबाए रखें",
+      onYourPhone: "आपके फ़ोन पर",
+      androidTitle: "Android",
+      androidCopy: "Chrome में तुरंत चलता है। होम स्क्रीन पर आइकन के लिए ऊपर दिए Download बटन से इंस्टॉल कीजिए।",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari में अभी चलता है — कुछ इंस्टॉल करने की ज़रूरत नहीं। होम स्क्रीन पर आइकन के लिए Share दबाकर Add to Home Screen चुनिए।",
+      sarvamKicker: "सर्वम एआई से संचालित",
+      sarvamCopy: "हर शब्द भारत में बने भाषा मॉडल से गुज़रता है — एक भारतीय कंपनी के, भारतीय भाषाएँ जैसे सचमुच बोली जाती हैं वैसे ही समझने के लिए: लहजे, मिली-जुली भाषा, सब कुछ।",
+      chainHear: "सुनता है",
+      chainTranslate: "अनुवाद करता है",
+      chainSpeak: "बोलता है",
       installApp: "डाउनलोड करें",
       installed: "इंस्टॉल हो गया — होम स्क्रीन से खोलें",
       setupTitle: "नई बातचीत",
@@ -1385,6 +1579,19 @@
       signOutConfirm: "BaatChiit থেকে সাইন আউট করবেন? আপনার মিনিট এই নম্বরেই থাকবে।",
       profileSaved: "সেভ হয়েছে",
       getAndroid: "ডাউনলোড করুন",
+      pillLangs: "১১টি ভারতীয় ভাষা",
+      pillIndia: "ভারতীয় কণ্ঠের জন্য তৈরি",
+      pillMic: "ধরে রাখলেই মাইক চলে",
+      onYourPhone: "আপনার ফোনে",
+      androidTitle: "Android",
+      androidCopy: "Chrome-এ সঙ্গে সঙ্গে চলে। হোম স্ক্রিনে আইকনের জন্য উপরের Download বোতাম থেকে ইনস্টল করুন।",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari-তে এখনই চলে — কিছু ইনস্টল করার দরকার নেই। হোম স্ক্রিনে আইকনের জন্য Share চেপে Add to Home Screen বাছুন।",
+      sarvamKicker: "সার্বম এআই দ্বারা চালিত",
+      sarvamCopy: "প্রতিটি শব্দ ভারতে তৈরি ভাষা মডেলের মধ্যে দিয়ে যায় — একটি ভারতীয় সংস্থার, ভারতীয় ভাষা যেভাবে সত্যিই বলা হয় সেভাবেই বোঝার জন্য: টান, মেশানো কথা, সবই।",
+      chainHear: "শোনে",
+      chainTranslate: "অনুবাদ করে",
+      chainSpeak: "বলে",
       installApp: "ডাউনলোড করুন",
       installed: "ইনস্টল হয়েছে — হোম স্ক্রিন থেকে খুলুন",
       setupTitle: "নতুন কথোপকথন",
@@ -1494,6 +1701,19 @@
       signOutConfirm: "BaatChiit માંથી સાઇન આઉટ કરવું? તમારી મિનિટ આ નંબર પર સચવાયેલી રહેશે.",
       profileSaved: "સેવ થયું",
       getAndroid: "ડાઉનલોડ કરો",
+      pillLangs: "11 ભારતીય ભાષાઓ",
+      pillIndia: "ભારતીય અવાજો માટે બનેલું",
+      pillMic: "માઇક ફક્ત દબાવી રાખો ત્યારે ચાલે",
+      onYourPhone: "તમારા ફોન પર",
+      androidTitle: "Android",
+      androidCopy: "Chrome માં તરત ચાલે છે. હોમ સ્ક્રીન પર આઇકન માટે ઉપરના Download બટનથી ઇન્સ્ટોલ કરો.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari માં અત્યારે જ ચાલે છે — કંઈ ઇન્સ્ટોલ કરવાની જરૂર નથી. હોમ સ્ક્રીન પર આઇકન માટે Share દબાવીને Add to Home Screen પસંદ કરો.",
+      sarvamKicker: "સર્વમ એઆઈ દ્વારા સંચાલિત",
+      sarvamCopy: "દરેક શબ્દ ભારતમાં બનેલા ભાષા મોડેલમાંથી પસાર થાય છે — એક ભારતીય કંપનીના, ભારતીય ભાષાઓ ખરેખર જેમ બોલાય છે તેમ સમજવા માટે: લહેકો, ભેળસેળ ભાષા, બધું.",
+      chainHear: "સાંભળે છે",
+      chainTranslate: "અનુવાદ કરે છે",
+      chainSpeak: "બોલે છે",
       installApp: "ડાઉનલોડ કરો",
       installed: "ઇન્સ્ટોલ થયું — હોમ સ્ક્રીનથી ખોલો",
       setupTitle: "નવી વાતચીત",
@@ -1603,6 +1823,19 @@
       signOutConfirm: "BaatChiit ನಿಂದ ಸೈನ್ ಔಟ್ ಮಾಡುವುದೇ? ನಿಮ್ಮ ನಿಮಿಷಗಳು ಈ ಸಂಖ್ಯೆಯಲ್ಲಿ ಸುರಕ್ಷಿತ.",
       profileSaved: "ಉಳಿಸಲಾಗಿದೆ",
       getAndroid: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+      pillLangs: "11 ಭಾರತೀಯ ಭಾಷೆಗಳು",
+      pillIndia: "ಭಾರತೀಯ ಧ್ವನಿಗಳಿಗಾಗಿ ರೂಪಿಸಲಾಗಿದೆ",
+      pillMic: "ಒತ್ತಿ ಹಿಡಿದಾಗ ಮಾತ್ರ ಮೈಕ್ ಚಾಲನೆ",
+      onYourPhone: "ನಿಮ್ಮ ಫೋನಿನಲ್ಲಿ",
+      androidTitle: "Android",
+      androidCopy: "Chrome ನಲ್ಲಿ ತಕ್ಷಣ ಕೆಲಸ ಮಾಡುತ್ತದೆ. ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿ ಐಕಾನ್ ಬೇಕಿದ್ದರೆ ಮೇಲಿನ Download ಬಟನ್‌ನಿಂದ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿ.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari ನಲ್ಲಿ ಈಗಲೇ ಕೆಲಸ ಮಾಡುತ್ತದೆ — ಏನೂ ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಬೇಕಿಲ್ಲ. ಹೋಮ್ ಸ್ಕ್ರೀನ್ ಐಕಾನ್‌ಗಾಗಿ Share ಒತ್ತಿ, ನಂತರ Add to Home Screen ಆಯ್ಕೆ ಮಾಡಿ.",
+      sarvamKicker: "ಸರ್ವಂ ಎಐ ಚಾಲಿತ",
+      sarvamCopy: "ಪ್ರತಿ ಪದವೂ ಭಾರತದಲ್ಲಿ ನಿರ್ಮಿಸಿದ ಭಾಷಾ ಮಾದರಿಗಳ ಮೂಲಕ ಸಾಗುತ್ತದೆ — ಭಾರತೀಯ ಕಂಪನಿಯದ್ದು, ಭಾರತೀಯ ಭಾಷೆಗಳನ್ನು ನಿಜವಾಗಿ ಮಾತನಾಡುವ ರೀತಿಯಲ್ಲೇ ಅರ್ಥ ಮಾಡಿಕೊಳ್ಳಲು: ಶೈಲಿ, ಬೆರೆಸಿದ ಮಾತು, ಎಲ್ಲವೂ.",
+      chainHear: "ಕೇಳುತ್ತದೆ",
+      chainTranslate: "ಅನುವಾದಿಸುತ್ತದೆ",
+      chainSpeak: "ಮಾತನಾಡುತ್ತದೆ",
       installApp: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
       installed: "ಇನ್‌ಸ್ಟಾಲ್ ಆಗಿದೆ — ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ ತೆರೆಯಿರಿ",
       setupTitle: "ಹೊಸ ಸಂಭಾಷಣೆ",
@@ -1712,6 +1945,19 @@
       signOutConfirm: "BaatChiit-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്യണോ? നിങ്ങളുടെ മിനിറ്റുകൾ ഈ നമ്പറിൽ സുരക്ഷിതം.",
       profileSaved: "സേവ് ചെയ്തു",
       getAndroid: "ഡൗൺലോഡ് ചെയ്യൂ",
+      pillLangs: "11 ഇന്ത്യൻ ഭാഷകൾ",
+      pillIndia: "ഇന്ത്യൻ ശബ്ദങ്ങൾക്കായി നിർമ്മിച്ചത്",
+      pillMic: "അമർത്തിപ്പിടിക്കുമ്പോൾ മാത്രം മൈക്ക്",
+      onYourPhone: "നിങ്ങളുടെ ഫോണിൽ",
+      androidTitle: "Android",
+      androidCopy: "Chrome-ൽ ഉടനെ പ്രവർത്തിക്കും. ഹോം സ്ക്രീനിൽ ഐക്കൺ വേണമെങ്കിൽ മുകളിലെ Download ബട്ടണിൽ നിന്ന് ഇൻസ്റ്റാൾ ചെയ്യൂ.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari-യിൽ ഇപ്പോൾത്തന്നെ പ്രവർത്തിക്കും — ഒന്നും ഇൻസ്റ്റാൾ ചെയ്യേണ്ട. ഹോം സ്ക്രീൻ ഐക്കണിന് Share അമർത്തി Add to Home Screen തിരഞ്ഞെടുക്കൂ.",
+      sarvamKicker: "സർവം എഐ പിന്തുണയോടെ",
+      sarvamCopy: "ഓരോ വാക്കും ഇന്ത്യയിൽ നിർമ്മിച്ച ഭാഷാ മോഡലുകളിലൂടെ കടന്നുപോകുന്നു — ഒരു ഇന്ത്യൻ കമ്പനിയുടേത്, ഇന്ത്യൻ ഭാഷകൾ യഥാർത്ഥത്തിൽ സംസാരിക്കുന്ന രീതിയിൽത്തന്നെ മനസ്സിലാക്കാൻ: ഉച്ചാരണം, കലർന്ന സംസാരം, എല്ലാം.",
+      chainHear: "കേൾക്കുന്നു",
+      chainTranslate: "വിവർത്തനം ചെയ്യുന്നു",
+      chainSpeak: "സംസാരിക്കുന്നു",
       installApp: "ഡൗൺലോഡ് ചെയ്യൂ",
       installed: "ഇൻസ്റ്റാൾ ആയി — ഹോം സ്ക്രീനിൽ നിന്ന് തുറക്കൂ",
       setupTitle: "പുതിയ സംഭാഷണം",
@@ -1821,6 +2067,19 @@
       signOutConfirm: "BaatChiit मधून साइन आउट करायचं? तुमची मिनिटं याच नंबरवर सुरक्षित राहतील.",
       profileSaved: "सेव्ह झालं",
       getAndroid: "डाउनलोड करा",
+      pillLangs: "11 भारतीय भाषा",
+      pillIndia: "भारतीय आवाजांसाठी बनवलेलं",
+      pillMic: "दाबून धरल्यावरच माइक चालतो",
+      onYourPhone: "तुमच्या फोनवर",
+      androidTitle: "Android",
+      androidCopy: "Chrome मध्ये लगेच चालतं. होम स्क्रीनवर आयकॉनसाठी वरच्या Download बटणातून इन्स्टॉल करा.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari मध्ये आत्ताच चालतं — काही इन्स्टॉल करायची गरज नाही. होम स्क्रीन आयकॉनसाठी Share दाबा आणि Add to Home Screen निवडा.",
+      sarvamKicker: "सर्वम एआयवर आधारित",
+      sarvamCopy: "प्रत्येक शब्द भारतात बनवलेल्या भाषा मॉडेलमधून जातो — एका भारतीय कंपनीच्या, भारतीय भाषा प्रत्यक्षात जशा बोलल्या जातात तशाच समजून घेण्यासाठी: हेल, मिसळलेली भाषा, सगळं.",
+      chainHear: "ऐकतं",
+      chainTranslate: "भाषांतर करतं",
+      chainSpeak: "बोलतं",
       installApp: "डाउनलोड करा",
       installed: "इन्स्टॉल झालं — होम स्क्रीनवरून उघडा",
       setupTitle: "नवीन संवाद",
@@ -1930,6 +2189,19 @@
       signOutConfirm: "BaatChiit ରୁ ସାଇନ୍ ଆଉଟ୍ କରିବେ? ଆପଣଙ୍କ ମିନିଟ୍ ଏହି ନମ୍ବରରେ ସୁରକ୍ଷିତ ରହିବ।",
       profileSaved: "ସେଭ୍ ହେଲା",
       getAndroid: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
+      pillLangs: "୧୧ଟି ଭାରତୀୟ ଭାଷା",
+      pillIndia: "ଭାରତୀୟ ସ୍ୱରଙ୍କ ପାଇଁ ତିଆରି",
+      pillMic: "ଦବାଇ ଧରିଲେ ହିଁ ମାଇକ୍ ଚାଲେ",
+      onYourPhone: "ଆପଣଙ୍କ ଫୋନରେ",
+      androidTitle: "Android",
+      androidCopy: "Chrome ରେ ସଙ୍ଗେ ସଙ୍ଗେ ଚାଲେ। ହୋମ୍ ସ୍କ୍ରିନରେ ଆଇକନ୍ ପାଇଁ ଉପରର Download ବଟନରୁ ଇନଷ୍ଟଲ୍ କରନ୍ତୁ।",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari ରେ ବର୍ତ୍ତମାନ ହିଁ ଚାଲେ — କିଛି ଇନଷ୍ଟଲ୍ କରିବାକୁ ପଡ଼ିବ ନାହିଁ। ହୋମ୍ ସ୍କ୍ରିନ୍ ଆଇକନ୍ ପାଇଁ Share ଦବାଇ Add to Home Screen ବାଛନ୍ତୁ।",
+      sarvamKicker: "ସର୍ବମ୍ ଏଆଇ ଦ୍ୱାରା ଚାଳିତ",
+      sarvamCopy: "ପ୍ରତ୍ୟେକ ଶବ୍ଦ ଭାରତରେ ତିଆରି ଭାଷା ମଡେଲ୍ ଦେଇ ଯାଏ — ଏକ ଭାରତୀୟ କମ୍ପାନୀର, ଭାରତୀୟ ଭାଷା ପ୍ରକୃତରେ ଯେମିତି କୁହାଯାଏ ସେମିତି ବୁଝିବା ପାଇଁ: ଉଚ୍ଚାରଣ, ମିଶ୍ରିତ କଥା, ସବୁକିଛି।",
+      chainHear: "ଶୁଣେ",
+      chainTranslate: "ଅନୁବାଦ କରେ",
+      chainSpeak: "କୁହେ",
       installApp: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
       installed: "ଇନଷ୍ଟଲ୍ ହୋଇଛି — ହୋମ୍ ସ୍କ୍ରିନରୁ ଖୋଲନ୍ତୁ",
       setupTitle: "ନୂଆ କଥାବାର୍ତ୍ତା",
@@ -2039,6 +2311,19 @@
       signOutConfirm: "BaatChiit ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰਨਾ? ਤੁਹਾਡੇ ਮਿੰਟ ਇਸੇ ਨੰਬਰ 'ਤੇ ਸੁਰੱਖਿਅਤ ਰਹਿਣਗੇ।",
       profileSaved: "ਸੇਵ ਹੋ ਗਿਆ",
       getAndroid: "ਡਾਊਨਲੋਡ ਕਰੋ",
+      pillLangs: "11 ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ",
+      pillIndia: "ਭਾਰਤੀ ਆਵਾਜ਼ਾਂ ਲਈ ਬਣਾਇਆ",
+      pillMic: "ਦਬਾਈ ਰੱਖਣ 'ਤੇ ਹੀ ਮਾਈਕ ਚੱਲਦਾ",
+      onYourPhone: "ਤੁਹਾਡੇ ਫ਼ੋਨ 'ਤੇ",
+      androidTitle: "Android",
+      androidCopy: "Chrome ਵਿੱਚ ਤੁਰੰਤ ਚੱਲਦਾ ਹੈ। ਹੋਮ ਸਕਰੀਨ 'ਤੇ ਆਈਕਨ ਲਈ ਉੱਪਰਲੇ Download ਬਟਨ ਤੋਂ ਇੰਸਟਾਲ ਕਰੋ।",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari ਵਿੱਚ ਹੁਣੇ ਚੱਲਦਾ ਹੈ — ਕੁਝ ਇੰਸਟਾਲ ਕਰਨ ਦੀ ਲੋੜ ਨਹੀਂ। ਹੋਮ ਸਕਰੀਨ ਆਈਕਨ ਲਈ Share ਦਬਾਓ, ਫਿਰ Add to Home Screen ਚੁਣੋ।",
+      sarvamKicker: "ਸਰਵਮ ਏਆਈ ਨਾਲ ਚੱਲਦਾ",
+      sarvamCopy: "ਹਰ ਸ਼ਬਦ ਭਾਰਤ ਵਿੱਚ ਬਣੇ ਭਾਸ਼ਾ ਮਾਡਲਾਂ ਵਿੱਚੋਂ ਲੰਘਦਾ ਹੈ — ਇੱਕ ਭਾਰਤੀ ਕੰਪਨੀ ਦੇ, ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ ਜਿਵੇਂ ਸੱਚਮੁੱਚ ਬੋਲੀਆਂ ਜਾਂਦੀਆਂ ਹਨ ਉਵੇਂ ਸਮਝਣ ਲਈ: ਲਹਿਜਾ, ਰਲੀ-ਮਿਲੀ ਬੋਲੀ, ਸਭ ਕੁਝ।",
+      chainHear: "ਸੁਣਦਾ ਹੈ",
+      chainTranslate: "ਅਨੁਵਾਦ ਕਰਦਾ ਹੈ",
+      chainSpeak: "ਬੋਲਦਾ ਹੈ",
       installApp: "ਡਾਊਨਲੋਡ ਕਰੋ",
       installed: "ਇੰਸਟਾਲ ਹੋ ਗਿਆ — ਹੋਮ ਸਕਰੀਨ ਤੋਂ ਖੋਲ੍ਹੋ",
       setupTitle: "ਨਵੀਂ ਗੱਲਬਾਤ",
@@ -2148,6 +2433,19 @@
       signOutConfirm: "BaatChiit-லிருந்து வெளியேறவா? உங்கள் நிமிடங்கள் இந்த எண்ணில் பாதுகாப்பாக இருக்கும்.",
       profileSaved: "சேமிக்கப்பட்டது",
       getAndroid: "பதிவிறக்கு",
+      pillLangs: "11 இந்திய மொழிகள்",
+      pillIndia: "இந்தியக் குரல்களுக்காக உருவாக்கப்பட்டது",
+      pillMic: "அழுத்திப் பிடிக்கும்போது மட்டுமே மைக்",
+      onYourPhone: "உங்கள் ஃபோனில்",
+      androidTitle: "Android",
+      androidCopy: "Chrome-இல் உடனே வேலை செய்யும். ஹோம் ஸ்கிரீனில் ஐகான் வேண்டுமெனில் மேலே உள்ள Download பொத்தானில் இருந்து நிறுவுங்கள்.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari-இல் இப்போதே வேலை செய்யும் — எதுவும் நிறுவ வேண்டாம். ஹோம் ஸ்கிரீன் ஐகானுக்கு Share அழுத்தி, Add to Home Screen தேர்வு செய்யுங்கள்.",
+      sarvamKicker: "சர்வம் ஏஐ மூலம்",
+      sarvamCopy: "ஒவ்வொரு சொல்லும் இந்தியாவில் உருவான மொழி மாதிரிகள் வழியாகச் செல்கிறது — ஓர் இந்திய நிறுவனத்தினுடையவை, இந்திய மொழிகள் உண்மையில் பேசப்படும் விதத்தையே புரிந்துகொள்ள: உச்சரிப்பு, கலந்த பேச்சு, அனைத்தும்.",
+      chainHear: "கேட்கிறது",
+      chainTranslate: "மொழிபெயர்க்கிறது",
+      chainSpeak: "பேசுகிறது",
       installApp: "பதிவிறக்கு",
       installed: "நிறுவப்பட்டது — முகப்புத் திரையிலிருந்து திறக்கவும்",
       setupTitle: "புதிய உரையாடல்",
@@ -2257,6 +2555,19 @@
       signOutConfirm: "BaatChiit నుండి సైన్ అవుట్ చేయాలా? మీ నిమిషాలు ఈ నంబర్‌లో సురక్షితంగా ఉంటాయి.",
       profileSaved: "సేవ్ అయ్యింది",
       getAndroid: "డౌన్‌లోడ్ చేయండి",
+      pillLangs: "11 భారతీయ భాషలు",
+      pillIndia: "భారతీయ గొంతుల కోసం రూపొందించబడింది",
+      pillMic: "నొక్కి పట్టుకున్నప్పుడే మైక్",
+      onYourPhone: "మీ ఫోన్‌లో",
+      androidTitle: "Android",
+      androidCopy: "Chrome లో వెంటనే పనిచేస్తుంది. హోమ్ స్క్రీన్‌పై ఐకాన్ కావాలంటే పైన ఉన్న Download బటన్ నుండి ఇన్‌స్టాల్ చేయండి.",
+      iphoneTitle: "iPhone",
+      iphoneCopy: "Safari లో ఇప్పుడే పనిచేస్తుంది — ఏమీ ఇన్‌స్టాల్ చేయనవసరం లేదు. హోమ్ స్క్రీన్ ఐకాన్ కోసం Share నొక్కి, Add to Home Screen ఎంచుకోండి.",
+      sarvamKicker: "సర్వం ఏఐ ఆధారంగా",
+      sarvamCopy: "ప్రతి పదం భారతదేశంలో నిర్మించిన భాషా మోడల్స్ గుండా వెళుతుంది — ఒక భారతీయ కంపెనీవి, భారతీయ భాషలు నిజంగా మాట్లాడే తీరునే అర్థం చేసుకోవడానికి: యాస, కలగలిపిన మాట, అన్నీ.",
+      chainHear: "వింటుంది",
+      chainTranslate: "అనువదిస్తుంది",
+      chainSpeak: "మాట్లాడుతుంది",
       installApp: "డౌన్‌లోడ్ చేయండి",
       installed: "ఇన్‌స్టాల్ అయ్యింది — హోమ్ స్క్రీన్ నుండి తెరవండి",
       setupTitle: "కొత్త సంభాషణ",
@@ -3146,6 +3457,19 @@
     $("btn-change-phone").textContent = t("changeNumber");
     $("t-install").textContent = t("installApp");
     $("t-get-android-label").textContent = t("getAndroid");
+    $("t-pill-langs").textContent = t("pillLangs");
+    $("t-pill-india").textContent = t("pillIndia");
+    $("t-pill-mic").textContent = t("pillMic");
+    $("t-getapp").textContent = t("onYourPhone");
+    $("t-android-title").textContent = t("androidTitle");
+    $("t-android-copy").textContent = t("androidCopy");
+    $("t-iphone-title").textContent = t("iphoneTitle");
+    $("t-iphone-copy").textContent = t("iphoneCopy");
+    $("t-sarvam-kicker").textContent = t("sarvamKicker");
+    $("t-sarvam-copy").textContent = t("sarvamCopy");
+    $("t-chain-hear").textContent = t("chainHear");
+    $("t-chain-translate").textContent = t("chainTranslate");
+    $("t-chain-speak").textContent = t("chainSpeak");
     $("t-about").textContent = t("about");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
