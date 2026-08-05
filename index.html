@@ -21,22 +21,34 @@
 <style>
   :root {
     /* ---- Palette (Claude Design handoff) ---- */
-    --cream: #FFF7EA;
-    --sand: #F4EBDA;
+    --cream: #FFFAF2;
+    --sand: #F7F0E4;
     --card: #FFFFFF;
-    --ink: #211A14;
-    --muted: #9A8A79;
+    /* Ink and muted were a warm brown-black (#211A14) over a dusty tan
+       (#9A8A79). Every neutral on the screen therefore read sepia —
+       faded photograph, not live app, and no amount of layout fixed it.
+       Both now carry a little of the brand indigo instead: same warmth
+       in the surfaces, but the text is crisp rather than tired. */
+    --ink: #1C1830;
+    --muted: #6D6580;
     --saffron: #FF7A29;
     --saffron-dk: #E85D0F;
+    /* For saffron used as SMALL TEXT rather than a fill: --saffron-dk on
+       cream measures 3.37:1, which fails at 10px. This clears 4.5:1. */
+    --saffron-ink: #B8480A;
     --gold: #F2B705;
     --indigo: #241C3D;
     --indigo-lt: #3A2E5C;
     --green: #2E9E63;
+    /* A second accent, used in drops: the three model chips, the Android
+       marker. Saffron alone has to mean "the thing to press", so it
+       can't also be decoration. */
+    --teal: #0E9E82;
     --danger: #B5461E;
-    --border: rgba(33, 26, 20, 0.1);
-    --border-strong: rgba(33, 26, 20, 0.12);
-    --cream-dim: rgba(255, 247, 234, 0.68);
-    --cream-faint: rgba(255, 247, 234, 0.45);
+    --border: rgba(28, 24, 48, 0.10);
+    --border-strong: rgba(28, 24, 48, 0.14);
+    --cream-dim: rgba(255, 250, 242, 0.68);
+    --cream-faint: rgba(255, 250, 242, 0.45);
 
     --font-display: "Baloo 2", "Manrope", sans-serif;
     --font-ui: "Manrope", -apple-system, "Segoe UI", sans-serif;
@@ -146,7 +158,7 @@
     justify-content: safe center;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
-    padding: 30px 26px 40px; gap: 0;
+    padding: 22px 26px 22px; gap: 0;
   }
   .auth-wrap .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 26px; }
   .auth-wrap .tagline { color: var(--muted); font-size: 14px; text-align: center; margin: 0 0 10px; }
@@ -157,14 +169,19 @@
   .ui-lang-chip {
     padding: 6px 12px;
     border-radius: 999px;
-    border: 1px solid rgba(33, 26, 20, 0.13);
-    background: transparent;
-    color: var(--muted);
+    border: 1px solid rgba(28, 24, 48, 0.10);
+    background: var(--card);
+    color: var(--ink);
     font-size: 12.5px;
     font-weight: 600;
     font-family: var(--font-script);
   }
-  .ui-lang-chip[aria-pressed="true"] { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .ui-lang-chip[aria-pressed="true"] {
+    background: var(--indigo);
+    color: var(--cream);
+    border-color: var(--indigo);
+    box-shadow: 0 3px 10px rgba(36, 28, 61, 0.22);
+  }
 
   /* Install prompt — quiet, below the primary action, since the app
      works perfectly well in the browser without it. */
@@ -724,10 +741,26 @@
      (Continue). Everything else is ink, muted ink, or a hairline. */
 
   /* --- Act one: the mark --- */
-  .hero-mark { margin-bottom: 16px; }
+  .hero-mark {
+    position: relative;
+    margin-bottom: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .hero-mark::before {
+    content: "";
+    position: absolute;
+    width: 150px; height: 150px;
+    border-radius: 50%;
+    background: radial-gradient(circle,
+      rgba(255, 122, 41, 0.20) 0%,
+      rgba(242, 183, 5, 0.13) 42%,
+      rgba(255, 250, 242, 0) 70%);
+    z-index: 0;
+  }
+  .hero-mark svg { position: relative; z-index: 1; }
   .auth-wrap .brand-name {
     font-family: var(--font-display); font-weight: 800;
-    font-size: 32px; letter-spacing: -0.015em;
+    font-size: 28px; letter-spacing: -0.015em;
     line-height: 1.1;
   }
   .auth-wrap .tagline {
@@ -740,10 +773,11 @@
   /* The facts, as one quiet line rather than three competing pills. */
   .hero-meta {
     font-size: 12px; font-weight: 600;
-    color: var(--muted); opacity: 0.85;
+    color: var(--muted);
     text-align: center;
     margin-top: 10px;
   }
+  .hero-meta .sep { color: var(--saffron); font-weight: 800; }
 
   /* --- Act two: the ask --- */
   .eyebrow {
@@ -752,9 +786,9 @@
     color: var(--muted);
     text-align: center;
   }
-  .lang-block { width: 100%; margin-top: 30px; }
+  .lang-block { width: 100%; margin-top: 22px; }
   .lang-block .eyebrow { margin-bottom: 11px; }
-  .signin-block { width: 100%; margin-top: 26px; }
+  .signin-block { width: 100%; margin-top: 20px; }
   /* Same label treatment as the language eyebrow above it — two sizes of
      small-caps label on one screen just looks like an oversight. Left
      aligned because it labels a full-width field, where the eyebrow
@@ -769,16 +803,37 @@
 
   /* --- Act three: the reassurance, deliberately quiet --- */
   .meta-divider {
-    width: 100%; height: 1px;
-    background: var(--border-strong);
-    margin: 34px 0 24px;
+    width: 100%; height: 1.5px;
+    background: linear-gradient(90deg,
+      rgba(255, 122, 41, 0) 0%,
+      rgba(255, 122, 41, 0.45) 28%,
+      rgba(242, 183, 5, 0.55) 50%,
+      rgba(14, 158, 130, 0.35) 74%,
+      rgba(14, 158, 130, 0) 100%);
+    margin: 18px 0 14px;
     flex: 0 0 auto;
+    border-radius: 2px;
   }
-  .meta { width: 100%; display: flex; flex-direction: column; gap: 22px; }
-  .meta-sarvam { text-align: center; }
+  .meta { width: 100%; display: flex; flex-direction: column; gap: 12px; }
+  .meta-sarvam {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; gap: 6px 12px;
+    text-align: center;
+    background: linear-gradient(180deg, rgba(36, 28, 61, 0.045), rgba(36, 28, 61, 0.02));
+    border: 1px solid rgba(36, 28, 61, 0.07);
+    border-radius: 14px;
+    padding: 11px 14px;
+    position: relative;
+    overflow: hidden;
+  }
+  .meta-sarvam::before {
+    content: "";
+    position: absolute; top: 0; left: 22%; right: 22%; height: 2px;
+    background: linear-gradient(90deg, rgba(242,183,5,0), var(--gold), rgba(242,183,5,0));
+  }
   .meta-kicker {
     font-size: 10px; font-weight: 800; letter-spacing: 0.16em;
-    color: var(--saffron-dk);
+    color: var(--saffron-ink);
   }
   .meta-copy {
     font-size: 12.5px; line-height: 1.55;
@@ -787,15 +842,16 @@
   }
   /* The three models, named. Mono because they are identifiers, and
      small because the point is that they exist, not that they shout. */
-  .model-row { display: flex; justify-content: center; gap: 6px; margin-top: 12px; }
+  .model-row { display: flex; justify-content: center; gap: 6px; }
   .model-chip {
     font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-    font-size: 10.5px; font-weight: 600; letter-spacing: 0.02em;
-    color: var(--indigo);
-    background: rgba(36, 28, 61, 0.06);
+    font-size: 10.5px; font-weight: 700; letter-spacing: 0.02em;
     border-radius: 7px;
     padding: 5px 9px;
   }
+  .model-chip[data-step="hear"]      { color: var(--indigo);     background: rgba(36, 28, 61, 0.08); }
+  .model-chip[data-step="translate"] { color: #0B7A65;           background: rgba(14, 158, 130, 0.11); }
+  .model-chip[data-step="speak"]     { color: var(--saffron-ink); background: rgba(255, 122, 41, 0.12); }
   /* Platform guidance as two lines of prose, not two boxes: it is an
      answer to a question, and an answer does not need a card. */
   .platform-line {
@@ -807,9 +863,37 @@
   .platform-line b {
     flex: 0 0 54px;
     color: var(--ink); font-weight: 800;
+    position: relative; padding-left: 12px;
   }
+  .platform-line b::before {
+    content: "";
+    position: absolute; left: 0; top: 0.52em;
+    width: 6px; height: 6px; border-radius: 50%;
+  }
+  .platform-line:nth-of-type(1) b::before { background: var(--teal); }
+  .platform-line:nth-of-type(2) b::before { background: var(--indigo); }
   /* Secondary by construction: bordered, not filled. The screen already
      has one orange button and a second would halve its meaning. */
+  .disclosure { width: 100%; }
+  .disclosure > summary {
+    list-style: none; cursor: pointer;
+    display: flex; align-items: center; gap: 7px;
+    font-size: 10px; font-weight: 800; letter-spacing: 0.16em;
+    color: var(--muted);
+    padding: 4px 0;
+  }
+  .disclosure > summary::-webkit-details-marker { display: none; }
+  .disclosure > summary::after {
+    content: "";
+    width: 6px; height: 6px;
+    border-right: 1.6px solid var(--muted);
+    border-bottom: 1.6px solid var(--muted);
+    transform: rotate(45deg) translateY(-1px);
+    transition: transform 0.15s ease;
+  }
+  .disclosure[open] > summary::after { transform: rotate(-135deg) translateY(1px); }
+  .disclosure > .platform-line:first-of-type { margin-top: 10px; }
+
   .btn-ghost {
     display: flex; align-items: center; justify-content: center; gap: 8px;
     width: 100%;
@@ -874,7 +958,7 @@
       <p class="tagline" id="t-tagline">Talk to anyone, in any Indian language.</p>
       <!-- The two facts worth knowing before you type a number in, as
            one quiet line. They were three pills and read as clutter. -->
-      <div class="hero-meta"><span id="t-pill-langs">11 Indian languages</span> · <span id="t-pill-india">Built for Indian voices</span></div>
+      <div class="hero-meta"><span id="t-pill-langs">11 Indian languages</span> <span class="sep">·</span> <span id="t-pill-india">Built for Indian voices</span></div>
 
       <div class="lang-block">
         <div class="eyebrow" id="t-lang-label">APP LANGUAGE</div>
@@ -896,31 +980,31 @@
       <div class="meta">
         <div class="meta-sarvam">
           <div class="meta-kicker" id="t-sarvam-kicker">POWERED BY SARVAM AI</div>
-          <p class="meta-copy" id="t-sarvam-copy">Every word runs through language models built in India, for the way Indian languages are actually spoken.</p>
           <div class="model-row">
-            <span class="model-chip">saaras</span>
-            <span class="model-chip">mayura</span>
-            <span class="model-chip">bulbul</span>
+            <span class="model-chip" data-step="hear">saaras</span>
+            <span class="model-chip" data-step="translate">mayura</span>
+            <span class="model-chip" data-step="speak">bulbul</span>
           </div>
         </div>
 
-        <div>
-          <div class="eyebrow" style="text-align:left;margin-bottom:11px;" id="t-getapp">ON YOUR PHONE</div>
+        <details class="disclosure">
+          <summary id="t-getapp">ON YOUR PHONE</summary>
           <!-- Both platforms, always both shown: someone handing their
                phone to a friend needs the answer for a phone that isn't
-               theirs. Prose, not cards — it's an answer to a question. -->
-          <div class="platform-line"><b id="t-android-title">Android</b><span id="t-android-copy">Works in Chrome straight away. Install it below for an icon on your home screen.</span></div>
+               theirs. Folded away because it answers a question most
+               people don't have on their first visit, and open it was a
+               third of the screen. -->
+          <div class="platform-line"><b id="t-android-title">Android</b><span id="t-android-copy">Works in Chrome straight away. Install it with the Download button for an icon on your home screen.</span></div>
           <div class="platform-line"><b id="t-iphone-title">iPhone</b><span id="t-iphone-copy">Works in Safari right now — nothing to install. Tap Share, then Add to Home Screen.</span></div>
+        </details>
 
-          <!-- Only shown when the browser actually offers installation; on
-               an already-installed app or an unsupported browser it stays
-               hidden rather than promising something that won't happen. -->
+        <!-- Outside the fold-away: this is the one thing on the lower
+             half someone might actually be looking for. -->
+        <div>
           <button class="btn-ghost" id="btn-install" hidden>
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span id="t-install">Install app</span>
           </button>
-          <!-- Always available: the install button only appears when Chrome
-               offers it, so without this there is no route to the APK. -->
           <a class="btn-ghost" id="t-get-android" href="/download">
             <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 3v12m0 0 4-4m-4 4-4-4M4 17v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg>
             <span id="t-get-android-label">Download</span>
@@ -3463,7 +3547,6 @@
     $("t-iphone-title").textContent = t("iphoneTitle");
     $("t-iphone-copy").textContent = t("iphoneCopy");
     $("t-sarvam-kicker").textContent = t("sarvamKicker");
-    $("t-sarvam-copy").textContent = t("sarvamCopy");
     $("t-about").textContent = t("about");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
