@@ -122,10 +122,25 @@
   }
 
   /* ============== LOGIN + OTP ============== */
+  /* #app is overflow:hidden and every .screen is absolutely positioned to
+     fill it, so a screen taller than the window loses whatever doesn't
+     fit — silently, with no scrollbar to hint at it. This one now holds
+     the platform cards and the Sarvam block below the login, which is
+     more than a laptop window's height.
+
+     "safe center" is the important part: plain `center` centres the
+     content and, when it overflows, pushes the first items off the top
+     where no amount of scrolling can reach them. `safe` centres while it
+     fits and falls back to top-aligned once it doesn't. The unprefixed
+     `center` above it is the fallback for browsers that don't parse it. */
   .auth-wrap {
     flex: 1;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    padding: 0 28px; gap: 18px;
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center;
+    justify-content: safe center;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px 28px 36px; gap: 18px;
   }
   .auth-wrap .brand-name { font-family: var(--font-display); font-weight: 800; font-size: 26px; }
   .auth-wrap .tagline { color: var(--muted); font-size: 14px; text-align: center; margin: 0 0 10px; }
