@@ -462,6 +462,32 @@
   .mic-btn.is-recording { transform: scale(1.12); animation: bcPulse 1.1s ease-in-out infinite; }
   .mic-btn.is-busy { opacity: 0.55; }
 
+  /* "Say that again." In a market the reply gets missed constantly, and
+     the only way to hear it again was to find and tap the right bubble —
+     which nobody discovers. This sits beside the mic on each half and
+     replays the last thing said TO that person, in their language.
+     The empty span on the other side keeps the mic optically centred
+     without absolute positioning. */
+  .mic-row {
+    display: flex; align-items: center; justify-content: center;
+    gap: 14px;
+  }
+  .mic-spacer { width: 42px; height: 42px; flex: 0 0 auto; }
+  .repeat-btn {
+    width: 42px; height: 42px;
+    flex: 0 0 auto;
+    border-radius: 999px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--ink);
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 2px 8px rgba(28, 24, 48, 0.08);
+  }
+  .repeat-btn:active { background: var(--sand); transform: scale(0.94); }
+  .repeat-btn[hidden] { display: none; }
+  .half--guest .repeat-btn { border-color: rgba(255, 250, 242, 0.28); background: rgba(255, 250, 242, 0.1); color: var(--cream); }
+
+
   .strip {
     height: 52px; min-height: 52px;
     background: var(--card);
@@ -1083,9 +1109,15 @@
       </div>
       <div class="feed" id="feed-guest"></div>
       <div class="mic-wrap">
-        <button class="mic-btn" id="mic-guest" aria-label="Guest: speak">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#241C3D"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#241C3D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
-        </button>
+        <div class="mic-row">
+          <span class="mic-spacer" aria-hidden="true"></span>
+          <button class="mic-btn" id="mic-guest" aria-label="Guest: speak">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#241C3D"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#241C3D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          </button>
+          <button class="repeat-btn" id="repeat-guest" aria-label="Repeat" hidden>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+          </button>
+        </div>
         <div class="mic-hint" id="mic-hint-guest"></div>
       </div>
     </div>
@@ -1116,9 +1148,15 @@
       </div>
       <div class="feed" id="feed-host"></div>
       <div class="mic-wrap">
-        <button class="mic-btn" id="mic-host" aria-label="Host: speak">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
-        </button>
+        <div class="mic-row">
+          <span class="mic-spacer" aria-hidden="true"></span>
+          <button class="mic-btn" id="mic-host" aria-label="Host: speak">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
+          </button>
+          <button class="repeat-btn" id="repeat-host" aria-label="Repeat" hidden>
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
+          </button>
+        </div>
         <div class="mic-hint" id="mic-hint-host"></div>
       </div>
     </div>
@@ -1417,6 +1455,8 @@
       signOutConfirm: "Sign out of BaatChiit? Your minutes stay safe on this number.",
       profileSaved: "Saved",
       getAndroid: "Download app",
+      repeat: "Repeat",
+      repeatingN: "Playing the last {n} again",
       pillLangs: "11 Indian languages",
       pillIndia: "Built for Indian voices",
       pillMic: "Mic runs only while held",
@@ -1539,6 +1579,8 @@
       signOutConfirm: "BaatChiit से साइन आउट करें? आपके मिनट इसी नंबर पर सुरक्षित रहेंगे।",
       profileSaved: "सेव हो गया",
       getAndroid: "डाउनलोड करें",
+      repeat: "फिर सुनाएँ",
+      repeatingN: "पिछले {n} फिर से सुना रहे हैं",
       pillLangs: "11 भारतीय भाषाएँ",
       pillIndia: "भारतीय आवाज़ों के लिए बना",
       pillMic: "माइक तभी चलता है जब दबाए रखें",
@@ -1661,6 +1703,8 @@
       signOutConfirm: "BaatChiit থেকে সাইন আউট করবেন? আপনার মিনিট এই নম্বরেই থাকবে।",
       profileSaved: "সেভ হয়েছে",
       getAndroid: "ডাউনলোড করুন",
+      repeat: "আবার শোনান",
+      repeatingN: "শেষ {n}টি আবার শোনানো হচ্ছে",
       pillLangs: "১১টি ভারতীয় ভাষা",
       pillIndia: "ভারতীয় কণ্ঠের জন্য তৈরি",
       pillMic: "ধরে রাখলেই মাইক চলে",
@@ -1783,6 +1827,8 @@
       signOutConfirm: "BaatChiit માંથી સાઇન આઉટ કરવું? તમારી મિનિટ આ નંબર પર સચવાયેલી રહેશે.",
       profileSaved: "સેવ થયું",
       getAndroid: "ડાઉનલોડ કરો",
+      repeat: "ફરી સંભળાવો",
+      repeatingN: "છેલ્લા {n} ફરી સંભળાવીએ છીએ",
       pillLangs: "11 ભારતીય ભાષાઓ",
       pillIndia: "ભારતીય અવાજો માટે બનેલું",
       pillMic: "માઇક ફક્ત દબાવી રાખો ત્યારે ચાલે",
@@ -1905,6 +1951,8 @@
       signOutConfirm: "BaatChiit ನಿಂದ ಸೈನ್ ಔಟ್ ಮಾಡುವುದೇ? ನಿಮ್ಮ ನಿಮಿಷಗಳು ಈ ಸಂಖ್ಯೆಯಲ್ಲಿ ಸುರಕ್ಷಿತ.",
       profileSaved: "ಉಳಿಸಲಾಗಿದೆ",
       getAndroid: "ಡೌನ್‌ಲೋಡ್ ಮಾಡಿ",
+      repeat: "ಮತ್ತೆ ಕೇಳಿಸಿ",
+      repeatingN: "ಕೊನೆಯ {n} ಮತ್ತೆ ಕೇಳಿಸಲಾಗುತ್ತಿದೆ",
       pillLangs: "11 ಭಾರತೀಯ ಭಾಷೆಗಳು",
       pillIndia: "ಭಾರತೀಯ ಧ್ವನಿಗಳಿಗಾಗಿ ರೂಪಿಸಲಾಗಿದೆ",
       pillMic: "ಒತ್ತಿ ಹಿಡಿದಾಗ ಮಾತ್ರ ಮೈಕ್ ಚಾಲನೆ",
@@ -2027,6 +2075,8 @@
       signOutConfirm: "BaatChiit-ൽ നിന്ന് സൈൻ ഔട്ട് ചെയ്യണോ? നിങ്ങളുടെ മിനിറ്റുകൾ ഈ നമ്പറിൽ സുരക്ഷിതം.",
       profileSaved: "സേവ് ചെയ്തു",
       getAndroid: "ഡൗൺലോഡ് ചെയ്യൂ",
+      repeat: "വീണ്ടും കേൾപ്പിക്കൂ",
+      repeatingN: "അവസാനത്തെ {n} വീണ്ടും കേൾപ്പിക്കുന്നു",
       pillLangs: "11 ഇന്ത്യൻ ഭാഷകൾ",
       pillIndia: "ഇന്ത്യൻ ശബ്ദങ്ങൾക്കായി നിർമ്മിച്ചത്",
       pillMic: "അമർത്തിപ്പിടിക്കുമ്പോൾ മാത്രം മൈക്ക്",
@@ -2149,6 +2199,8 @@
       signOutConfirm: "BaatChiit मधून साइन आउट करायचं? तुमची मिनिटं याच नंबरवर सुरक्षित राहतील.",
       profileSaved: "सेव्ह झालं",
       getAndroid: "डाउनलोड करा",
+      repeat: "पुन्हा ऐकवा",
+      repeatingN: "शेवटची {n} पुन्हा ऐकवत आहोत",
       pillLangs: "11 भारतीय भाषा",
       pillIndia: "भारतीय आवाजांसाठी बनवलेलं",
       pillMic: "दाबून धरल्यावरच माइक चालतो",
@@ -2271,6 +2323,8 @@
       signOutConfirm: "BaatChiit ରୁ ସାଇନ୍ ଆଉଟ୍ କରିବେ? ଆପଣଙ୍କ ମିନିଟ୍ ଏହି ନମ୍ବରରେ ସୁରକ୍ଷିତ ରହିବ।",
       profileSaved: "ସେଭ୍ ହେଲା",
       getAndroid: "ଡାଉନଲୋଡ୍ କରନ୍ତୁ",
+      repeat: "ପୁଣି ଶୁଣାନ୍ତୁ",
+      repeatingN: "ଶେଷ {n}ଟି ପୁଣି ଶୁଣାଉଛୁ",
       pillLangs: "୧୧ଟି ଭାରତୀୟ ଭାଷା",
       pillIndia: "ଭାରତୀୟ ସ୍ୱରଙ୍କ ପାଇଁ ତିଆରି",
       pillMic: "ଦବାଇ ଧରିଲେ ହିଁ ମାଇକ୍ ଚାଲେ",
@@ -2393,6 +2447,8 @@
       signOutConfirm: "BaatChiit ਤੋਂ ਸਾਈਨ ਆਊਟ ਕਰਨਾ? ਤੁਹਾਡੇ ਮਿੰਟ ਇਸੇ ਨੰਬਰ 'ਤੇ ਸੁਰੱਖਿਅਤ ਰਹਿਣਗੇ।",
       profileSaved: "ਸੇਵ ਹੋ ਗਿਆ",
       getAndroid: "ਡਾਊਨਲੋਡ ਕਰੋ",
+      repeat: "ਫਿਰ ਸੁਣਾਓ",
+      repeatingN: "ਪਿਛਲੇ {n} ਫਿਰ ਸੁਣਾ ਰਹੇ ਹਾਂ",
       pillLangs: "11 ਭਾਰਤੀ ਭਾਸ਼ਾਵਾਂ",
       pillIndia: "ਭਾਰਤੀ ਆਵਾਜ਼ਾਂ ਲਈ ਬਣਾਇਆ",
       pillMic: "ਦਬਾਈ ਰੱਖਣ 'ਤੇ ਹੀ ਮਾਈਕ ਚੱਲਦਾ",
@@ -2515,6 +2571,8 @@
       signOutConfirm: "BaatChiit-லிருந்து வெளியேறவா? உங்கள் நிமிடங்கள் இந்த எண்ணில் பாதுகாப்பாக இருக்கும்.",
       profileSaved: "சேமிக்கப்பட்டது",
       getAndroid: "பதிவிறக்கு",
+      repeat: "மீண்டும் ஒலிக்கவும்",
+      repeatingN: "கடைசி {n} மீண்டும் ஒலிக்கிறது",
       pillLangs: "11 இந்திய மொழிகள்",
       pillIndia: "இந்தியக் குரல்களுக்காக உருவாக்கப்பட்டது",
       pillMic: "அழுத்திப் பிடிக்கும்போது மட்டுமே மைக்",
@@ -2637,6 +2695,8 @@
       signOutConfirm: "BaatChiit నుండి సైన్ అవుట్ చేయాలా? మీ నిమిషాలు ఈ నంబర్‌లో సురక్షితంగా ఉంటాయి.",
       profileSaved: "సేవ్ అయ్యింది",
       getAndroid: "డౌన్‌లోడ్ చేయండి",
+      repeat: "మళ్ళీ వినిపించు",
+      repeatingN: "చివరి {n} మళ్ళీ వినిపిస్తున్నాం",
       pillLangs: "11 భారతీయ భాషలు",
       pillIndia: "భారతీయ గొంతుల కోసం రూపొందించబడింది",
       pillMic: "నొక్కి పట్టుకున్నప్పుడే మైక్",
@@ -2764,6 +2824,7 @@
     guest: { lang: null, manual: false },
 
     messages: [],
+    playQueue: [],
     sessionRec: null,           // current entry in the localStorage history
 
     openMic: localStorage.getItem(OPENMIC_KEY) === "1",
@@ -3238,6 +3299,7 @@
       feed.innerHTML = html;
       feed.scrollTop = feed.scrollHeight;
     });
+    renderRepeatButtons();
     // Tapping a received bubble — or any phrase card — replays its audio.
     document.querySelectorAll('.msg-row[data-mine="false"], .phrase-msg').forEach(function (row) {
       row.addEventListener("click", function () {
@@ -3246,6 +3308,47 @@
       });
     });
   }
+
+  // "Say that again" — the last few things said TO this side, in order.
+  // Three, not the whole conversation: past that it stops being a repeat
+  // and becomes a recording nobody sits through. Only clips already in
+  // hand are used, so a repeat is instant and costs no minutes; anything
+  // whose audio never arrived is skipped rather than re-fetched.
+  var REPEAT_COUNT = 3;
+  function repeatableFor(side) {
+    var list = [];
+    for (var i = state.messages.length - 1; i >= 0 && list.length < REPEAT_COUNT; i--) {
+      var m = state.messages[i];
+      if (!m.tts) continue;
+      // A phrase card is spoken in the guest's language, so it is the
+      // guest who heard it.
+      if (m.type === "phrase") { if (side === "guest") list.unshift(m); continue; }
+      if (m.speaker === otherSide(side)) list.unshift(m);
+    }
+    return list;
+  }
+
+  function playNextQueued() {
+    var next = state.playQueue.shift();
+    if (next) playTts(next);
+  }
+
+  function renderRepeatButtons() {
+    ["host", "guest"].forEach(function (side) {
+      $("repeat-" + side).hidden = repeatableFor(side).length === 0;
+    });
+  }
+
+  ["host", "guest"].forEach(function (side) {
+    $("repeat-" + side).addEventListener("click", function () {
+      var list = repeatableFor(side);
+      if (!list.length) return;
+      // Queue everything after the first; the first plays now.
+      state.playQueue = list.slice(1).map(function (m) { return m.tts; });
+      playTts(list[0].tts);
+      if (list.length > 1) notice(side, t("repeatingN").replace("{n}", list.length));
+    });
+  });
 
   function notice(side, text, ms) {
     var feed = $("feed-" + side);
@@ -3272,6 +3375,9 @@
       // grabbing the mic on any other screen would light the recording
       // indicator for no reason.
       state.player.addEventListener("ended", function () {
+        // A repeat plays two or three clips back to back; keep going
+        // before handing the audio session back for recording.
+        if (state.playQueue && state.playQueue.length) { playNextQueued(); return; }
         if ($("screen-main").classList.contains("active")) {
           ensureMicStream().catch(function () { /* asked again on the next press */ });
         }
@@ -3537,6 +3643,8 @@
     $("t-sent-to").textContent = t("sentTo");
     $("btn-verify-otp").textContent = t("verify");
     $("btn-change-phone").textContent = t("changeNumber");
+    $("repeat-host").setAttribute("aria-label", t("repeat"));
+    $("repeat-guest").setAttribute("aria-label", t("repeat"));
     $("t-install").textContent = t("installApp");
     $("t-get-android-label").textContent = t("getAndroid");
     $("t-pill-langs").textContent = t("pillLangs");
