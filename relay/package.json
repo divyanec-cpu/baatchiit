@@ -1,0 +1,16 @@
+{
+  "name": "baatchiit-relay",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Realtime speech-to-text relay for BaatChiit (Cloud Run, asia-south1)",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "ws": "8.18.3"
+  }
+}

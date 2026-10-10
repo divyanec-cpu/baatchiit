@@ -139,7 +139,16 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  if (!audioBuffer || !audioBuffer.length) {
+  // Third shape: the words were already transcribed live by the realtime
+  // relay while the person spoke (relay/, Cloud Run), so the phone sends
+  // text instead of audio and STT is skipped. Same price as any exchange
+  // — this is the same translation, just reached faster — and a capped
+  // length so it can't be used as a bulk translator.
+  const relayTranscript = typeof body.transcript === "string" ? body.transcript.trim().slice(0, 1000) : null;
+  if (body.transcript !== undefined && !relayTranscript) {
+    return res.status(400).json({ error: "Empty transcript." });
+  }
+  if (!relayTranscript && (!audioBuffer || !audioBuffer.length)) {
     return res.status(400).json({ error: "Missing the recorded clip." });
   }
   if (!targetLangCode || !SUPPORTED_LANGUAGES.has(targetLangCode)) {
@@ -155,8 +164,11 @@ module.exports = async function handler(req, res) {
 
   try {
     // ---------- Step 1: Speech to Text ----------
-    const stt = await speechToText({ apiKey, audioBuffer, mimeType, sourceLangHint: sarvamLang(sourceLangHint) });
+    const stt = relayTranscript
+      ? { transcript: relayTranscript, languageCode: body.detectedLanguage || sourceLangHint || null }
+      : await speechToText({ apiKey, audioBuffer, mimeType, sourceLangHint: sarvamLang(sourceLangHint) });
     timings.stt = Date.now() - t0;
+    if (relayTranscript) timings.via = "relay";
 
     if (!stt.transcript || !stt.transcript.trim()) {
       // Nothing understandable was said (silence, noise, a very short tap).
