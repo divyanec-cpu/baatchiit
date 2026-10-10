@@ -3374,16 +3374,39 @@
       // doesn't wait on getUserMedia. Only while a conversation is open —
       // grabbing the mic on any other screen would light the recording
       // indicator for no reason.
-      state.player.addEventListener("ended", function () {
-        // A repeat plays two or three clips back to back; keep going
-        // before handing the audio session back for recording.
-        if (state.playQueue && state.playQueue.length) { playNextQueued(); return; }
-        if ($("screen-main").classList.contains("active")) {
-          ensureMicStream().catch(function () { /* asked again on the next press */ });
-        }
-      });
+      state.player.addEventListener("ended", afterPlayback);
     }
     return state.player;
+  }
+
+  // What happens when a reply finishes, however it was played — the
+  // <audio> element fires "ended", a streamed reply calls this when its
+  // last chunk stops. A repeat plays two or three clips back to back, so
+  // that goes first; then the mic is taken back for the next press.
+  function afterPlayback() {
+    if (state.playQueue && state.playQueue.length) { playNextQueued(); return; }
+    if ($("screen-main").classList.contains("active")) {
+      ensureMicStream().catch(function () { /* asked again on the next press */ });
+    }
+  }
+
+  // Silence everything that is playing or scheduled. Called when a new
+  // reply starts (two voices over each other is never right) and when a
+  // mic goes down — someone is about to speak, and a reply still playing
+  // would be recorded straight back into their clip.
+  function stopStreams() {
+    state.streamGen = (state.streamGen || 0) + 1;    // orphans any stream still arriving
+    (state.streamSources || []).forEach(function (src) {
+      try { src.onended = null; src.stop(); } catch (e) { /* already stopped */ }
+    });
+    state.streamSources = [];
+  }
+  function stopAllPlayback() {
+    stopStreams();
+    state.playQueue = [];
+    if (state.player && !state.player.paused) {
+      try { state.player.pause(); } catch (e) { /* nothing to pause */ }
+    }
   }
   // iOS audio sessions, the short version:
   //   "ambient"          — the default, and the ring/silent switch mutes
@@ -3438,6 +3461,9 @@
 
   function playTts(audioBase64) {
     try {
+      // Streams only — a queued Repeat clip must not cancel the queue it
+      // belongs to.
+      stopStreams();
       releaseMic();
       claimAudioSession("playback");   // loudspeaker, not the earpiece
       // A blob: URL rather than a data: URI. Safari parses the whole
@@ -3604,7 +3630,7 @@
         // Devanagari, so speak the Hindi version of the same phrase.
         var speakCode = speakLang === "hi-Latn-IN" ? "hi-IN" : speakLang;
         var text = phrase[speakCode] || phrase[speakLang] || phrase["en-IN"];
-        if (text) fetchSpeech(message, speakCode, text);
+        if (text) speak(message, speakCode, text);
       });
       list.appendChild(b);
     });
@@ -4072,7 +4098,12 @@
         else if (rms < 0.02) {
           if (spoke) {
             if (!silentSince) silentSince = now;
-            else if (now - silentSince > 1500) stopRecording(side);
+            // How long a pause ends the turn. Every millisecond here is
+            // added to every open-mic exchange before translation can even
+            // begin. 1.5s felt safe but sluggish; 0.9s still rides out the
+            // ordinary gap between phrases. If slow speakers start getting
+            // cut off mid-sentence, this is the number to raise.
+            else if (now - silentSince > 900) stopRecording(side);
           }
         } else {
           silentSince = 0;
@@ -4143,18 +4174,6 @@
     }
   }
 
-  function blobToBase64(blob) {
-    return new Promise(function (resolve, reject) {
-      var reader = new FileReader();
-      reader.onload = function () {
-        var commaIndex = reader.result.indexOf(",");
-        resolve(reader.result.slice(commaIndex + 1));
-      };
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-  }
-
   // Fetches the spoken version after the words are already on screen and
   // plays it. Kept on the message so the replay tap still works. A
   // failure here is silent: the translation is readable either way, and
@@ -4191,6 +4210,177 @@
     }).catch(function () { /* the text is already readable */ });
   }
 
+  // -----------------------------------------------------------------
+  // Streaming voice. fetchSpeech above waits for the whole reply to be
+  // synthesised (~1.15s from Mumbai) before a sound comes out; streamed,
+  // the first audio arrives in ~0.2s and plays while the rest is made.
+  // The server sends raw 16-bit PCM at 16kHz, already loudness-boosted;
+  // each piece is scheduled in Web Audio straight after the one before.
+  //
+  // Streaming needs things the plain path doesn't, so it is only tried
+  // where they hold, and fetchSpeech is the fallback everywhere else:
+  //   - Web Audio and readable fetch bodies;
+  //   - on iPhone, navigator.audioSession — without it (iOS < 16.4) Web
+  //     Audio is muted by the ring switch, which is the silent-reply bug
+  //     all over again;
+  //   - an AudioContext that is actually running. It is started by a
+  //     tap; if iOS has interrupted it, this falls back rather than
+  //     waiting on a context that won't start.
+  // A fallback only happens before any audio has played: half a reply
+  // is better than hearing the same reply twice.
+  // -----------------------------------------------------------------
+  var STREAM_RATE = 16000;
+
+  function isIOS() {
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  }
+
+  function canStream() {
+    if (!(window.AudioContext || window.webkitAudioContext)) return false;
+    if (!window.ReadableStream || !("body" in Response.prototype)) return false;
+    if (isIOS() && !navigator.audioSession) return false;
+    return true;
+  }
+
+  // Every reply goes through here.
+  function speak(message, langCode, text) {
+    if (!canStream()) { fetchSpeech(message, langCode, text); return; }
+    var attempt = { played: false };
+    streamSpeech(message, langCode, text, attempt).catch(function (err) {
+      if (DEBUG) notice(message.speaker ? otherSide(message.speaker) : "host", "stream → fallback: " + (err && err.message), 5000);
+      if (!attempt.played) fetchSpeech(message, langCode, text);
+    });
+  }
+
+  // 16-bit PCM bytes -> an AudioBuffer. Older Safari refuses buffers
+  // below 22.05kHz, so if 16kHz is rejected the samples are stretched to
+  // the context's own rate instead (linear interpolation is plenty for
+  // speech that was synthesised at 16kHz to begin with).
+  function pcmToBuffer(ctx, bytes) {
+    var n = bytes.length >> 1;
+    var view = new DataView(bytes.buffer, bytes.byteOffset, n * 2);
+    var f = new Float32Array(n);
+    for (var i = 0; i < n; i++) f[i] = view.getInt16(i * 2, true) / 32768;
+    try {
+      var b = ctx.createBuffer(1, n, STREAM_RATE);
+      b.getChannelData(0).set(f);
+      return b;
+    } catch (e) {
+      var ratio = ctx.sampleRate / STREAM_RATE, m = Math.floor(n * ratio);
+      var out = ctx.createBuffer(1, m, ctx.sampleRate), d = out.getChannelData(0);
+      for (var j = 0; j < m; j++) {
+        var x = j / ratio, k = Math.floor(x), t = x - k;
+        d[j] = (f[k] || 0) * (1 - t) + (f[k + 1] || f[k] || 0) * t;
+      }
+      return out;
+    }
+  }
+
+  // The PCM that was streamed, wrapped as a WAV — so tap-to-replay and
+  // Repeat keep working exactly as before, offline, from the phone.
+  function pcmToWavBase64(parts, total) {
+    var wav = new Uint8Array(44 + total), v = new DataView(wav.buffer);
+    var tag = function (o, s) { for (var i = 0; i < 4; i++) wav[o + i] = s.charCodeAt(i); };
+    tag(0, "RIFF"); v.setUint32(4, 36 + total, true); tag(8, "WAVE");
+    tag(12, "fmt "); v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, 1, true);
+    v.setUint32(24, STREAM_RATE, true); v.setUint32(28, STREAM_RATE * 2, true);
+    v.setUint16(32, 2, true); v.setUint16(34, 16, true);
+    tag(36, "data"); v.setUint32(40, total, true);
+    var at = 44;
+    parts.forEach(function (p) { wav.set(p, at); at += p.length; });
+    var bin = "";
+    for (var i = 0; i < wav.length; i += 0x8000) bin += String.fromCharCode.apply(null, wav.subarray(i, i + 0x8000));
+    return btoa(bin);
+  }
+
+  function streamSpeech(message, langCode, text, attempt) {
+    var askedAt = Date.now();
+    var AC = window.AudioContext || window.webkitAudioContext;
+    var ctx = state.audioCtx || (state.audioCtx = new AC());
+    stopAllPlayback();
+    releaseMic();                      // a live mic keeps iOS on the earpiece
+    claimAudioSession("playback");
+    // resume() is called before anything is awaited, so when this runs
+    // from a tap (a phrase card) it still counts as inside the gesture.
+    var resumed = ctx.state === "running" ? Promise.resolve() : ctx.resume();
+    var gen = state.streamGen;         // a later reply bumps this and orphans us
+
+    return Promise.race([
+      resumed,
+      new Promise(function (_, reject) { setTimeout(function () { reject(new Error("audio didn't start")); }, 600); })
+    ]).then(function () {
+      if (ctx.state !== "running") throw new Error("audio context " + ctx.state);
+      return fetch("/api/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          token: localStorage.getItem(AUTH_TOKEN_KEY),
+          text: text || message.speechText || message.translated,
+          langCode: langCode,
+          stream: true
+        })
+      });
+    }).then(function (res) {
+      var type = res.headers.get("Content-Type") || "";
+      if (!res.ok || !res.body || type.indexOf("audio/L16") !== 0) throw new Error("no stream (HTTP " + res.status + ")");
+      var gain = res.headers.get("X-BC-Gain"), serverFirst = res.headers.get("X-BC-First-Ms");
+      var reader = res.body.getReader();
+      var parts = [], total = 0, carry = null, pending = [], pendingLen = 0;
+      var nextAt = 0, firstSoundAt = null, last = null;
+      state.streamSources = [];
+
+      // Schedule what has arrived. Tiny network fragments are batched to
+      // ~0.1s first so the voice isn't stitched from hundreds of slivers.
+      function scheduleFrom(force) {
+        if (!pendingLen || (!force && pendingLen < 3200)) return;
+        var bytes = new Uint8Array(pendingLen), o = 0;
+        pending.forEach(function (p) { bytes.set(p, o); o += p.length; });
+        pending = []; pendingLen = 0;
+        var src = ctx.createBufferSource();
+        src.buffer = pcmToBuffer(ctx, bytes);
+        src.connect(ctx.destination);
+        nextAt = Math.max(nextAt, ctx.currentTime + 0.03);
+        src.start(nextAt);
+        nextAt += src.buffer.duration;
+        state.streamSources.push(src);
+        last = src;
+        if (firstSoundAt === null) { firstSoundAt = Date.now(); attempt.played = true; }
+      }
+
+      function pump() {
+        return reader.read().then(function (r) {
+          if (gen !== state.streamGen) { reader.cancel().catch(function () {}); return false; }
+          if (r.done) return true;
+          var chunk = r.value;
+          if (carry) { var j = new Uint8Array(carry.length + chunk.length); j.set(carry); j.set(chunk, carry.length); chunk = j; carry = null; }
+          if (chunk.length % 2) { carry = chunk.subarray(chunk.length - 1); chunk = chunk.subarray(0, chunk.length - 1); }
+          if (chunk.length) {
+            var copy = chunk.slice();
+            parts.push(copy); total += copy.length;
+            pending.push(copy); pendingLen += copy.length;
+            scheduleFrom(false);
+          }
+          return pump();
+        });
+      }
+
+      return pump().then(function (completed) {
+        if (!completed) return;        // superseded by a newer reply
+        scheduleFrom(true);
+        if (!total) throw new Error("stream was empty");
+        message.tts = pcmToWavBase64(parts, total);
+        renderFeeds();                 // re-binds tap-to-replay; shows Repeat
+        if (last) last.onended = afterPlayback; else afterPlayback();
+        if (DEBUG) {
+          notice(message.speaker ? otherSide(message.speaker) : "host",
+            "voice (streamed) first sound " + secs(firstSoundAt - askedAt) +
+            " · server first " + serverFirst + "ms · " + Math.round(total / 1024) + " KB · boost x" + gain, 6000);
+        }
+      });
+    });
+  }
+
   // An idle serverless function has to boot before it can do anything,
   // and that boot lands on the very first sentence someone speaks — the
   // worst possible moment. Opening the conversation screen pokes both
@@ -4216,26 +4406,28 @@
     micBtn.classList.add("is-busy");
     $(side + "-label").textContent = t("translating");
 
-    blobToBase64(blob).then(function (audioBase64) {
-      return fetch("/api/pipeline", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          audioBase64: audioBase64,
-          mimeType: mimeType,
-          sourceLangHint: state[side].lang || "unknown",
-          // Nobody's language is known until they speak, so the first
-          // exchange has no confirmed target. For the phone's owner we
-          // know what they picked on the welcome screen; for a stranger
-          // English is the safest guess until they say something.
-          targetLangCode: state[listener].lang || (listener === "host" ? state.uiLang : "en-IN"),
-          token: localStorage.getItem(AUTH_TOKEN_KEY),
-          // Words first. Speech synthesis is a whole extra round trip to
-          // Sarvam, and making the reader wait for it was most of the
-          // delay people felt — the audio follows from /api/speak.
-          wantAudio: false
-        })
-      });
+    // The recording goes up as raw bytes, with everything else in headers.
+    // It used to be base64 inside JSON, which is a third bigger — and the
+    // upload is the one stage that runs over the phone's own connection,
+    // usually the slowest link in the whole chain.
+    fetch("/api/pipeline", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/octet-stream",
+        "Authorization": "Bearer " + (localStorage.getItem(AUTH_TOKEN_KEY) || ""),
+        "X-BC-Mime": mimeType || "",
+        "X-BC-Source": state[side].lang || "unknown",
+        // Nobody's language is known until they speak, so the first
+        // exchange has no confirmed target. For the phone's owner we
+        // know what they picked on the welcome screen; for a stranger
+        // English is the safest guess until they say something.
+        "X-BC-Target": state[listener].lang || (listener === "host" ? state.uiLang : "en-IN"),
+        // Words first. Speech synthesis is a whole extra round trip to
+        // Sarvam, and making the reader wait for it was most of the
+        // delay people felt — the audio follows from /api/speak.
+        "X-BC-Want-Audio": "0"
+      },
+      body: blob
     }).then(function (res) {
       return res.json().then(function (data) {
         if (!res.ok) { var e = new Error(data.error || "Translation failed."); e.status = res.status; e.code = data.code; throw e; }
@@ -4283,7 +4475,7 @@
       }
 
       if (data.ttsAudioBase64) playTts(data.ttsAudioBase64);
-      else fetchSpeech(message, state[listener].lang || (listener === "host" ? state.uiLang : "en-IN"));
+      else speak(message, state[listener].lang || (listener === "host" ? state.uiLang : "en-IN"));
 
       if (typeof data.minutesLeft === "number" && state.account) {
         state.account.minutes = data.minutesLeft;
@@ -4323,6 +4515,9 @@
     var mic = $("mic-" + side);
     mic.addEventListener("pointerdown", function (e) {
       e.preventDefault();
+      // Someone is about to speak: a reply still playing would be
+      // recorded straight back into their clip, so it stops here.
+      stopAllPlayback();
       unlockAudio();
       claimAudioSession("play-and-record");   // taking the mic back from playback
       primeAudioContext();

@@ -82,8 +82,25 @@ module.exports = async function handler(req, res) {
   // Vercel's Node.js runtime parses a JSON request body for you, so
   // req.body is normally already an object -- but we fall back to
   // parsing it ourselves just in case it arrives as a raw string.
+  // Two request shapes. Current clients send the recording as raw bytes
+  // (application/octet-stream) with everything else in headers — base64
+  // inflates audio by a third, and every byte is uploaded over a phone
+  // connection before anything else can start. Older cached clients still
+  // send JSON with audioBase64, and keep working.
   let body = req.body;
-  if (typeof body === "string") {
+  let audioBuffer = null;
+  if (Buffer.isBuffer(body)) {
+    audioBuffer = body;
+    const h = req.headers;
+    const auth = String(h["authorization"] || "");
+    body = {
+      token: auth.indexOf("Bearer ") === 0 ? auth.slice(7) : undefined,
+      mimeType: h["x-bc-mime"],
+      sourceLangHint: h["x-bc-source"],
+      targetLangCode: h["x-bc-target"],
+      wantAudio: h["x-bc-want-audio"] !== "0",
+    };
+  } else if (typeof body === "string") {
     try {
       body = JSON.parse(body || "{}");
     } catch {
@@ -98,6 +115,7 @@ module.exports = async function handler(req, res) {
   if (body.warmup) return res.status(200).json({ awake: true });
 
   const { audioBase64, mimeType, sourceLangHint, targetLangCode, token } = body;
+  if (!audioBuffer && audioBase64) audioBuffer = Buffer.from(audioBase64, "base64");
   // Older clients don't send the flag and still expect audio inline.
   const wantAudio = body.wantAudio !== false;
 
@@ -121,8 +139,8 @@ module.exports = async function handler(req, res) {
     }
   }
 
-  if (!audioBase64) {
-    return res.status(400).json({ error: "Missing audioBase64 (the recorded clip, base64-encoded)." });
+  if (!audioBuffer || !audioBuffer.length) {
+    return res.status(400).json({ error: "Missing the recorded clip." });
   }
   if (!targetLangCode || !SUPPORTED_LANGUAGES.has(targetLangCode)) {
     return res.status(400).json({
@@ -137,7 +155,7 @@ module.exports = async function handler(req, res) {
 
   try {
     // ---------- Step 1: Speech to Text ----------
-    const stt = await speechToText({ apiKey, audioBase64, mimeType, sourceLangHint: sarvamLang(sourceLangHint) });
+    const stt = await speechToText({ apiKey, audioBuffer, mimeType, sourceLangHint: sarvamLang(sourceLangHint) });
     timings.stt = Date.now() - t0;
 
     if (!stt.transcript || !stt.transcript.trim()) {
@@ -255,8 +273,7 @@ module.exports = async function handler(req, res) {
 // ---------------------------------------------------------------------
 // Step 1: Speech to Text  --  POST https://api.sarvam.ai/speech-to-text
 // ---------------------------------------------------------------------
-async function speechToText({ apiKey, audioBase64, mimeType, sourceLangHint }) {
-  const audioBuffer = Buffer.from(audioBase64, "base64");
+async function speechToText({ apiKey, audioBuffer, mimeType, sourceLangHint }) {
 
   // Sarvam validates the file's Content-Type as an exact string against
   // an allow-list of bare mime types (e.g. "audio/webm"). Browsers'

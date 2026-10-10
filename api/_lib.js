@@ -272,6 +272,94 @@ function boostWavLoudness(base64) {
   }
 }
 
+// ---------------------------------------------------------------------
+// The same boost for STREAMED speech, where the whole clip never exists
+// at once. boostWavLoudness measures the full clip before choosing a
+// gain; a stream can't wait for that, so this measures the first stretch
+// of actual speech, fixes the gain there, and holds it for the rest —
+// changing gain mid-sentence would make the voice pump.
+//
+// "Actual speech" matters: Sarvam's chunks open with silence (the first
+// bytes of a real stream were all zeros), and silence measured as level
+// would push the gain to its ceiling and turn the first word to crackle.
+// So the level is taken over non-silent samples only, and audio is held
+// back until there is enough of it (~0.1s) to judge. In practice that is
+// the first chunk, so it costs nothing.
+//
+// Input is raw 16-bit little-endian mono PCM in arbitrary-sized pieces —
+// a piece can end halfway through a sample, so the odd byte is carried.
+// ---------------------------------------------------------------------
+const SILENCE_FLOOR = 0.01 * 32767;   // below this a sample is "not speech"
+const ACTIVE_SAMPLES_TO_JUDGE = 1600; // 0.1s at 16kHz
+// The gain is judged on a sentence's first 0.1s of speech, and openings
+// run louder than the sentence average — so the same target would come
+// out quieter than the non-streamed path. Divya spent a week getting the
+// voice loud enough on an iPhone; streaming must not quietly undo that.
+// Tuned on real Sarvam audio (2026-10-10, target 0.78): Tamil matches the
+// non-streamed path exactly, Hindi lands ~2 dB under it but with a third
+// of the clipped samples. Raising this further mostly adds distortion —
+// at 0.78 the limiter is already doing most of the work. Judging over a
+// longer window closes the gap but delays first sound by a whole chunk.
+const STREAM_LEVEL_MATCH = 1.35;
+
+function createPcmBooster() {
+  let carry = null;        // a dangling half-sample from the previous piece
+  let held = [];           // complete-sample buffers waiting for a gain
+  let heldActive = 0, heldSumSq = 0;
+  let gain = null;
+
+  function apply(buf) {
+    for (let i = 0; i + 1 < buf.length; i += 2) {
+      const v = Math.round(softClip((buf.readInt16LE(i) * gain) / 32767) * 32767);
+      buf.writeInt16LE(v > 32767 ? 32767 : v < -32768 ? -32768 : v, i);
+    }
+    return buf;
+  }
+
+  function decide(force) {
+    if (gain !== null) return;
+    if (heldActive >= ACTIVE_SAMPLES_TO_JUDGE || (force && heldActive > 0)) {
+      const rms = Math.sqrt(heldSumSq / heldActive);
+      gain = Math.max(1, Math.min((TARGET_RMS * STREAM_LEVEL_MATCH) / rms, MAX_GAIN));
+    } else if (force) {
+      gain = 1;   // nothing but silence: leave it alone
+    }
+  }
+
+  return {
+    // Returns boosted audio ready to send, or null while still judging.
+    push(piece) {
+      let buf = carry ? Buffer.concat([carry, piece]) : piece;
+      carry = null;
+      if (buf.length % 2) { carry = buf.subarray(buf.length - 1); buf = buf.subarray(0, buf.length - 1); }
+      if (!buf.length) return null;
+      buf = Buffer.from(buf);   // own the bytes: boosting writes in place
+      if (gain === null) {
+        for (let i = 0; i + 1 < buf.length; i += 2) {
+          const v = buf.readInt16LE(i);
+          if (v > SILENCE_FLOOR || v < -SILENCE_FLOOR) { heldActive++; heldSumSq += v * v; }
+        }
+        held.push(buf);
+        decide(false);
+        if (gain === null) return null;
+        const out = apply(Buffer.concat(held));
+        held = [];
+        return out;
+      }
+      return apply(buf);
+    },
+    // End of stream: release anything still held back.
+    flush() {
+      decide(true);
+      if (!held.length) return null;
+      const out = apply(Buffer.concat(held));
+      held = [];
+      return out;
+    },
+    get gain() { return gain; },
+  };
+}
+
 module.exports = {
   SESSION_TTL_SECONDS,
   WELCOME_DECIMINUTES,
@@ -294,4 +382,5 @@ module.exports = {
   getOverrides,
   saveOverrides,
   boostWavLoudness,
+  createPcmBooster,
 };
