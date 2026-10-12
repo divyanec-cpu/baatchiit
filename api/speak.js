@@ -3,14 +3,17 @@
 // Text-to-speech on its own, so the conversation screen doesn't have to
 // wait for audio before showing words.
 //
-//   POST /api/speak { token, text, langCode } -> { audioBase64 }
+//   POST /api/speak { token, text, langCode, gender } -> { audioBase64 }
+//
+// gender is the SPEAKER's ("male" | "female", default female): their words
+// come out in a voice that matches them. See VOICES in _lib.js.
 //
 // The exchange was already charged by api/pipeline.js when it produced
 // the translation; this endpoint only voices text that was just
 // returned, so it does not touch the minutes balance. It still requires
 // a valid session, so it can't be used as a free TTS service.
 
-const { redisConfigured, getSession, boostWavLoudness, createPcmBooster } = require("./_lib.js");
+const { redisConfigured, getSession, boostWavLoudness, createPcmBooster, voiceFor } = require("./_lib.js");
 
 const SARVAM_BASE = "https://api.sarvam.ai";
 const MAX_TEXT = 1000;
@@ -44,7 +47,7 @@ function sarvamLang(code) {
 // iPhone speaker. Sarvam's spec says the socket is MP3-only; it isn't —
 // linear16 comes back as audio/pcm, verified 2026-10-10.
 // ---------------------------------------------------------------------
-function streamSpeech({ apiKey, text, langCode, req, res }) {
+function streamSpeech({ apiKey, text, langCode, speaker, req, res }) {
   return new Promise((resolve) => {
     const started = Date.now();
     const booster = createPcmBooster();
@@ -97,7 +100,7 @@ function streamSpeech({ apiKey, text, langCode, req, res }) {
     sock.addEventListener("open", () => {
       sock.send(JSON.stringify({ type: "config", data: {
         language_code: sarvamLang(langCode),
-        speaker: "priya",
+        speaker,
         speech_sample_rate: 16000,
         output_audio_codec: "linear16",
       } }));
@@ -149,7 +152,8 @@ module.exports = async function handler(req, res) {
     if (!session) return res.status(401).json({ error: "Please log in.", code: "LOGIN_REQUIRED" });
   }
 
-  if (body.stream === true) return streamSpeech({ apiKey, text, langCode, req, res });
+  const speaker = voiceFor(body.gender);
+  if (body.stream === true) return streamSpeech({ apiKey, text, langCode, speaker, req, res });
 
   try {
     const started = Date.now();
@@ -160,7 +164,7 @@ module.exports = async function handler(req, res) {
         text,
         target_language_code: sarvamLang(langCode),
         model: "bulbul:v3",
-        speaker: "priya",
+        speaker,
         speech_sample_rate: 16000,   // speech is clear at 16k; the reply is
         // uncompressed WAV over base64, so this is ~27% less to download
       }),

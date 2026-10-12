@@ -360,6 +360,30 @@ function createPcmBooster() {
   };
 }
 
+// ---------------------------------------------------------------------
+// Whose voice. The person who spoke is either male or female, and that
+// decides two things: the voice their words come out in, and the
+// grammar of the translation — in Hindi, Marathi, Punjabi and others the
+// verb changes with the speaker ("jaa raha hoon" / "jaa rahi hoon").
+// Sarvam's translate call takes speaker_gender, and when it is left out
+// it writes everyone as a woman — measured 2026-10-12: a man's "I am
+// going" came back "मैं जा रही हूँ" in Hindi and "ਜਾ ਰਹੀ ਹਾਂ" in Punjabi.
+//
+// shubh is Sarvam's default bulbul:v3 voice. Of the six measured, its
+// source audio was the loudest, and after the boost it lands at the same
+// level as priya on both the streamed and the plain path.
+// ---------------------------------------------------------------------
+const VOICES = { female: "priya", male: "shubh" };
+
+// Anything other than an explicit "male" is treated as female, which is
+// what Sarvam does on its own — so old clients behave exactly as before.
+function speakerGender(value) {
+  return String(value || "").toLowerCase() === "male" ? "male" : "female";
+}
+function voiceFor(gender) {
+  return VOICES[speakerGender(gender)];
+}
+
 module.exports = {
   SESSION_TTL_SECONDS,
   WELCOME_DECIMINUTES,
@@ -383,4 +407,6 @@ module.exports = {
   saveOverrides,
   boostWavLoudness,
   createPcmBooster,
+  speakerGender,
+  voiceFor,
 };

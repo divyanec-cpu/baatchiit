@@ -308,6 +308,9 @@
   .manual-wrap { padding: 14px 20px 0; display: flex; flex-direction: column; gap: 14px; }
   .chip-group-label { font-size: 12px; font-weight: 800; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.4px; }
   .chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip-why { font-size: 12px; color: var(--muted); margin-top: 7px; line-height: 1.4; }
+  /* Start was pressed without choosing male/female: point at the row. */
+  .chip-row.needs-pick .lang-chip { border-color: var(--saffron); animation: bcBlink 0.5s ease-in-out 3; }
   .lang-chip {
     padding: 8px 14px;
     border-radius: 999px;
@@ -385,18 +388,24 @@
   }
   .msg-row[data-mine="true"] .bubble { border-bottom-right-radius: 4px; }
   .msg-row[data-mine="false"] .bubble { border-bottom-left-radius: 4px; }
-  .half--host .msg-row[data-mine="true"] .bubble { background: var(--saffron); color: #fff; }
-  .half--host .msg-row[data-mine="false"] .bubble { background: var(--card); color: var(--ink); border: 1.5px solid rgba(33, 26, 20, 0.08); }
+  /* .transcript is a saved conversation, read from the phone owner's
+     side — so it looks exactly like the host half. */
+  .half--host .msg-row[data-mine="true"] .bubble,
+  .transcript .msg-row[data-mine="true"] .bubble { background: var(--saffron); color: #fff; }
+  .half--host .msg-row[data-mine="false"] .bubble,
+  .transcript .msg-row[data-mine="false"] .bubble { background: var(--card); color: var(--ink); border: 1.5px solid rgba(33, 26, 20, 0.08); }
   .half--guest .msg-row[data-mine="true"] .bubble { background: var(--gold); color: var(--indigo); }
   .half--guest .msg-row[data-mine="false"] .bubble { background: var(--indigo-lt); color: var(--cream); border: 1.5px solid rgba(255, 247, 234, 0.12); }
   .bubble-secondary { font-size: 11.5px; padding: 0 4px; font-family: var(--font-script); }
-  .half--host .bubble-secondary { color: var(--muted); }
+  .half--host .bubble-secondary, .transcript .bubble-secondary { color: var(--muted); }
   .half--guest .bubble-secondary { color: var(--cream-faint); }
 
   /* number chips inside bubbles (per-surface contrast) */
   .chip { font-weight: 800; padding: 1px 7px; border-radius: 7px; font-size: 0.94em; white-space: nowrap; }
-  .half--host .msg-row[data-mine="true"] .chip { background: rgba(0,0,0,0.16); color: #fff; }
-  .half--host .msg-row[data-mine="false"] .chip { background: rgba(33,26,20,0.08); color: var(--ink); }
+  .half--host .msg-row[data-mine="true"] .chip,
+  .transcript .msg-row[data-mine="true"] .chip { background: rgba(0,0,0,0.16); color: #fff; }
+  .half--host .msg-row[data-mine="false"] .chip,
+  .transcript .msg-row[data-mine="false"] .chip { background: rgba(33,26,20,0.08); color: var(--ink); }
   .half--guest .msg-row[data-mine="true"] .chip { background: rgba(0,0,0,0.14); color: var(--indigo); }
   .half--guest .msg-row[data-mine="false"] .chip { background: rgba(255,255,255,0.16); color: var(--cream); }
 
@@ -467,13 +476,12 @@
      the only way to hear it again was to find and tap the right bubble —
      which nobody discovers. This sits beside the mic on each half and
      replays the last thing said TO that person, in their language.
-     The empty span on the other side keeps the mic optically centred
-     without absolute positioning. */
+     The keyboard button balances it on the other side; Repeat is hidden
+     with visibility rather than display so the mic never shifts. */
   .mic-row {
     display: flex; align-items: center; justify-content: center;
     gap: 14px;
   }
-  .mic-spacer { width: 42px; height: 42px; flex: 0 0 auto; }
   .repeat-btn {
     width: 42px; height: 42px;
     flex: 0 0 auto;
@@ -487,6 +495,23 @@
   .repeat-btn:active { background: var(--sand); transform: scale(0.94); }
   .repeat-btn[hidden] { display: none; }
   .half--guest .repeat-btn { border-color: rgba(255, 250, 242, 0.28); background: rgba(255, 250, 242, 0.1); color: var(--cream); }
+  /* The keyboard button on the mic's other side uses the same round
+     style, and replaced the empty spacer that used to balance Repeat. */
+
+  /* Male / female, per side, in the header. It changes the grammar of
+     the translation (jaa raha / jaa rahi) as well as the voice, so it
+     has to be visible and fixable mid-conversation, not buried. */
+  .voice-btn {
+    margin-left: auto;
+    font-size: 12px; font-weight: 800;
+    padding: 4px 10px;
+    border-radius: 999px;
+    white-space: nowrap;
+  }
+  .half--host .voice-btn { background: var(--sand); color: var(--ink); border: 1.5px solid var(--border-strong); }
+  .half--guest .voice-btn { background: rgba(255, 250, 242, 0.1); color: var(--cream); border: 1.5px solid rgba(255, 250, 242, 0.28); }
+  .voice-btn:active { transform: scale(0.95); }
+  .edited-mark { opacity: 0.6; font-size: 0.85em; margin-left: 4px; }
 
 
   .strip {
@@ -547,6 +572,60 @@
   .hist-card .place { font-weight: 700; font-size: 14.5px; font-family: var(--font-script); }
   .hist-card .meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
   .hist-empty { color: var(--muted); font-size: 13.5px; }
+  /* Cards open the saved conversation, so they are buttons with a
+     chevron — a card that looks tappable and isn't was the old bug. */
+  button.hist-card {
+    width: 100%; text-align: left;
+    display: flex; align-items: center; gap: 10px;
+  }
+  button.hist-card > div { flex: 1; min-width: 0; }
+  button.hist-card::after { content: "›"; font-size: 22px; color: var(--muted); line-height: 1; }
+  button.hist-card:active { background: var(--sand); }
+
+  /* A saved conversation, opened from History. */
+  .transcript-head { display: flex; align-items: flex-start; gap: 10px; }
+  /* Script font: the title is the conversation's first line, often in
+     Devanagari or Tamil, which the display face doesn't cover. */
+  .transcript-head h2 { font-family: var(--font-script); font-weight: 800; font-size: 16px; margin: 0; line-height: 1.35; overflow-wrap: anywhere; }
+  .transcript-meta { font-size: 12.5px; color: var(--muted); margin-top: 3px; }
+  .transcript { flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 4px 0; }
+  .transcript-who { font-size: 11px; font-weight: 800; color: var(--muted); padding: 0 4px; letter-spacing: 0.3px; }
+  .transcript-actions { display: flex; gap: 10px; align-items: center; }
+  .transcript-actions .btn-primary { flex: 1; padding: 13px; font-size: 15px; }
+  .transcript-actions .link-btn { color: var(--danger); padding: 8px; }
+
+  /* Typing, or correcting what was heard. Anchored to the TOP of the
+     screen: the on-screen keyboard rises from the bottom, and on Android
+     it covers fixed bottom sheets instead of pushing them up. */
+  .compose-sheet {
+    position: fixed; left: 0; right: 0; top: 0;
+    background: var(--cream);
+    border-radius: 0 0 18px 18px;
+    z-index: 21;
+    display: none;
+    flex-direction: column;
+    gap: 10px;
+    padding: 0 0 18px;
+    box-shadow: 0 10px 30px rgba(28, 24, 48, 0.18);
+    animation: bcFade 0.2s ease;
+  }
+  .compose-sheet.open { display: flex; }
+  .compose-sheet textarea {
+    margin: 0 20px;
+    min-height: 92px;
+    resize: none;
+    border-radius: 12px;
+    border: 1.5px solid var(--border-strong);
+    background: var(--card);
+    color: var(--ink);
+    padding: 12px 14px;
+    font-family: var(--font-script);
+    font-size: 16px;            /* under 16px, iOS zooms the page on focus */
+    line-height: 1.45;
+  }
+  .compose-sheet textarea:focus { outline: 2px solid var(--saffron); outline-offset: 0; }
+  .compose-sheet .phrase-hint { padding: 0 20px; margin: 0; }
+  .compose-sheet .btn-primary { margin: 0 20px; width: auto; }
 
   .phrases-sheet {
     position: fixed; left: 0; right: 0; bottom: 0;
@@ -957,7 +1036,7 @@
        so each one has to be pulled back into it by hand. */
     /* Centred with auto margins, not a transform: these sheets animate
        in with bcFade, which owns `transform` and would cancel it. */
-    .phrases-sheet {
+    .phrases-sheet, .compose-sheet {
       max-width: var(--app-w);
       margin-left: auto; margin-right: auto;
     }
@@ -1059,6 +1138,9 @@
     <div class="setup-head">
       <div class="title" id="t-setup-title">New conversation</div>
       <div class="strip-side" style="gap:8px;">
+        <button class="icon-btn" id="btn-history-1" aria-label="History">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4v6h6M4.5 13a8 8 0 1 0 2-5.3L4 10"/><path d="M12 8v4l3 2"/></svg>
+        </button>
         <button class="icon-btn" id="btn-help-1" aria-label="Help">?</button>
         <!-- Person, not ₹: this opens the account (details, minutes,
              sign out), and a rupee sign read as "payments only". -->
@@ -1085,6 +1167,13 @@
           <div class="chip-group-label" id="t-you-speak">YOU SPEAK</div>
           <div class="chip-row" data-side="host" id="host-chips"></div>
         </div>
+        <!-- Asked once per phone and remembered: it changes the words of
+             every translation, not just the voice. -->
+        <div>
+          <div class="chip-group-label" id="t-you-are">YOU ARE</div>
+          <div class="chip-row" data-side="host" id="gender-chips"></div>
+          <div class="chip-why" id="t-gender-why"></div>
+        </div>
       </div>
 
       <div class="setting-row">
@@ -1107,15 +1196,18 @@
       <div class="side-head">
         <span class="side-dot" id="guest-dot" data-state="waiting"></span>
         <span class="side-label" id="guest-label" data-state="waiting">Listening — detecting language…</span>
+        <button class="voice-btn" id="voice-guest"></button>
       </div>
       <div class="feed" id="feed-guest"></div>
       <div class="mic-wrap">
         <div class="mic-row">
-          <span class="mic-spacer" aria-hidden="true"></span>
+          <button class="repeat-btn" id="type-guest" aria-label="Type">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/></svg>
+          </button>
           <button class="mic-btn" id="mic-guest" aria-label="Guest: speak">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#241C3D"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#241C3D" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
           </button>
-          <button class="repeat-btn" id="repeat-guest" aria-label="Repeat" hidden>
+          <button class="repeat-btn" id="repeat-guest" aria-label="Repeat" style="visibility:hidden">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
           </button>
         </div>
@@ -1146,15 +1238,18 @@
       <div class="side-head">
         <span class="side-dot" id="host-dot" data-state="waiting"></span>
         <span class="side-label" id="host-label" data-state="waiting">Listening — detecting language…</span>
+        <button class="voice-btn" id="voice-host"></button>
       </div>
       <div class="feed" id="feed-host"></div>
       <div class="mic-wrap">
         <div class="mic-row">
-          <span class="mic-spacer" aria-hidden="true"></span>
+          <button class="repeat-btn" id="type-host" aria-label="Type">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6.5 10h.01M10 10h.01M13.5 10h.01M17 10h.01M7.5 14h9"/></svg>
+          </button>
           <button class="mic-btn" id="mic-host" aria-label="Host: speak">
             <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="9" y="2" width="6" height="12" rx="3" fill="#fff"/><path d="M5 11a7 7 0 0014 0M12 18v3" stroke="#fff" stroke-width="2" stroke-linecap="round" fill="none"/></svg>
           </button>
-          <button class="repeat-btn" id="repeat-host" aria-label="Repeat" hidden>
+          <button class="repeat-btn" id="repeat-host" aria-label="Repeat" style="visibility:hidden">
             <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M3 12a9 9 0 0 1 15.5-6.2M21 12a9 9 0 0 1-15.5 6.2"/><path d="M18 3v4h-4M6 21v-4h4"/></svg>
           </button>
         </div>
@@ -1268,7 +1363,35 @@
 
 <div class="history-sheet" id="history-sheet" role="dialog" aria-label="History">
   <h2 id="t-history-title">History</h2>
-  <div id="history-list"></div>
+  <div id="history-list" style="display:flex;flex-direction:column;gap:10px;"></div>
+</div>
+
+<!-- One saved conversation, opened from History: every line, read from
+     the phone owner's side, with Share and Delete. -->
+<div class="history-sheet" id="transcript-sheet" role="dialog" aria-label="Conversation">
+  <div class="transcript-head">
+    <button class="icon-btn" id="btn-transcript-back" aria-label="Back" style="flex:0 0 auto;">←</button>
+    <div style="min-width:0;">
+      <h2 id="transcript-title"></h2>
+      <div class="transcript-meta" id="transcript-meta"></div>
+    </div>
+  </div>
+  <div class="transcript" id="transcript-list"></div>
+  <div class="transcript-actions">
+    <button class="btn-primary" id="btn-transcript-share">Share</button>
+    <button class="link-btn" id="btn-transcript-delete">Delete</button>
+  </div>
+</div>
+
+<!-- Typing a line, or correcting one that was misheard. -->
+<div class="compose-sheet" id="compose-sheet" role="dialog" aria-label="Type">
+  <div class="phrases-head">
+    <h2 id="compose-title">Type your message</h2>
+    <button class="link-btn" id="btn-close-compose">Close</button>
+  </div>
+  <textarea id="compose-text" maxlength="500" rows="3" autocomplete="off" enterkeyhint="send"></textarea>
+  <p class="phrase-hint" id="compose-tip"></p>
+  <button class="btn-primary" id="btn-compose-send">Translate →</button>
 </div>
 
 <!-- Language pair: tapping the pill mid-conversation overrides a wrong
@@ -1531,6 +1654,32 @@
       pairHint: "Only their language is here — yours is set on the previous screen.",
       backToAuto: "Back to auto-detect",
       langsUpdated: "Languages updated",
+      male: "Male",
+      female: "Female",
+      youAre: "YOU ARE",
+      genderWhy: "Many languages change words for this — “jaa raha” or “jaa rahi” — and your translated voice matches it.",
+      pickGender: "Choose male or female first — it changes the words",
+      voiceAria: "Voice and wording",
+      voiceNowMale: "Male wording and voice from now on",
+      voiceNowFemale: "Female wording and voice from now on",
+      typeAria: "Type instead",
+      typeTitleHost: "Type your message",
+      typeTitleGuest: "Type their message",
+      editTitle: "Fix what was heard",
+      typeTip: "Tip: tap anything you said to correct it.",
+      editTip: "Change the words, then translate again. It replaces the line on both sides.",
+      typePlaceholder: "Type here…",
+      typeSend: "Translate →",
+      editedAria: "corrected",
+      youWord: "You",
+      themWord: "Them",
+      histShare: "Share",
+      histDelete: "Delete",
+      histDeleteConfirm: "Delete this conversation from this phone?",
+      histDeleted: "Deleted",
+      histNoLines: "This conversation was saved before BaatChiit kept the words — only its summary is here.",
+      copied: "Copied — paste it anywhere",
+      copyFailed: "Couldn't copy on this browser",
       tourNext: "Next", tourStart: "Start", tourSkip: "Not now",
       help: [
         ["Two people, one phone", "The screen is split in two. The top half is upside down on purpose — put the phone between you and both sides read straight."],
@@ -1655,6 +1804,32 @@
       pairHint: "यहाँ सिर्फ़ सामने वाले की भाषा है — आपकी भाषा पिछली स्क्रीन पर तय होती है।",
       backToAuto: "फिर से अपने आप पहचानें",
       langsUpdated: "भाषाएँ बदल दी गईं",
+      male: "पुरुष",
+      female: "महिला",
+      youAre: "आप हैं",
+      genderWhy: "कई भाषाओं में इससे शब्द बदलते हैं — “जा रहा” या “जा रही” — और अनुवाद की आवाज़ भी वैसी ही होगी।",
+      pickGender: "पहले पुरुष या महिला चुनें — इससे शब्द बदलते हैं",
+      voiceAria: "आवाज़ और शब्द",
+      voiceNowMale: "अब से पुरुष की आवाज़ और शब्द",
+      voiceNowFemale: "अब से महिला की आवाज़ और शब्द",
+      typeAria: "लिखकर भेजें",
+      typeTitleHost: "अपनी बात लिखें",
+      typeTitleGuest: "उनकी बात लिखें",
+      editTitle: "जो सुना गया, उसे ठीक करें",
+      typeTip: "सुझाव: अपनी कही किसी भी बात पर टैप करके उसे ठीक कर सकते हैं।",
+      editTip: "शब्द बदलें, फिर दोबारा अनुवाद करें। दोनों तरफ़ वही बात बदल जाएगी।",
+      typePlaceholder: "यहाँ लिखें…",
+      typeSend: "अनुवाद करें →",
+      editedAria: "ठीक किया गया",
+      youWord: "आप",
+      themWord: "वे",
+      histShare: "शेयर करें",
+      histDelete: "मिटाएँ",
+      histDeleteConfirm: "यह बातचीत इस फ़ोन से मिटा दें?",
+      histDeleted: "मिटा दी गई",
+      histNoLines: "यह बातचीत तब सेव हुई थी जब BaatChiit पूरे शब्द नहीं रखता था — यहाँ सिर्फ़ झलक है।",
+      copied: "कॉपी हो गया — कहीं भी पेस्ट करें",
+      copyFailed: "इस ब्राउज़र में कॉपी नहीं हो सका",
       tourNext: "आगे", tourStart: "शुरू करें", tourSkip: "अभी नहीं",
       help: [
         ["दो लोग, एक फ़ोन", "स्क्रीन दो हिस्सों में है। ऊपर वाला हिस्सा जानबूझकर उल्टा है — फ़ोन बीच में रखें, दोनों को सीधा दिखेगा।"],
@@ -1779,6 +1954,32 @@
       pairHint: "এখানে শুধু ওঁর ভাষা — আপনার ভাষা আগের স্ক্রিনে ঠিক হয়।",
       backToAuto: "আবার নিজে থেকে শনাক্ত",
       langsUpdated: "ভাষা বদলে গেছে",
+      male: "পুরুষ",
+      female: "মহিলা",
+      youAre: "আপনি",
+      genderWhy: "হিন্দি সহ অনেক ভাষায় এতে শব্দ বদলায় (जा रहा / जा रही), আর অনুবাদের কণ্ঠও সেই অনুযায়ী হবে।",
+      pickGender: "আগে পুরুষ বা মহিলা বেছে নিন — এতে শব্দ বদলায়",
+      voiceAria: "কণ্ঠ ও শব্দ",
+      voiceNowMale: "এখন থেকে পুরুষের কণ্ঠ ও শব্দ",
+      voiceNowFemale: "এখন থেকে মহিলার কণ্ঠ ও শব্দ",
+      typeAria: "লিখে পাঠান",
+      typeTitleHost: "আপনার কথা লিখুন",
+      typeTitleGuest: "ওঁর কথা লিখুন",
+      editTitle: "যা শোনা গেছে, ঠিক করুন",
+      typeTip: "টিপ: আপনার বলা যেকোনো কথায় ট্যাপ করে সেটা ঠিক করতে পারেন।",
+      editTip: "শব্দ বদলে আবার অনুবাদ করুন। দুই দিকেই কথাটা বদলে যাবে।",
+      typePlaceholder: "এখানে লিখুন…",
+      typeSend: "অনুবাদ করুন →",
+      editedAria: "সংশোধিত",
+      youWord: "আপনি",
+      themWord: "উনি",
+      histShare: "শেয়ার করুন",
+      histDelete: "মুছে দিন",
+      histDeleteConfirm: "এই কথোপকথন এই ফোন থেকে মুছে দেবেন?",
+      histDeleted: "মুছে ফেলা হয়েছে",
+      histNoLines: "এই কথোপকথন তখন সেভ হয়েছিল যখন BaatChiit পুরো কথা রাখত না — এখানে শুধু সারাংশ আছে।",
+      copied: "কপি হয়েছে — যেকোনো জায়গায় পেস্ট করুন",
+      copyFailed: "এই ব্রাউজারে কপি করা গেল না",
       tourNext: "পরবর্তী", tourStart: "শুরু করুন", tourSkip: "এখন নয়",
       help: [
         ["দুজন, একটি ফোন", "স্ক্রিন দুই ভাগে ভাগ করা। উপরের অংশ ইচ্ছে করেই উল্টো — ফোনটি মাঝখানে রাখুন, দুজনেই সোজা দেখতে পাবেন।"],
@@ -1903,6 +2104,32 @@
       pairHint: "અહીં ફક્ત તેમની ભાષા છે — તમારી ભાષા પાછલી સ્ક્રીન પર નક્કી થાય છે.",
       backToAuto: "ફરી આપોઆપ ઓળખ",
       langsUpdated: "ભાષાઓ બદલાઈ",
+      male: "પુરુષ",
+      female: "સ્ત્રી",
+      youAre: "તમે",
+      genderWhy: "ગુજરાતી, હિન્દી અને બીજી ઘણી ભાષાઓમાં આથી શબ્દો બદલાય છે (ગયો / ગઈ), અને અનુવાદનો અવાજ પણ તે મુજબ હશે.",
+      pickGender: "પહેલાં પુરુષ કે સ્ત્રી પસંદ કરો — આથી શબ્દો બદલાય છે",
+      voiceAria: "અવાજ અને શબ્દો",
+      voiceNowMale: "હવેથી પુરુષનો અવાજ અને શબ્દો",
+      voiceNowFemale: "હવેથી સ્ત્રીનો અવાજ અને શબ્દો",
+      typeAria: "લખીને મોકલો",
+      typeTitleHost: "તમારી વાત લખો",
+      typeTitleGuest: "તેમની વાત લખો",
+      editTitle: "જે સંભળાયું તે સુધારો",
+      typeTip: "ટિપ: તમે કહેલી કોઈ પણ વાત પર ટેપ કરીને તેને સુધારી શકો છો.",
+      editTip: "શબ્દો બદલો, પછી ફરી અનુવાદ કરો. બંને બાજુ એ જ વાત બદલાઈ જશે.",
+      typePlaceholder: "અહીં લખો…",
+      typeSend: "અનુવાદ કરો →",
+      editedAria: "સુધારેલું",
+      youWord: "તમે",
+      themWord: "તેઓ",
+      histShare: "શેર કરો",
+      histDelete: "કાઢી નાખો",
+      histDeleteConfirm: "આ વાતચીત આ ફોનમાંથી કાઢી નાખીએ?",
+      histDeleted: "કાઢી નાખી",
+      histNoLines: "આ વાતચીત ત્યારે સચવાઈ હતી જ્યારે BaatChiit આખા શબ્દો રાખતું નહોતું — અહીં ફક્ત ઝલક છે.",
+      copied: "કૉપિ થઈ ગયું — ગમે ત્યાં પેસ્ટ કરો",
+      copyFailed: "આ બ્રાઉઝરમાં કૉપિ ન થઈ શક્યું",
       tourNext: "આગળ", tourStart: "શરૂ કરો", tourSkip: "હમણાં નહીં",
       help: [
         ["બે વ્યક્તિ, એક ફોન", "સ્ક્રીન બે ભાગમાં છે. ઉપરનો ભાગ જાણી જોઈને ઊંધો છે — ફોન વચ્ચે મૂકો, બંનેને સીધું દેખાશે."],
@@ -2027,6 +2254,32 @@
       pairHint: "ಇಲ್ಲಿ ಅವರ ಭಾಷೆ ಮಾತ್ರ — ನಿಮ್ಮದು ಹಿಂದಿನ ಪರದೆಯಲ್ಲಿ ನಿಗದಿಯಾಗುತ್ತದೆ.",
       backToAuto: "ಮತ್ತೆ ತಾನಾಗಿ ಗುರುತಿಸಲಿ",
       langsUpdated: "ಭಾಷೆಗಳು ಬದಲಾಗಿವೆ",
+      male: "ಪುರುಷ",
+      female: "ಮಹಿಳೆ",
+      youAre: "ನೀವು",
+      genderWhy: "ಹಿಂದಿ ಸೇರಿದಂತೆ ಹಲವು ಭಾಷೆಗಳಲ್ಲಿ ಇದರಿಂದ ಪದಗಳು ಬದಲಾಗುತ್ತವೆ (जा रहा / जा रही), ಮತ್ತು ಅನುವಾದದ ಧ್ವನಿಯೂ ಅದಕ್ಕೆ ಹೊಂದುತ್ತದೆ.",
+      pickGender: "ಮೊದಲು ಪುರುಷ ಅಥವಾ ಮಹಿಳೆ ಆಯ್ಕೆಮಾಡಿ — ಇದರಿಂದ ಪದಗಳು ಬದಲಾಗುತ್ತವೆ",
+      voiceAria: "ಧ್ವನಿ ಮತ್ತು ಪದಗಳು",
+      voiceNowMale: "ಇನ್ನು ಮುಂದೆ ಪುರುಷ ಧ್ವನಿ ಮತ್ತು ಪದಗಳು",
+      voiceNowFemale: "ಇನ್ನು ಮುಂದೆ ಮಹಿಳಾ ಧ್ವನಿ ಮತ್ತು ಪದಗಳು",
+      typeAria: "ಬರೆದು ಕಳುಹಿಸಿ",
+      typeTitleHost: "ನಿಮ್ಮ ಮಾತನ್ನು ಬರೆಯಿರಿ",
+      typeTitleGuest: "ಅವರ ಮಾತನ್ನು ಬರೆಯಿರಿ",
+      editTitle: "ಕೇಳಿಸಿಕೊಂಡದ್ದನ್ನು ಸರಿಪಡಿಸಿ",
+      typeTip: "ಸಲಹೆ: ನೀವು ಹೇಳಿದ ಯಾವುದನ್ನಾದರೂ ಟ್ಯಾಪ್ ಮಾಡಿ ಸರಿಪಡಿಸಬಹುದು.",
+      editTip: "ಪದಗಳನ್ನು ಬದಲಿಸಿ, ಮತ್ತೆ ಅನುವಾದಿಸಿ. ಎರಡೂ ಕಡೆ ಅದೇ ಸಾಲು ಬದಲಾಗುತ್ತದೆ.",
+      typePlaceholder: "ಇಲ್ಲಿ ಬರೆಯಿರಿ…",
+      typeSend: "ಅನುವಾದಿಸಿ →",
+      editedAria: "ಸರಿಪಡಿಸಲಾಗಿದೆ",
+      youWord: "ನೀವು",
+      themWord: "ಅವರು",
+      histShare: "ಹಂಚಿಕೊಳ್ಳಿ",
+      histDelete: "ಅಳಿಸಿ",
+      histDeleteConfirm: "ಈ ಸಂಭಾಷಣೆಯನ್ನು ಈ ಫೋನಿನಿಂದ ಅಳಿಸಬೇಕೆ?",
+      histDeleted: "ಅಳಿಸಲಾಗಿದೆ",
+      histNoLines: "BaatChiit ಪೂರ್ಣ ಮಾತುಗಳನ್ನು ಉಳಿಸುವ ಮೊದಲು ಈ ಸಂಭಾಷಣೆ ಉಳಿಸಲಾಗಿತ್ತು — ಇಲ್ಲಿ ಸಾರಾಂಶ ಮಾತ್ರ ಇದೆ.",
+      copied: "ನಕಲಿಸಲಾಗಿದೆ — ಎಲ್ಲಿಯಾದರೂ ಅಂಟಿಸಿ",
+      copyFailed: "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ನಕಲಿಸಲು ಆಗಲಿಲ್ಲ",
       tourNext: "ಮುಂದೆ", tourStart: "ಪ್ರಾರಂಭಿಸಿ", tourSkip: "ಈಗ ಬೇಡ",
       help: [
         ["ಇಬ್ಬರು, ಒಂದು ಫೋನ್", "ಪರದೆ ಎರಡು ಭಾಗಗಳಲ್ಲಿದೆ. ಮೇಲಿನ ಭಾಗ ಉದ್ದೇಶಪೂರ್ವಕವಾಗಿ ತಲೆಕೆಳಗಾಗಿದೆ — ಫೋನನ್ನು ನಡುವೆ ಇಡಿ, ಇಬ್ಬರಿಗೂ ನೇರವಾಗಿ ಕಾಣುತ್ತದೆ."],
@@ -2151,6 +2404,32 @@
       pairHint: "ഇവിടെ അവരുടെ ഭാഷ മാത്രം — നിങ്ങളുടേത് മുൻ സ്ക്രീനിൽ തീരുമാനിക്കുന്നു.",
       backToAuto: "വീണ്ടും തനിയെ തിരിച്ചറിയട്ടെ",
       langsUpdated: "ഭാഷകൾ മാറ്റി",
+      male: "പുരുഷൻ",
+      female: "സ്ത്രീ",
+      youAre: "നിങ്ങൾ",
+      genderWhy: "ഹിന്ദി ഉൾപ്പെടെ പല ഭാഷകളിലും ഇതനുസരിച്ച് വാക്കുകൾ മാറും (जा रहा / जा रही), വിവർത്തനത്തിന്റെ ശബ്ദവും അതിനൊത്തായിരിക്കും.",
+      pickGender: "ആദ്യം പുരുഷൻ അല്ലെങ്കിൽ സ്ത്രീ തിരഞ്ഞെടുക്കുക — ഇതനുസരിച്ച് വാക്കുകൾ മാറും",
+      voiceAria: "ശബ്ദവും വാക്കുകളും",
+      voiceNowMale: "ഇനി മുതൽ പുരുഷ ശബ്ദവും വാക്കുകളും",
+      voiceNowFemale: "ഇനി മുതൽ സ്ത്രീ ശബ്ദവും വാക്കുകളും",
+      typeAria: "ടൈപ്പ് ചെയ്യുക",
+      typeTitleHost: "നിങ്ങളുടെ സന്ദേശം ടൈപ്പ് ചെയ്യുക",
+      typeTitleGuest: "അവരുടെ സന്ദേശം ടൈപ്പ് ചെയ്യുക",
+      editTitle: "കേട്ടത് തിരുത്തുക",
+      typeTip: "സൂചന: നിങ്ങൾ പറഞ്ഞ ഏതിലും ടാപ്പ് ചെയ്ത് തിരുത്താം.",
+      editTip: "വാക്കുകൾ മാറ്റി വീണ്ടും വിവർത്തനം ചെയ്യുക. ഇരുവശത്തും ആ വരി മാറും.",
+      typePlaceholder: "ഇവിടെ ടൈപ്പ് ചെയ്യുക…",
+      typeSend: "വിവർത്തനം ചെയ്യുക →",
+      editedAria: "തിരുത്തിയത്",
+      youWord: "നിങ്ങൾ",
+      themWord: "അവർ",
+      histShare: "പങ്കിടുക",
+      histDelete: "ഇല്ലാതാക്കുക",
+      histDeleteConfirm: "ഈ സംഭാഷണം ഈ ഫോണിൽ നിന്ന് ഇല്ലാതാക്കണോ?",
+      histDeleted: "ഇല്ലാതാക്കി",
+      histNoLines: "BaatChiit മുഴുവൻ വാക്കുകളും സൂക്ഷിക്കുന്നതിനു മുൻപ് സേവ് ചെയ്ത സംഭാഷണമാണിത് — ഇവിടെ ചുരുക്കം മാത്രം.",
+      copied: "പകർത്തി — എവിടെയും പേസ്റ്റ് ചെയ്യാം",
+      copyFailed: "ഈ ബ്രൗസറിൽ പകർത്താനായില്ല",
       tourNext: "അടുത്തത്", tourStart: "തുടങ്ങാം", tourSkip: "ഇപ്പോൾ വേണ്ട",
       help: [
         ["രണ്ടു പേർ, ഒരു ഫോൺ", "സ്ക്രീൻ രണ്ടായി പകുത്തിരിക്കുന്നു. മുകൾഭാഗം മനഃപൂർവം തലകീഴായാണ് — ഫോൺ നടുവിൽ വെക്കൂ, രണ്ടു പേർക്കും നേരെ കാണാം."],
@@ -2275,6 +2554,32 @@
       pairHint: "इथे फक्त त्यांची भाषा — तुमची भाषा मागच्या स्क्रीनवर ठरते.",
       backToAuto: "पुन्हा आपोआप ओळख",
       langsUpdated: "भाषा बदलल्या",
+      male: "पुरुष",
+      female: "स्त्री",
+      youAre: "तुम्ही",
+      genderWhy: "मराठी, हिंदीसह अनेक भाषांमध्ये यामुळे शब्द बदलतात (जातो / जाते), आणि अनुवादाचा आवाजही तसाच असेल.",
+      pickGender: "आधी पुरुष की स्त्री ते निवडा — यामुळे शब्द बदलतात",
+      voiceAria: "आवाज आणि शब्द",
+      voiceNowMale: "आतापासून पुरुषाचा आवाज आणि शब्द",
+      voiceNowFemale: "आतापासून स्त्रीचा आवाज आणि शब्द",
+      typeAria: "लिहून पाठवा",
+      typeTitleHost: "तुमचं बोलणं लिहा",
+      typeTitleGuest: "त्यांचं बोलणं लिहा",
+      editTitle: "जे ऐकलं ते दुरुस्त करा",
+      typeTip: "टीप: तुम्ही बोललेल्या कोणत्याही ओळीवर टॅप करून ती दुरुस्त करू शकता.",
+      editTip: "शब्द बदला, मग पुन्हा अनुवाद करा. दोन्ही बाजूंना तीच ओळ बदलेल.",
+      typePlaceholder: "इथे लिहा…",
+      typeSend: "अनुवाद करा →",
+      editedAria: "दुरुस्त केलेलं",
+      youWord: "तुम्ही",
+      themWord: "ते",
+      histShare: "शेअर करा",
+      histDelete: "हटवा",
+      histDeleteConfirm: "ही बातचीत या फोनमधून हटवायची?",
+      histDeleted: "हटवली",
+      histNoLines: "BaatChiit पूर्ण शब्द साठवत नव्हतं तेव्हा ही बातचीत सेव्ह झाली होती — इथे फक्त झलक आहे.",
+      copied: "कॉपी झालं — कुठेही पेस्ट करा",
+      copyFailed: "या ब्राउझरमध्ये कॉपी करता आलं नाही",
       tourNext: "पुढे", tourStart: "सुरू करा", tourSkip: "आत्ता नको",
       help: [
         ["दोन माणसं, एक फोन", "स्क्रीन दोन भागांत आहे. वरचा भाग मुद्दाम उलटा आहे — फोन मध्ये ठेवा, दोघांना सरळ दिसेल."],
@@ -2399,6 +2704,32 @@
       pairHint: "ଏଠାରେ କେବଳ ତାଙ୍କ ଭାଷା — ଆପଣଙ୍କ ଭାଷା ପୂର୍ବ ପରଦାରେ ସ୍ଥିର ହୁଏ।",
       backToAuto: "ପୁଣି ନିଜେ ଚିହ୍ନଟ",
       langsUpdated: "ଭାଷା ବଦଳାଗଲା",
+      male: "ପୁରୁଷ",
+      female: "ମହିଳା",
+      youAre: "ଆପଣ",
+      genderWhy: "ହିନ୍ଦୀ ସମେତ ଅନେକ ଭାଷାରେ ଏଥିରୁ ଶବ୍ଦ ବଦଳେ (जा रहा / जा रही), ଆଉ ଅନୁବାଦର ସ୍ୱର ମଧ୍ୟ ସେହିପରି ହେବ।",
+      pickGender: "ପ୍ରଥମେ ପୁରୁଷ ବା ମହିଳା ବାଛନ୍ତୁ — ଏଥିରୁ ଶବ୍ଦ ବଦଳେ",
+      voiceAria: "ସ୍ୱର ଓ ଶବ୍ଦ",
+      voiceNowMale: "ଏବେଠାରୁ ପୁରୁଷ ସ୍ୱର ଓ ଶବ୍ଦ",
+      voiceNowFemale: "ଏବେଠାରୁ ମହିଳା ସ୍ୱର ଓ ଶବ୍ଦ",
+      typeAria: "ଲେଖି ପଠାନ୍ତୁ",
+      typeTitleHost: "ଆପଣଙ୍କ କଥା ଲେଖନ୍ତୁ",
+      typeTitleGuest: "ତାଙ୍କ କଥା ଲେଖନ୍ତୁ",
+      editTitle: "ଯାହା ଶୁଣାଗଲା ତାକୁ ଠିକ୍ କରନ୍ତୁ",
+      typeTip: "ପରାମର୍ଶ: ଆପଣ କହିଥିବା ଯେକୌଣସି କଥାରେ ଟ୍ୟାପ୍ କରି ତାକୁ ଠିକ୍ କରିପାରିବେ।",
+      editTip: "ଶବ୍ଦ ବଦଳାନ୍ତୁ, ତାପରେ ପୁଣି ଅନୁବାଦ କରନ୍ତୁ। ଦୁଇ ପଟେ ସେହି ଧାଡ଼ି ବଦଳିଯିବ।",
+      typePlaceholder: "ଏଠାରେ ଲେଖନ୍ତୁ…",
+      typeSend: "ଅନୁବାଦ କରନ୍ତୁ →",
+      editedAria: "ସଂଶୋଧିତ",
+      youWord: "ଆପଣ",
+      themWord: "ସେ",
+      histShare: "ସେୟାର କରନ୍ତୁ",
+      histDelete: "ଲିଭାନ୍ତୁ",
+      histDeleteConfirm: "ଏହି କଥାବାର୍ତ୍ତା ଏହି ଫୋନରୁ ଲିଭାଇବେ?",
+      histDeleted: "ଲିଭାଗଲା",
+      histNoLines: "BaatChiit ପୂରା କଥା ସଞ୍ଚୟ କରିବା ଆଗରୁ ଏହି କଥାବାର୍ତ୍ତା ସେଭ୍ ହୋଇଥିଲା — ଏଠାରେ କେବଳ ସାରାଂଶ ଅଛି।",
+      copied: "କପି ହେଲା — ଯେକୌଣସି ଜାଗାରେ ପେଷ୍ଟ କରନ୍ତୁ",
+      copyFailed: "ଏହି ବ୍ରାଉଜରରେ କପି ହୋଇପାରିଲା ନାହିଁ",
       tourNext: "ଆଗକୁ", tourStart: "ଆରମ୍ଭ କରନ୍ତୁ", tourSkip: "ବର୍ତ୍ତମାନ ନୁହେଁ",
       help: [
         ["ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍", "ସ୍କ୍ରିନ ଦୁଇ ଭାଗରେ ବିଭକ୍ତ। ଉପର ଭାଗ ଜାଣିଶୁଣି ଓଲଟା — ଫୋନକୁ ମଝିରେ ରଖନ୍ତୁ, ଦୁହେଁ ସିଧା ଦେଖିପାରିବେ।"],
@@ -2523,6 +2854,32 @@
       pairHint: "ਇੱਥੇ ਸਿਰਫ਼ ਉਹਨਾਂ ਦੀ ਭਾਸ਼ਾ ਹੈ — ਤੁਹਾਡੀ ਪਿਛਲੀ ਸਕਰੀਨ 'ਤੇ ਤੈਅ ਹੁੰਦੀ ਹੈ।",
       backToAuto: "ਫਿਰ ਆਪੇ ਪਛਾਣ",
       langsUpdated: "ਭਾਸ਼ਾਵਾਂ ਬਦਲ ਦਿੱਤੀਆਂ",
+      male: "ਮਰਦ",
+      female: "ਔਰਤ",
+      youAre: "ਤੁਸੀਂ",
+      genderWhy: "ਪੰਜਾਬੀ, ਹਿੰਦੀ ਸਮੇਤ ਕਈ ਭਾਸ਼ਾਵਾਂ ਵਿੱਚ ਇਸ ਨਾਲ ਸ਼ਬਦ ਬਦਲਦੇ ਹਨ (ਜਾ ਰਿਹਾ / ਜਾ ਰਹੀ), ਅਤੇ ਅਨੁਵਾਦ ਦੀ ਆਵਾਜ਼ ਵੀ ਉਸੇ ਮੁਤਾਬਕ ਹੋਵੇਗੀ।",
+      pickGender: "ਪਹਿਲਾਂ ਮਰਦ ਜਾਂ ਔਰਤ ਚੁਣੋ — ਇਸ ਨਾਲ ਸ਼ਬਦ ਬਦਲਦੇ ਹਨ",
+      voiceAria: "ਆਵਾਜ਼ ਅਤੇ ਸ਼ਬਦ",
+      voiceNowMale: "ਹੁਣ ਤੋਂ ਮਰਦ ਦੀ ਆਵਾਜ਼ ਅਤੇ ਸ਼ਬਦ",
+      voiceNowFemale: "ਹੁਣ ਤੋਂ ਔਰਤ ਦੀ ਆਵਾਜ਼ ਅਤੇ ਸ਼ਬਦ",
+      typeAria: "ਲਿਖ ਕੇ ਭੇਜੋ",
+      typeTitleHost: "ਆਪਣੀ ਗੱਲ ਲਿਖੋ",
+      typeTitleGuest: "ਉਨ੍ਹਾਂ ਦੀ ਗੱਲ ਲਿਖੋ",
+      editTitle: "ਜੋ ਸੁਣਿਆ ਗਿਆ, ਉਸਨੂੰ ਠੀਕ ਕਰੋ",
+      typeTip: "ਸੁਝਾਅ: ਆਪਣੀ ਕਹੀ ਕਿਸੇ ਵੀ ਗੱਲ 'ਤੇ ਟੈਪ ਕਰਕੇ ਉਸਨੂੰ ਠੀਕ ਕਰ ਸਕਦੇ ਹੋ।",
+      editTip: "ਸ਼ਬਦ ਬਦਲੋ, ਫਿਰ ਦੁਬਾਰਾ ਅਨੁਵਾਦ ਕਰੋ। ਦੋਵਾਂ ਪਾਸੇ ਉਹੀ ਗੱਲ ਬਦਲ ਜਾਵੇਗੀ।",
+      typePlaceholder: "ਇੱਥੇ ਲਿਖੋ…",
+      typeSend: "ਅਨੁਵਾਦ ਕਰੋ →",
+      editedAria: "ਠੀਕ ਕੀਤਾ",
+      youWord: "ਤੁਸੀਂ",
+      themWord: "ਉਹ",
+      histShare: "ਸਾਂਝਾ ਕਰੋ",
+      histDelete: "ਮਿਟਾਓ",
+      histDeleteConfirm: "ਕੀ ਇਹ ਗੱਲਬਾਤ ਇਸ ਫੋਨ ਤੋਂ ਮਿਟਾ ਦੇਈਏ?",
+      histDeleted: "ਮਿਟਾ ਦਿੱਤੀ",
+      histNoLines: "ਇਹ ਗੱਲਬਾਤ ਉਦੋਂ ਸੰਭਾਲੀ ਗਈ ਸੀ ਜਦੋਂ BaatChiit ਪੂਰੇ ਸ਼ਬਦ ਨਹੀਂ ਰੱਖਦਾ ਸੀ — ਇੱਥੇ ਸਿਰਫ਼ ਝਲਕ ਹੈ।",
+      copied: "ਕਾਪੀ ਹੋ ਗਿਆ — ਕਿਤੇ ਵੀ ਪੇਸਟ ਕਰੋ",
+      copyFailed: "ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਕਾਪੀ ਨਹੀਂ ਹੋ ਸਕਿਆ",
       tourNext: "ਅੱਗੇ", tourStart: "ਸ਼ੁਰੂ ਕਰੋ", tourSkip: "ਹੁਣੇ ਨਹੀਂ",
       help: [
         ["ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ", "ਸਕਰੀਨ ਦੋ ਹਿੱਸਿਆਂ ਵਿੱਚ ਹੈ। ਉੱਪਰਲਾ ਹਿੱਸਾ ਜਾਣ-ਬੁੱਝ ਕੇ ਉਲਟਾ ਹੈ — ਫੋਨ ਵਿਚਕਾਰ ਰੱਖੋ, ਦੋਹਾਂ ਨੂੰ ਸਿੱਧਾ ਦਿਸੇਗਾ।"],
@@ -2647,6 +3004,32 @@
       pairHint: "இங்கே அவரது மொழி மட்டும் — உங்கள் மொழி முந்தைய திரையில் அமைக்கப்படுகிறது.",
       backToAuto: "மீண்டும் தானாகக் கண்டறி",
       langsUpdated: "மொழிகள் மாற்றப்பட்டன",
+      male: "ஆண்",
+      female: "பெண்",
+      youAre: "நீங்கள்",
+      genderWhy: "இந்தி உள்ளிட்ட பல மொழிகளில் இதனால் சொற்கள் மாறும் (जा रहा / जा रही), மொழிபெயர்ப்பின் குரலும் அதற்கேற்ப இருக்கும்.",
+      pickGender: "முதலில் ஆண் அல்லது பெண் என்பதைத் தேர்ந்தெடுங்கள் — இதனால் சொற்கள் மாறும்",
+      voiceAria: "குரலும் சொற்களும்",
+      voiceNowMale: "இனி ஆண் குரலும் சொற்களும்",
+      voiceNowFemale: "இனி பெண் குரலும் சொற்களும்",
+      typeAria: "தட்டச்சு செய்யுங்கள்",
+      typeTitleHost: "உங்கள் செய்தியைத் தட்டச்சு செய்யுங்கள்",
+      typeTitleGuest: "அவர்களின் செய்தியைத் தட்டச்சு செய்யுங்கள்",
+      editTitle: "கேட்டதைத் திருத்துங்கள்",
+      typeTip: "குறிப்பு: நீங்கள் சொன்ன எதையும் தட்டி திருத்தலாம்.",
+      editTip: "சொற்களை மாற்றி மீண்டும் மொழிபெயருங்கள். இரு பக்கமும் அந்த வரி மாறும்.",
+      typePlaceholder: "இங்கே தட்டச்சு செய்யுங்கள்…",
+      typeSend: "மொழிபெயர் →",
+      editedAria: "திருத்தப்பட்டது",
+      youWord: "நீங்கள்",
+      themWord: "அவர்",
+      histShare: "பகிருங்கள்",
+      histDelete: "நீக்கு",
+      histDeleteConfirm: "இந்த உரையாடலை இந்த ஃபோனிலிருந்து நீக்கவா?",
+      histDeleted: "நீக்கப்பட்டது",
+      histNoLines: "BaatChiit முழு வார்த்தைகளைச் சேமிப்பதற்கு முன் இந்த உரையாடல் சேமிக்கப்பட்டது — இங்கே சுருக்கம் மட்டுமே.",
+      copied: "நகலெடுக்கப்பட்டது — எங்கும் ஒட்டலாம்",
+      copyFailed: "இந்த உலாவியில் நகலெடுக்க முடியவில்லை",
       tourNext: "அடுத்து", tourStart: "தொடங்கு", tourSkip: "இப்போது வேண்டாம்",
       help: [
         ["இருவர், ஒரு ஃபோன்", "திரை இரண்டு பகுதிகளாக உள்ளது. மேல் பகுதி வேண்டுமென்றே தலைகீழாக உள்ளது — ஃபோனை நடுவில் வையுங்கள், இருவருக்கும் நேராகத் தெரியும்."],
@@ -2771,6 +3154,32 @@
       pairHint: "ఇక్కడ వారి భాష మాత్రమే — మీది ముందటి స్క్రీన్‌లో నిర్ణయమవుతుంది.",
       backToAuto: "మళ్ళీ దానంతట గుర్తింపు",
       langsUpdated: "భాషలు మార్చబడ్డాయి",
+      male: "పురుషుడు",
+      female: "స్త్రీ",
+      youAre: "మీరు",
+      genderWhy: "హిందీ సహా చాలా భాషల్లో దీని వల్ల పదాలు మారతాయి (जा रहा / जा रही), అనువాదం గొంతు కూడా దానికి తగ్గట్టే ఉంటుంది.",
+      pickGender: "ముందు పురుషుడా స్త్రీనా ఎంచుకోండి — దీని వల్ల పదాలు మారతాయి",
+      voiceAria: "గొంతు, పదాలు",
+      voiceNowMale: "ఇకపై పురుషుడి గొంతు, పదాలు",
+      voiceNowFemale: "ఇకపై స్త్రీ గొంతు, పదాలు",
+      typeAria: "టైప్ చేయండి",
+      typeTitleHost: "మీ మాట టైప్ చేయండి",
+      typeTitleGuest: "వారి మాట టైప్ చేయండి",
+      editTitle: "విన్నదాన్ని సరిచేయండి",
+      typeTip: "చిట్కా: మీరు చెప్పిన దేనినైనా తాకి సరిచేయవచ్చు.",
+      editTip: "పదాలు మార్చి, మళ్లీ అనువదించండి. రెండు వైపులా ఆ వాక్యం మారుతుంది.",
+      typePlaceholder: "ఇక్కడ టైప్ చేయండి…",
+      typeSend: "అనువదించండి →",
+      editedAria: "సరిచేసినది",
+      youWord: "మీరు",
+      themWord: "వారు",
+      histShare: "షేర్ చేయండి",
+      histDelete: "తొలగించండి",
+      histDeleteConfirm: "ఈ సంభాషణను ఈ ఫోన్ నుండి తొలగించాలా?",
+      histDeleted: "తొలగించబడింది",
+      histNoLines: "BaatChiit పూర్తి మాటలు దాచుకోకముందు ఈ సంభాషణ సేవ్ అయింది — ఇక్కడ సారాంశం మాత్రమే ఉంది.",
+      copied: "కాపీ అయింది — ఎక్కడైనా పేస్ట్ చేయండి",
+      copyFailed: "ఈ బ్రౌజర్‌లో కాపీ చేయలేకపోయాం",
       tourNext: "తర్వాత", tourStart: "ప్రారంభించండి", tourSkip: "ఇప్పుడు వద్దు",
       help: [
         ["ఇద్దరు, ఒక ఫోన్", "స్క్రీన్ రెండు భాగాలుగా ఉంది. పై భాగం కావాలనే తలకిందులుగా ఉంది — ఫోన్‌ను మధ్యలో పెట్టండి, ఇద్దరికీ నేరుగా కనిపిస్తుంది."],
@@ -2808,6 +3217,14 @@
   var HISTORY_KEY = "bc_history";
   var OPENMIC_KEY = "bc_openmic";
   var UI_LANG_KEY = "bc_ui_lang";
+  // "male" | "female" for the phone's owner, asked once on the setup
+  // screen. It decides the grammar of their translations as well as
+  // their voice — see VOICES in api/_lib.js.
+  var GENDER_KEY = "bc_gender";
+  function savedGender() {
+    var g = localStorage.getItem(GENDER_KEY);
+    return g === "male" || g === "female" ? g : null;
+  }
 
   // -----------------------------------------------------------------
   // App state
@@ -2821,12 +3238,19 @@
 
     hostSel: "hi-IN",           // your language, chosen on the setup screen
     guestSel: "en-IN",          // only a fallback for phrase previews
-    host: { lang: null, manual: false },
-    guest: { lang: null, manual: false },
+    hostGender: savedGender(),  // male/female, chosen once on the setup screen
+    // gender: whose words these are, for grammar and voice. The other
+    // person starts as female because that is what Sarvam assumes when
+    // told nothing — the button on their side shows it, so it's fixable.
+    host: { lang: null, manual: false, gender: "female" },
+    guest: { lang: null, manual: false, gender: "female" },
 
     messages: [],
     playQueue: [],
     sessionRec: null,           // current entry in the localStorage history
+    historyFrom: 0,             // messages before this were deleted from history
+    viewingHistId: null,        // the saved conversation open in the transcript sheet
+    compose: null,              // {side, idx} while the typing sheet is open
 
     openMic: localStorage.getItem(OPENMIC_KEY) === "1",
     micStream: null,
@@ -3203,6 +3627,25 @@
     });
   }
 
+  function renderGenderChips() {
+    var wrap = $("gender-chips");
+    wrap.innerHTML = "";
+    ["male", "female"].forEach(function (g) {
+      var b = document.createElement("button");
+      b.className = "lang-chip";
+      b.dataset.selected = state.hostGender === g ? "true" : "false";
+      b.textContent = genderLabel(g);
+      b.addEventListener("click", function () {
+        state.hostGender = g;
+        localStorage.setItem(GENDER_KEY, g);
+        wrap.classList.remove("needs-pick");
+        renderGenderChips();
+      });
+      wrap.appendChild(b);
+    });
+  }
+  function genderLabel(g) { return (g === "male" ? "♂ " : "♀ ") + t(g === "male" ? "male" : "female"); }
+
   function renderOpenMic() {
     $("openmic-switch").setAttribute("aria-pressed", state.openMic ? "true" : "false");
   }
@@ -3214,12 +3657,24 @@
   });
 
   $("btn-start").addEventListener("click", function () {
+    // Required once: guessing would put every man's sentences in the
+    // feminine, which is what happened before this was asked.
+    if (!state.hostGender) {
+      var row = $("gender-chips");
+      row.classList.remove("needs-pick");
+      void row.offsetWidth;              // restart the blink
+      row.classList.add("needs-pick");
+      row.scrollIntoView({ block: "center", behavior: "smooth" });
+      toast(t("pickGender"));
+      return;
+    }
     // Your language is known from this screen; theirs is detected the
     // first time they speak, and only theirs ever changes by itself.
-    state.host = { lang: state.hostSel, manual: true };
-    state.guest = { lang: null, manual: false };
+    state.host = { lang: state.hostSel, manual: true, gender: state.hostGender };
+    state.guest = { lang: null, manual: false, gender: "female" };
     state.messages = [];
     state.sessionRec = null;
+    state.historyFrom = 0;
     renderFeeds();
     renderSideHeads();
     showScreen("main");
@@ -3247,6 +3702,9 @@
       var label = $(side + "-label");
       dot.dataset.state = locked ? "locked" : "waiting";
       label.dataset.state = locked ? "locked" : "waiting";
+      var voice = $("voice-" + side);
+      voice.textContent = genderLabel(state[side].gender);
+      voice.setAttribute("aria-label", t("voiceAria") + ": " + t(state[side].gender));
       // Don't overwrite the live "Listening…" of a mic that's actually
       // open — this runs on every render, including mid-recording.
       if (state.recordingSide === side) return;
@@ -3271,6 +3729,19 @@
     }
   }
 
+  // Male/female, per side, mid-conversation. The host's choice is also
+  // remembered for next time; the guest's is only for this conversation.
+  // It applies from the next sentence — nothing already said is redone.
+  ["host", "guest"].forEach(function (side) {
+    $("voice-" + side).addEventListener("click", function () {
+      var g = state[side].gender === "male" ? "female" : "male";
+      state[side].gender = g;
+      if (side === "host") { state.hostGender = g; localStorage.setItem(GENDER_KEY, g); renderGenderChips(); }
+      renderSideHeads();
+      notice(side, t(g === "male" ? "voiceNowMale" : "voiceNowFemale"));
+    });
+  });
+
   // A message is {speaker, original, translated, tts} or {type:"phrase", phrase}.
   // Each half renders the feed in ITS OWN language: my bubbles show what
   // I said, their bubbles show the translation made for me.
@@ -3293,7 +3764,8 @@
         var secondary = mine ? m.translated : m.original;
         html +=
           '<div class="msg-row" data-mine="' + mine + '" data-idx="' + idx + '">' +
-            '<div class="bubble">' + withNumberChips(primary) + "</div>" +
+            '<div class="bubble">' + withNumberChips(primary) +
+              (m.edited ? '<span class="edited-mark" aria-label="' + escapeHtml(t("editedAria")) + '">✎</span>' : "") + "</div>" +
             (secondary ? '<div class="bubble-secondary">' + withNumberChips(secondary) + "</div>" : "") +
           "</div>";
       });
@@ -3302,10 +3774,23 @@
     });
     renderRepeatButtons();
     // Tapping a received bubble — or any phrase card — replays its audio.
-    document.querySelectorAll('.msg-row[data-mine="false"], .phrase-msg').forEach(function (row) {
+    document.querySelectorAll('.feed .msg-row[data-mine="false"], .feed .phrase-msg').forEach(function (row) {
       row.addEventListener("click", function () {
         var m = state.messages[Number(row.dataset.idx)];
         if (m && m.tts) playTts(m.tts);
+      });
+    });
+    // Tapping something YOU said opens it for correction: a misheard
+    // name, number or medicine is fixed by typing it, not by repeating
+    // the sentence and hoping.
+    ["host", "guest"].forEach(function (side) {
+      $("feed-" + side).querySelectorAll('.msg-row[data-mine="true"]').forEach(function (row) {
+        if (row.classList.contains("live-partial")) return;
+        row.addEventListener("click", function () {
+          var idx = Number(row.dataset.idx);
+          var m = state.messages[idx];
+          if (m && m.speaker === side && !state.recordingSide) openCompose(side, idx);
+        });
       });
     });
   }
@@ -3336,7 +3821,7 @@
 
   function renderRepeatButtons() {
     ["host", "guest"].forEach(function (side) {
-      $("repeat-" + side).hidden = repeatableFor(side).length === 0;
+      $("repeat-" + side).style.visibility = repeatableFor(side).length ? "visible" : "hidden";
     });
   }
 
@@ -3490,26 +3975,64 @@
   }
 
   // -----------------------------------------------------------------
-  // History: local, auto-named. One record per conversation, updated
-  // as exchanges happen. Stored newest-first, capped at 30.
+  // History: local, auto-named. One record per conversation, rewritten
+  // whenever a line is added or corrected. Stored newest-first, capped at
+  // 30 conversations; each keeps the TEXT of its last 200 lines (no audio
+  // — that would fill the phone's storage in a day). Records saved before
+  // 2026-10-12 have no lines, only the preview and count.
   // -----------------------------------------------------------------
+  var HISTORY_MAX = 30;
+  var HISTORY_MAX_LINES = 200;
   function loadHistory() {
     try { return JSON.parse(localStorage.getItem(HISTORY_KEY)) || []; }
     catch (e) { return []; }
   }
-  function recordExchange(firstOriginal) {
-    var list = loadHistory();
-    if (!state.sessionRec) {
-      state.sessionRec = { id: Date.now(), startedAt: Date.now(), count: 0, preview: firstOriginal || "" };
-      list.unshift(state.sessionRec);
-    } else {
-      // replace the stored copy with the live one (match by id)
-      for (var i = 0; i < list.length; i++) if (list[i].id === state.sessionRec.id) { list[i] = state.sessionRec; break; }
+  function writeHistory(list) {
+    list = list.slice(0, HISTORY_MAX);
+    // Storage is per-site and small (~5MB). If it's full, the oldest
+    // conversations go first — never the one being written.
+    while (true) {
+      try { localStorage.setItem(HISTORY_KEY, JSON.stringify(list)); return; }
+      catch (e) { if (list.length <= 1) return; list.pop(); }
     }
-    state.sessionRec.count++;
-    state.sessionRec.hostLang = state.host.lang;
-    state.sessionRec.guestLang = state.guest.lang;
-    localStorage.setItem(HISTORY_KEY, JSON.stringify(list.slice(0, 30)));
+  }
+  // One saved line: s = whose (host/guest), o = what they said, t = the
+  // translation, e = corrected, p = a phrase card (said by the host).
+  function savedLine(m) {
+    if (m.type === "phrase") {
+      var hostCode = state.host.lang || "en-IN", guestCode = state.guest.lang || state.guestSel || "hi-IN";
+      return { s: "host", p: 1,
+        o: m.phrase[hostCode] || m.phrase["en-IN"],
+        t: m.phrase[guestCode] || m.phrase["en-IN"] };
+    }
+    var line = { s: m.speaker, o: m.original, t: m.translated };
+    if (m.edited) line.e = 1;
+    return line;
+  }
+  // The line as the phone's owner reads it: their own words, or the
+  // translation made for them.
+  function ownerText(line) { return line.s === "host" ? line.o : line.t; }
+
+  function saveSession() {
+    var msgs = state.messages.slice(state.historyFrom);
+    if (!msgs.length) return;
+    var lines = msgs.slice(-HISTORY_MAX_LINES).map(savedLine);
+    var list = loadHistory();
+    var rec = null;
+    if (state.sessionRec) {
+      for (var i = 0; i < list.length; i++) if (list[i].id === state.sessionRec.id) { rec = list[i]; break; }
+    }
+    if (!rec) {
+      rec = { id: Date.now(), startedAt: Date.now() };
+      list.unshift(rec);
+    }
+    rec.lines = lines;
+    rec.count = msgs.filter(function (m) { return m.type !== "phrase"; }).length;
+    rec.preview = ownerText(lines[0]) || "";
+    rec.hostLang = state.host.lang;
+    rec.guestLang = state.guest.lang;
+    state.sessionRec = rec;
+    writeHistory(list);
   }
   function whenLabel(ts) {
     var d = new Date(ts), now = new Date();
@@ -3519,6 +4042,9 @@
     if (yesterday) return "Yesterday";
     return d.toLocaleDateString([], { month: "short", day: "numeric" });
   }
+  function pairLabel(h) {
+    return (h.hostLang ? langName(h.hostLang) : "Auto") + " ⇄ " + (h.guestLang ? langName(h.guestLang) : "Auto");
+  }
   function renderHistory() {
     var list = loadHistory();
     var wrap = $("history-list");
@@ -3527,21 +4053,103 @@
       return;
     }
     wrap.innerHTML = list.map(function (h) {
-      var pair = (h.hostLang ? langName(h.hostLang) : "Auto") + " ⇄ " + (h.guestLang ? langName(h.guestLang) : "Auto");
       var title = h.preview ? h.preview : "Conversation";
       if (title.length > 42) title = title.slice(0, 42) + "…";
       return (
-        '<div class="hist-card">' +
+        '<button class="hist-card" data-id="' + h.id + '"><div>' +
           '<div class="place">' + escapeHtml(title) + "</div>" +
-          '<div class="meta">' + escapeHtml(pair + " · " + whenLabel(h.startedAt) + " · " + h.count + " " + t("exchangesWord")) + "</div>" +
-        "</div>"
+          '<div class="meta">' + escapeHtml(pairLabel(h) + " · " + whenLabel(h.startedAt) + " · " + h.count + " " + t("exchangesWord")) + "</div>" +
+        "</div></button>"
       );
+    }).join("");
+    wrap.querySelectorAll(".hist-card").forEach(function (card) {
+      card.addEventListener("click", function () {
+        state.viewingHistId = Number(card.dataset.id);
+        openSheet("transcript");
+      });
+    });
+  }
+
+  function viewedRecord() {
+    var list = loadHistory();
+    for (var i = 0; i < list.length; i++) if (list[i].id === state.viewingHistId) return list[i];
+    return null;
+  }
+  function renderTranscript() {
+    var rec = viewedRecord();
+    if (!rec) { $("transcript-title").textContent = ""; $("transcript-list").innerHTML = ""; return; }
+    $("transcript-title").textContent = rec.preview || "Conversation";
+    $("transcript-meta").textContent = pairLabel(rec) + " · " + whenLabel(rec.startedAt);
+    var lines = rec.lines || [];
+    $("btn-transcript-share").hidden = !lines.length;
+    if (!lines.length) {
+      $("transcript-list").innerHTML = '<p class="hist-empty">' + escapeHtml(t("histNoLines")) + "</p>";
+      return;
+    }
+    // Drawn like the owner's half of the conversation screen: their
+    // bubbles on the right, the other person's on the left, each with
+    // the other language underneath.
+    $("transcript-list").innerHTML = lines.map(function (line) {
+      var mine = line.s === "host";
+      var primary = ownerText(line) || "";
+      var secondary = mine ? line.t : line.o;
+      return '<div class="msg-row" data-mine="' + mine + '">' +
+        '<div class="bubble">' + withNumberChips(primary) + (line.e ? '<span class="edited-mark">✎</span>' : "") + "</div>" +
+        (secondary && secondary !== primary ? '<div class="bubble-secondary">' + withNumberChips(secondary) + "</div>" : "") +
+        "</div>";
     }).join("");
   }
 
+  // Plain text for WhatsApp / SMS / notes: one line per thing said, in
+  // the owner's language, with the other language indented beneath.
+  function transcriptText(rec) {
+    var when = new Date(rec.startedAt).toLocaleString([], { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" });
+    var out = ["BaatChiit · " + when, pairLabel(rec), ""];
+    (rec.lines || []).forEach(function (line) {
+      var mine = line.s === "host";
+      var primary = ownerText(line) || "";
+      var secondary = mine ? line.t : line.o;
+      out.push((mine ? t("youWord") : t("themWord")) + ": " + primary);
+      if (secondary && secondary !== primary) out.push("    " + secondary);
+    });
+    out.push("", "— baatchiit.vercel.app");
+    return out.join("\n");
+  }
+
+  $("btn-transcript-back").addEventListener("click", dismissSheet);
+  $("btn-transcript-share").addEventListener("click", function () {
+    var rec = viewedRecord();
+    if (!rec) return;
+    var text = transcriptText(rec);
+    // The phone's own share sheet — WhatsApp, SMS, email, whatever is
+    // installed. A laptop browser without one gets a copy instead.
+    if (navigator.share) {
+      navigator.share({ text: text }).catch(function () { /* closed the share sheet */ });
+    } else if (navigator.clipboard) {
+      navigator.clipboard.writeText(text).then(function () { toast(t("copied")); }, function () { toast(t("copyFailed")); });
+    } else {
+      toast(t("copyFailed"));
+    }
+  });
+  $("btn-transcript-delete").addEventListener("click", function () {
+    var rec = viewedRecord();
+    if (!rec || !window.confirm(t("histDeleteConfirm"))) return;
+    writeHistory(loadHistory().filter(function (h) { return h.id !== rec.id; }));
+    // Deleting the conversation that is still open: whatever is said
+    // next starts a fresh record, rather than bringing the deleted lines
+    // back with it.
+    if (state.sessionRec && state.sessionRec.id === rec.id) {
+      state.sessionRec = null;
+      state.historyFrom = state.messages.length;
+    }
+    state.viewingHistId = null;
+    toast(t("histDeleted"));
+    dismissSheet();                  // back to the list, which re-renders
+  });
+
   // A sheet is one history entry above the screen it covers, so the
   // back key closes it first instead of leaving the conversation.
-  var SHEETS = ["history", "phrases", "help", "langpair", "tour"];
+  var SHEETS = ["history", "transcript", "compose", "phrases", "help", "langpair", "tour"];
   function hideAllSheets() {
     $("sheet-backdrop").classList.remove("open");
     SHEETS.forEach(function (s) { $(s + "-sheet").classList.remove("open"); });
@@ -3552,6 +4160,8 @@
     $("sheet-backdrop").classList.add("open");
     $(which + "-sheet").classList.add("open");
     if (which === "history") renderHistory();
+    if (which === "transcript") renderTranscript();
+    if (which === "compose") renderCompose();
     if (which === "phrases") { preferPackForPurpose(); renderPhrasePacks(); }
     if (which === "help") renderHelp();
     if (which === "langpair") renderLangPair();
@@ -3573,6 +4183,59 @@
     else closeSheets();
   }
   $("btn-history").addEventListener("click", function () { openSheet("history"); });
+  $("btn-history-1").addEventListener("click", function () { openSheet("history"); });
+
+  // -----------------------------------------------------------------
+  // Typing: the keyboard button beside each mic, for a noisy shop or a
+  // name that has to be spelled — and the same box opens with the words
+  // already in it when someone taps a line they said, to fix a mishearing.
+  // Either way the text goes to the pipeline like a live transcript, and
+  // costs the same as speaking it.
+  // -----------------------------------------------------------------
+  function openCompose(side, idx) {
+    var editing = typeof idx === "number" && state.messages[idx];
+    state.compose = { side: side, idx: editing ? idx : null };
+    openSheet("compose");
+    var box = $("compose-text");
+    box.value = editing ? state.messages[idx].original : "";
+    // Inside the tap, so the phone actually raises its keyboard.
+    box.focus();
+    if (editing) box.setSelectionRange(box.value.length, box.value.length);
+  }
+  function renderCompose() {
+    var c = state.compose;
+    if (!c) return;
+    var editing = c.idx !== null;
+    $("compose-title").textContent = editing ? t("editTitle") : t(c.side === "host" ? "typeTitleHost" : "typeTitleGuest");
+    $("compose-tip").textContent = editing ? t("editTip") : t("typeTip");
+    $("compose-text").placeholder = t("typePlaceholder");
+    $("btn-compose-send").textContent = t("typeSend");
+    $("btn-close-compose").textContent = t("close");
+  }
+  function sendCompose() {
+    var c = state.compose;
+    var text = $("compose-text").value.trim();
+    if (!c) return;
+    if (!text) { $("compose-text").focus(); return; }
+    var original = c.idx !== null && state.messages[c.idx] ? state.messages[c.idx].original : null;
+    state.compose = null;
+    $("compose-text").blur();
+    dismissSheet();
+    if (text === original) return;        // nothing changed, nothing to pay for
+    sendToPipeline(c.side, null, null, { text: text, typed: true, replaceIdx: c.idx });
+  }
+  ["host", "guest"].forEach(function (side) {
+    $("type-" + side).addEventListener("click", function () {
+      if (state.recordingSide) return;
+      openCompose(side, null);
+    });
+  });
+  $("btn-compose-send").addEventListener("click", sendCompose);
+  $("btn-close-compose").addEventListener("click", function () { state.compose = null; dismissSheet(); });
+  // Enter sends, as in any chat; Shift+Enter still makes a new line.
+  $("compose-text").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey && !e.isComposing) { e.preventDefault(); sendCompose(); }
+  });
   $("btn-phrases").addEventListener("click", function () { openSheet("phrases"); });
   $("btn-close-phrases").addEventListener("click", dismissSheet);
   $("sheet-backdrop").addEventListener("click", dismissSheet);
@@ -3619,9 +4282,11 @@
         "<span>" + escapeHtml(phrase["en-IN"]) + "</span>" +
         '<span class="native-preview">' + escapeHtml(phrase[previewCode] || "") + "</span>";
       b.addEventListener("click", function () {
-        var message = { type: "phrase", phrase: phrase, tts: null };
+        // A phrase is said on the phone owner's behalf, in their voice.
+        var message = { type: "phrase", phrase: phrase, tts: null, gender: state.host.gender };
         state.messages.push(message);
         renderFeeds();
+        saveSession();
         dismissSheet();
         // Say it out loud in the other person's language — a phrase you
         // have to point at silently isn't much use across a stall. The
@@ -3695,6 +4360,9 @@
     $("t-auto-copy").textContent = t("autoCopy");
     $("t-auto-badge").textContent = t("autoBadge");
     $("t-you-speak").textContent = t("youSpeak");
+    $("t-you-are").textContent = t("youAre");
+    $("t-gender-why").textContent = t("genderWhy");
+    renderGenderChips();
     $("t-openmic-lbl").textContent = t("openMicLbl");
     $("t-openmic-sub").textContent = t("openMicSub");
     // "Start conversation", not "Start listening": nothing is recorded
@@ -3748,11 +4416,17 @@
     $("t-pair-hint").textContent = t("pairHint");
     $("t-pair-they").textContent = t("theySpeak");
     $("btn-pair-auto").textContent = t("backToAuto");
+    $("btn-transcript-share").textContent = t("histShare");
+    $("btn-transcript-delete").textContent = t("histDelete");
+    $("type-host").setAttribute("aria-label", t("typeAria"));
+    $("type-guest").setAttribute("aria-label", t("typeAria"));
 
     renderUiLangChips();
     renderMicHints();
     renderSideHeads();
     if ($("history-sheet").classList.contains("open")) renderHistory();
+    if ($("transcript-sheet").classList.contains("open")) renderTranscript();
+    if ($("compose-sheet").classList.contains("open")) renderCompose();
     if ($("phrases-sheet").classList.contains("open")) renderPhrasePacks();
     if ($("langpair-sheet").classList.contains("open")) renderLangPair();
     if ($("help-sheet").classList.contains("open")) renderHelp();
@@ -3786,7 +4460,7 @@
       b.addEventListener("click", function () {
         // Both sides on one language would translate nothing.
         if (state.host.lang === lang.code) { toast(t("sameLang")); return; }
-        state.guest = { lang: lang.code, manual: true };
+        state.guest = { lang: lang.code, manual: true, gender: state.guest.gender };
         renderLangPair();
         renderSideHeads();
         renderFeeds();          // bubbles show each side in its own language
@@ -3800,7 +4474,7 @@
   $("btn-close-langpair").addEventListener("click", dismissSheet);
   $("btn-pair-auto").addEventListener("click", function () {
     // Only theirs goes back to being detected; yours stays as you set it.
-    state.guest = { lang: null, manual: false };
+    state.guest = { lang: null, manual: false, gender: state.guest.gender };
     renderLangPair();
     renderSideHeads();
     dismissSheet();
@@ -4401,7 +5075,8 @@
         // where the screen shows Latin letters but the voice model needs
         // Devanagari.
         text: text || message.speechText || message.translated,
-        langCode: langCode
+        langCode: langCode,
+        gender: message.gender || "female"     // the voice matches whoever spoke
       })
     }).then(function (res) {
       return res.ok ? res.json() : null;
@@ -4528,6 +5203,7 @@
           token: localStorage.getItem(AUTH_TOKEN_KEY),
           text: text || message.speechText || message.translated,
           langCode: langCode,
+          gender: message.gender || "female",
           stream: true
         })
       });
@@ -4613,6 +5289,8 @@
   // `live` is set when the words were already transcribed by the relay
   // ({text, language, finalMs}); then only text is sent. Otherwise the
   // recorded clip is uploaded and transcribed on the server.
+  // Typed words travel the same way as {text, typed:true}, and a
+  // correction adds replaceIdx: the bubble is rewritten in place.
   function sendToPipeline(side, blob, mimeType, live) {
     var listener = otherSide(side);
     var micBtn = $("mic-" + side);
@@ -4627,9 +5305,13 @@
       body: JSON.stringify({
         token: localStorage.getItem(AUTH_TOKEN_KEY),
         transcript: live.text,
-        detectedLanguage: live.language || state[side].lang || null,
-        sourceLangHint: state[side].lang || "unknown",
+        // Typed text is in whatever the keyboard had — Hindi often comes
+        // in Latin letters — so the translator is asked to detect it.
+        detectedLanguage: live.typed ? null : (live.language || state[side].lang || null),
+        sourceLangHint: live.typed ? "auto" : (state[side].lang || "unknown"),
         targetLangCode: target,
+        speakerGender: state[side].gender,
+        typed: !!live.typed,
         wantAudio: false
       })
     }) :
@@ -4652,7 +5334,9 @@
         // Words first. Speech synthesis is a whole extra round trip to
         // Sarvam, and making the reader wait for it was most of the
         // delay people felt — the audio follows from /api/speak.
-        "X-BC-Want-Audio": "0"
+        "X-BC-Want-Audio": "0",
+        // Whose words: the translation's grammar and the voice follow it.
+        "X-BC-Gender": state[side].gender
       },
       body: blob
     });
@@ -4683,18 +5367,31 @@
       }
       renderSideHeads();
 
-      var message = {
+      var fields = {
         speaker: side,
+        gender: state[side].gender,
         original: data.transcript,
         translated: data.translatedText,
         speechText: data.speechText || data.translatedText,
         tts: data.ttsAudioBase64 || null
       };
-      state.messages.push(message);
+      var message;
+      var replacing = live && typeof live.replaceIdx === "number" ? state.messages[live.replaceIdx] : null;
+      if (replacing && replacing.speaker === side) {
+        // A correction: same bubble, new words, said again.
+        message = replacing;
+        Object.keys(fields).forEach(function (k) { message[k] = fields[k]; });
+        message.edited = true;
+      } else {
+        message = fields;
+        state.messages.push(message);
+      }
       renderFeeds();
-      recordExchange(data.transcript);
+      saveSession();
 
-      if (DEBUG && live) {
+      if (DEBUG && live && live.typed) {
+        notice(side, "typed · words " + secs(Date.now() - sentAt) + " (tr " + ((data.timings || {}).translate || "?") + ")", 6000);
+      } else if (DEBUG && live) {
         var srvL = data.timings || {};
         notice(side, "live: final " + live.finalMs + "ms after release · words " +
           secs(live.finalMs + Date.now() - sentAt) + " after release (tr " + (srvL.translate || "?") + ")", 6000);

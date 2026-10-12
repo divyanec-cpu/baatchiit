@@ -35,7 +35,7 @@
 
 const SARVAM_BASE = "https://api.sarvam.ai";
 
-const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser, recordActivity, boostWavLoudness } = require("./_lib.js");
+const { DECIMINUTES_PER_EXCHANGE, redisConfigured, getSession, getUser, saveUser, recordActivity, boostWavLoudness, speakerGender, voiceFor } = require("./_lib.js");
 
 // Hinglish is not a language Sarvam knows -- it's Hindi asked for in a
 // particular shape: English words left where people actually say them
@@ -99,6 +99,7 @@ module.exports = async function handler(req, res) {
       sourceLangHint: h["x-bc-source"],
       targetLangCode: h["x-bc-target"],
       wantAudio: h["x-bc-want-audio"] !== "0",
+      speakerGender: h["x-bc-gender"],
     };
   } else if (typeof body === "string") {
     try {
@@ -118,6 +119,9 @@ module.exports = async function handler(req, res) {
   if (!audioBuffer && audioBase64) audioBuffer = Buffer.from(audioBase64, "base64");
   // Older clients don't send the flag and still expect audio inline.
   const wantAudio = body.wantAudio !== false;
+  // Who spoke, male or female: the translation's grammar and the voice
+  // both follow it. See VOICES in _lib.js.
+  const gender = speakerGender(body.speakerGender);
 
   // ---------- Metering gate (login-first + minutes wallet) ----------
   // Every successful exchange costs 1 deciminute ("~1 minute per 10
@@ -144,6 +148,10 @@ module.exports = async function handler(req, res) {
   // text instead of audio and STT is skipped. Same price as any exchange
   // — this is the same translation, just reached faster — and a capped
   // length so it can't be used as a bulk translator.
+  // The same shape carries words the person TYPED, or corrected after a
+  // mishearing ({typed:true}); those come with sourceLangHint "auto",
+  // because people type in whatever their keyboard has — Hindi in Latin
+  // letters as often as in Devanagari — and mayura detects it.
   const relayTranscript = typeof body.transcript === "string" ? body.transcript.trim().slice(0, 1000) : null;
   if (body.transcript !== undefined && !relayTranscript) {
     return res.status(400).json({ error: "Empty transcript." });
@@ -168,7 +176,7 @@ module.exports = async function handler(req, res) {
       ? { transcript: relayTranscript, languageCode: body.detectedLanguage || sourceLangHint || null }
       : await speechToText({ apiKey, audioBuffer, mimeType, sourceLangHint: sarvamLang(sourceLangHint) });
     timings.stt = Date.now() - t0;
-    if (relayTranscript) timings.via = "relay";
+    if (relayTranscript) timings.via = body.typed ? "typed" : "relay";
 
     if (!stt.transcript || !stt.transcript.trim()) {
       // Nothing understandable was said (silence, noise, a very short tap).
@@ -207,6 +215,7 @@ module.exports = async function handler(req, res) {
           sourceLangCode: sourceForTranslate,
           targetLangCode,
           outputScript: "roman",
+          gender,
         }).catch((err) => {
           // Losing the Latin letters is a disappointment; losing the
           // conversation is a failure. Fall back to Devanagari.
@@ -219,6 +228,7 @@ module.exports = async function handler(req, res) {
           sourceLangCode: sourceForTranslate,
           targetLangCode,
           outputScript: null,
+          gender,
         }),
       ]);
       translation = roman || native;
@@ -229,6 +239,7 @@ module.exports = async function handler(req, res) {
         input: stt.transcript,
         sourceLangCode: sourceForTranslate,
         targetLangCode,
+        gender,
       });
       speechText = translation.translatedText;
     }
@@ -246,6 +257,7 @@ module.exports = async function handler(req, res) {
         apiKey,
         text: speechText,
         targetLangCode: sarvamLang(targetLangCode),
+        gender,
       });
       if (ttsAudioBase64) ttsAudioBase64 = boostWavLoudness(ttsAudioBase64).base64;
       timings.tts = Date.now() - tTts;
@@ -318,7 +330,7 @@ async function speechToText({ apiKey, audioBuffer, mimeType, sourceLangHint }) {
 // ---------------------------------------------------------------------
 // Step 2: Translate  --  POST https://api.sarvam.ai/translate
 // ---------------------------------------------------------------------
-async function translateText({ apiKey, input, sourceLangCode, targetLangCode, outputScript }) {
+async function translateText({ apiKey, input, sourceLangCode, targetLangCode, outputScript, gender }) {
   const res = await fetch(`${SARVAM_BASE}/translate`, {
     method: "POST",
     headers: {
@@ -336,6 +348,7 @@ async function translateText({ apiKey, input, sourceLangCode, targetLangCode, ou
       mode: targetLangCode === HINGLISH ? "code-mixed" : "modern-colloquial",
       ...(outputScript ? { output_script: outputScript } : {}),
       numerals_format: "international", // plain 0-9 digits, so the app's on-screen "number chips" can spot them
+      speaker_gender: gender === "male" ? "Male" : "Female",
     }),
   });
 
@@ -346,7 +359,7 @@ async function translateText({ apiKey, input, sourceLangCode, targetLangCode, ou
 // ---------------------------------------------------------------------
 // Step 3: Text to Speech  --  POST https://api.sarvam.ai/text-to-speech
 // ---------------------------------------------------------------------
-async function textToSpeech({ apiKey, text, targetLangCode }) {
+async function textToSpeech({ apiKey, text, targetLangCode, gender }) {
   const res = await fetch(`${SARVAM_BASE}/text-to-speech`, {
     method: "POST",
     headers: {
@@ -357,7 +370,7 @@ async function textToSpeech({ apiKey, text, targetLangCode }) {
       text,
       target_language_code: targetLangCode,
       model: "bulbul:v3",
-      speaker: "priya",
+      speaker: voiceFor(gender),
       speech_sample_rate: 16000,   // speech is clear at 16k; the reply is
         // uncompressed WAV over base64, so this is ~27% less to download
     }),
