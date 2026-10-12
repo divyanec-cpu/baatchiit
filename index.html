@@ -686,8 +686,8 @@
   }
   .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
-  /* ============== FIRST-RUN TOUR ============== */
-  .tour {
+  /* ============== MODAL CARD (the microphone explainer) ============== */
+  .modal {
     position: fixed; inset: 0;
     background: rgba(20, 14, 8, 0.62);
     z-index: 50;
@@ -695,8 +695,8 @@
     align-items: center; justify-content: center;
     padding: 24px;
   }
-  .tour.open { display: flex; }
-  .tour-card {
+  .modal.open { display: flex; }
+  .modal-card {
     background: var(--cream);
     border-radius: 22px;
     padding: 26px 22px 18px;
@@ -705,12 +705,25 @@
     display: flex; flex-direction: column; gap: 10px;
     animation: bcFade 0.25s ease;
   }
-  .tour-icon { font-size: 34px; line-height: 1; }
-  .tour-title { font-family: var(--font-display); font-weight: 800; font-size: 19px; margin: 0; }
-  .tour-body { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 0; }
-  .tour-dots { display: flex; gap: 6px; justify-content: center; padding: 6px 0 2px; }
-  .tour-dots span { width: 7px; height: 7px; border-radius: 999px; background: var(--border-strong); }
-  .tour-dots span[data-on="true"] { background: var(--saffron); }
+  .modal-icon { font-size: 34px; line-height: 1; }
+  .modal-title { font-family: var(--font-display); font-weight: 800; font-size: 19px; margin: 0; }
+  .modal-body { font-size: 14px; line-height: 1.55; color: var(--muted); margin: 0; text-align: left; }
+
+  /* An empty conversation says what to do, right above the mic. It used
+     to open on a four-card tour instead — four taps between a new user
+     and the first thing they came to try. */
+  .empty-hint {
+    align-self: center;
+    text-align: center;
+    max-width: 88%;
+    font-size: 14px; font-weight: 700; line-height: 1.45;
+    padding: 10px 14px;
+    border-radius: 14px;
+    border: 1.5px dashed var(--border-strong);
+    font-family: var(--font-script);
+  }
+  .half--host .empty-hint { color: var(--saffron-ink); }
+  .half--guest .empty-hint { color: var(--gold); border-color: rgba(242, 183, 5, 0.35); }
 
   /* ============== HELP SHEET ============== */
   .help-item {
@@ -1041,7 +1054,7 @@
       margin-left: auto; margin-right: auto;
     }
     .history-sheet { right: calc(50% - var(--app-w) / 2); }
-    /* The backdrop and the tour still dim the whole window — a modal
+    /* The backdrop and the modal card still dim the whole window — a modal
        that only greys out part of the screen looks like a bug. */
   }
 </style>
@@ -1412,7 +1425,7 @@
   </div>
 </div>
 
-<!-- Help sheet: same explanations as the first-run tour, always reachable -->
+<!-- Help sheet: every explanation, always reachable from the ? buttons -->
 <div class="phrases-sheet" id="help-sheet" role="dialog" aria-label="How BaatChiit works">
   <div class="phrases-head">
     <h2 id="t-help-title">How it works</h2>
@@ -1421,15 +1434,15 @@
   <div class="phrases-list" id="help-list"></div>
 </div>
 
-<!-- First-run tour (once per device; the ? button reopens the same content) -->
-<div class="tour" id="tour-sheet" role="dialog" aria-label="Quick tour">
-  <div class="tour-card">
-    <div class="tour-icon" id="tour-icon"></div>
-    <h2 class="tour-title" id="tour-title"></h2>
-    <p class="tour-body" id="tour-body"></p>
-    <div class="tour-dots" id="tour-dots"></div>
-    <button class="btn-primary" id="tour-next">Aage →</button>
-    <button class="link-btn" id="tour-skip" style="align-self:center;">Abhi rehne do</button>
+<!-- The microphone, explained BEFORE the phone's own permission prompt —
+     and, if it was refused, how to turn it back on. -->
+<div class="modal" id="mic-sheet" role="dialog" aria-label="Microphone">
+  <div class="modal-card">
+    <div class="modal-icon">🎤</div>
+    <h2 class="modal-title" id="mic-title"></h2>
+    <p class="modal-body" id="mic-body"></p>
+    <button class="btn-primary" id="btn-mic-allow"></button>
+    <button class="link-btn" id="btn-mic-later" style="align-self:center;"></button>
   </div>
 </div>
 
@@ -1535,7 +1548,7 @@
   ];
 
   // -----------------------------------------------------------------
-  // UI copy for the welcome + OTP screens and the tour/help content,
+  // UI copy for the welcome + OTP screens and the help content,
   // in every language the translator supports. The rest of the app is
   // English for now (Divya's call). Claude-authored translations — a
   // native read-through is still worth doing, same as PHRASE_PACKS.
@@ -1680,7 +1693,16 @@
       histNoLines: "This conversation was saved before BaatChiit kept the words — only its summary is here.",
       copied: "Copied — paste it anywhere",
       copyFailed: "Couldn't copy on this browser",
-      tourNext: "Next", tourStart: "Start", tourSkip: "Not now",
+      tryFirst: "Try it: hold the mic and say “Namaste, how are you?”",
+      guestEmpty: "Speak in your own language — they'll hear it in theirs.",
+      micAskTitle: "Allow the microphone",
+      micAskBody: "BaatChiit only listens while you hold the mic button. Your phone will ask once — tap Allow.",
+      micAllow: "Allow microphone",
+      micLater: "Not now",
+      micDeniedTitle: "The microphone is blocked",
+      micDeniedAndroid: "In Chrome: tap the icon left of the web address → Permissions → Microphone → Allow. In the installed app: Chrome → Settings → Site settings → Microphone, and allow baatchiit.vercel.app. Meanwhile you can type with the keyboard button.",
+      micDeniedIos: "In Safari, tap aA in the address bar → Website Settings → Microphone → Allow. Meanwhile you can type with the keyboard button.",
+      micTryAgain: "Try again",
       help: [
         ["Two people, one phone", "The screen is split in two. The top half is upside down on purpose — put the phone between you and both sides read straight."],
         ["Press the mic and speak", "Hold the round mic on your side, speak, then let go. The other side sees and hears the translation."],
@@ -1830,7 +1852,16 @@
       histNoLines: "यह बातचीत तब सेव हुई थी जब BaatChiit पूरे शब्द नहीं रखता था — यहाँ सिर्फ़ झलक है।",
       copied: "कॉपी हो गया — कहीं भी पेस्ट करें",
       copyFailed: "इस ब्राउज़र में कॉपी नहीं हो सका",
-      tourNext: "आगे", tourStart: "शुरू करें", tourSkip: "अभी नहीं",
+      tryFirst: "आज़माइए: माइक दबाए रखें और बोलें — “नमस्ते, आप कैसे हैं?”",
+      guestEmpty: "अपनी भाषा में बोलिए — सामने वाले को उनकी भाषा में सुनाई देगा।",
+      micAskTitle: "माइक की अनुमति दें",
+      micAskBody: "BaatChiit तभी सुनता है जब आप माइक बटन दबाए रखते हैं। फ़ोन एक बार पूछेगा — Allow दबाइए।",
+      micAllow: "माइक चालू करें",
+      micLater: "अभी नहीं",
+      micDeniedTitle: "माइक बंद है",
+      micDeniedAndroid: "Chrome में: पते के बाईं ओर के आइकन पर टैप करें → Permissions → Microphone → Allow। इंस्टॉल किए ऐप में: Chrome → Settings → Site settings → Microphone में baatchiit.vercel.app को अनुमति दें। तब तक कीबोर्ड बटन से लिखकर भी बात कर सकते हैं।",
+      micDeniedIos: "Safari में पते के पास aA दबाएँ → Website Settings → Microphone → Allow। तब तक कीबोर्ड बटन से लिखकर भी बात कर सकते हैं।",
+      micTryAgain: "फिर कोशिश करें",
       help: [
         ["दो लोग, एक फ़ोन", "स्क्रीन दो हिस्सों में है। ऊपर वाला हिस्सा जानबूझकर उल्टा है — फ़ोन बीच में रखें, दोनों को सीधा दिखेगा।"],
         ["माइक दबाएँ और बोलें", "अपनी तरफ़ का गोल माइक दबाए रखें, बोलें, फिर छोड़ दें। दूसरी तरफ़ अनुवाद दिखेगा और सुनाई देगा।"],
@@ -1980,7 +2011,16 @@
       histNoLines: "এই কথোপকথন তখন সেভ হয়েছিল যখন BaatChiit পুরো কথা রাখত না — এখানে শুধু সারাংশ আছে।",
       copied: "কপি হয়েছে — যেকোনো জায়গায় পেস্ট করুন",
       copyFailed: "এই ব্রাউজারে কপি করা গেল না",
-      tourNext: "পরবর্তী", tourStart: "শুরু করুন", tourSkip: "এখন নয়",
+      tryFirst: "চেষ্টা করুন: মাইক চেপে ধরে বলুন — “নমস্কার, কেমন আছেন?”",
+      guestEmpty: "নিজের ভাষায় বলুন — উনি ওঁর ভাষায় শুনবেন।",
+      micAskTitle: "মাইকের অনুমতি দিন",
+      micAskBody: "মাইক বোতাম চেপে ধরলেই শুধু BaatChiit শোনে। ফোন একবার জিজ্ঞেস করবে — Allow চাপুন।",
+      micAllow: "মাইক চালু করুন",
+      micLater: "এখন নয়",
+      micDeniedTitle: "মাইক বন্ধ আছে",
+      micDeniedAndroid: "Chrome-এ: ঠিকানার বাঁ দিকের আইকনে ট্যাপ করুন → Permissions → Microphone → Allow। ইনস্টল করা অ্যাপে: Chrome → Settings → Site settings → Microphone-এ baatchiit.vercel.app-কে অনুমতি দিন। ততক্ষণ কীবোর্ড বোতাম দিয়ে লিখেও কথা বলতে পারেন।",
+      micDeniedIos: "Safari-তে ঠিকানার পাশে aA চাপুন → Website Settings → Microphone → Allow। ততক্ষণ কীবোর্ড বোতাম দিয়ে লিখেও কথা বলতে পারেন।",
+      micTryAgain: "আবার চেষ্টা করুন",
       help: [
         ["দুজন, একটি ফোন", "স্ক্রিন দুই ভাগে ভাগ করা। উপরের অংশ ইচ্ছে করেই উল্টো — ফোনটি মাঝখানে রাখুন, দুজনেই সোজা দেখতে পাবেন।"],
         ["মাইক চেপে বলুন", "নিজের দিকের গোল মাইক চেপে ধরে বলুন, তারপর ছেড়ে দিন। অন্য দিকে অনুবাদ দেখা ও শোনা যাবে।"],
@@ -2130,7 +2170,16 @@
       histNoLines: "આ વાતચીત ત્યારે સચવાઈ હતી જ્યારે BaatChiit આખા શબ્દો રાખતું નહોતું — અહીં ફક્ત ઝલક છે.",
       copied: "કૉપિ થઈ ગયું — ગમે ત્યાં પેસ્ટ કરો",
       copyFailed: "આ બ્રાઉઝરમાં કૉપિ ન થઈ શક્યું",
-      tourNext: "આગળ", tourStart: "શરૂ કરો", tourSkip: "હમણાં નહીં",
+      tryFirst: "અજમાવી જુઓ: માઇક દબાવી રાખો અને બોલો — “નમસ્તે, કેમ છો?”",
+      guestEmpty: "તમારી ભાષામાં બોલો — સામેની વ્યક્તિને તેમની ભાષામાં સંભળાશે.",
+      micAskTitle: "માઇકની પરવાનગી આપો",
+      micAskBody: "તમે માઇક બટન દબાવી રાખો ત્યારે જ BaatChiit સાંભળે છે. ફોન એક વાર પૂછશે — Allow દબાવો.",
+      micAllow: "માઇક ચાલુ કરો",
+      micLater: "હમણાં નહીં",
+      micDeniedTitle: "માઇક બંધ છે",
+      micDeniedAndroid: "Chrome માં: સરનામાની ડાબી બાજુના આઇકન પર ટેપ કરો → Permissions → Microphone → Allow. ઇન્સ્ટોલ કરેલી એપમાં: Chrome → Settings → Site settings → Microphone માં baatchiit.vercel.app ને પરવાનગી આપો. ત્યાં સુધી કીબોર્ડ બટનથી લખીને પણ વાત કરી શકો છો.",
+      micDeniedIos: "Safari માં સરનામા પાસે aA દબાવો → Website Settings → Microphone → Allow. ત્યાં સુધી કીબોર્ડ બટનથી લખીને પણ વાત કરી શકો છો.",
+      micTryAgain: "ફરી પ્રયાસ કરો",
       help: [
         ["બે વ્યક્તિ, એક ફોન", "સ્ક્રીન બે ભાગમાં છે. ઉપરનો ભાગ જાણી જોઈને ઊંધો છે — ફોન વચ્ચે મૂકો, બંનેને સીધું દેખાશે."],
         ["માઇક દબાવીને બોલો", "તમારી બાજુનું ગોળ માઇક દબાવી રાખો, બોલો, પછી છોડી દો. સામેની બાજુ અનુવાદ દેખાશે અને સંભળાશે."],
@@ -2280,7 +2329,16 @@
       histNoLines: "BaatChiit ಪೂರ್ಣ ಮಾತುಗಳನ್ನು ಉಳಿಸುವ ಮೊದಲು ಈ ಸಂಭಾಷಣೆ ಉಳಿಸಲಾಗಿತ್ತು — ಇಲ್ಲಿ ಸಾರಾಂಶ ಮಾತ್ರ ಇದೆ.",
       copied: "ನಕಲಿಸಲಾಗಿದೆ — ಎಲ್ಲಿಯಾದರೂ ಅಂಟಿಸಿ",
       copyFailed: "ಈ ಬ್ರೌಸರ್‌ನಲ್ಲಿ ನಕಲಿಸಲು ಆಗಲಿಲ್ಲ",
-      tourNext: "ಮುಂದೆ", tourStart: "ಪ್ರಾರಂಭಿಸಿ", tourSkip: "ಈಗ ಬೇಡ",
+      tryFirst: "ಪ್ರಯತ್ನಿಸಿ: ಮೈಕ್ ಒತ್ತಿ ಹಿಡಿದು ಹೇಳಿ — “ನಮಸ್ಕಾರ, ಹೇಗಿದ್ದೀರಿ?”",
+      guestEmpty: "ನಿಮ್ಮ ಭಾಷೆಯಲ್ಲೇ ಮಾತನಾಡಿ — ಅವರಿಗೆ ಅವರ ಭಾಷೆಯಲ್ಲಿ ಕೇಳಿಸುತ್ತದೆ.",
+      micAskTitle: "ಮೈಕ್‌ಗೆ ಅನುಮತಿ ನೀಡಿ",
+      micAskBody: "ನೀವು ಮೈಕ್ ಬಟನ್ ಒತ್ತಿ ಹಿಡಿದಾಗ ಮಾತ್ರ BaatChiit ಕೇಳುತ್ತದೆ. ಫೋನ್ ಒಮ್ಮೆ ಕೇಳುತ್ತದೆ — Allow ಒತ್ತಿ.",
+      micAllow: "ಮೈಕ್ ಆನ್ ಮಾಡಿ",
+      micLater: "ಈಗ ಬೇಡ",
+      micDeniedTitle: "ಮೈಕ್ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ",
+      micDeniedAndroid: "Chrome ನಲ್ಲಿ: ವಿಳಾಸದ ಎಡಭಾಗದ ಐಕಾನ್ ಟ್ಯಾಪ್ ಮಾಡಿ → Permissions → Microphone → Allow. ಇನ್‌ಸ್ಟಾಲ್ ಮಾಡಿದ ಆ್ಯಪ್‌ನಲ್ಲಿ: Chrome → Settings → Site settings → Microphone ನಲ್ಲಿ baatchiit.vercel.app ಗೆ ಅನುಮತಿ ನೀಡಿ. ಅಲ್ಲಿಯವರೆಗೆ ಕೀಬೋರ್ಡ್ ಬಟನ್ ಬಳಸಿ ಬರೆದು ಮಾತನಾಡಬಹುದು.",
+      micDeniedIos: "Safari ನಲ್ಲಿ ವಿಳಾಸದ ಪಕ್ಕದ aA ಒತ್ತಿ → Website Settings → Microphone → Allow. ಅಲ್ಲಿಯವರೆಗೆ ಕೀಬೋರ್ಡ್ ಬಟನ್ ಬಳಸಿ ಬರೆದು ಮಾತನಾಡಬಹುದು.",
+      micTryAgain: "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
       help: [
         ["ಇಬ್ಬರು, ಒಂದು ಫೋನ್", "ಪರದೆ ಎರಡು ಭಾಗಗಳಲ್ಲಿದೆ. ಮೇಲಿನ ಭಾಗ ಉದ್ದೇಶಪೂರ್ವಕವಾಗಿ ತಲೆಕೆಳಗಾಗಿದೆ — ಫೋನನ್ನು ನಡುವೆ ಇಡಿ, ಇಬ್ಬರಿಗೂ ನೇರವಾಗಿ ಕಾಣುತ್ತದೆ."],
         ["ಮೈಕ್ ಒತ್ತಿ ಮಾತನಾಡಿ", "ನಿಮ್ಮ ಕಡೆಯ ದುಂಡಗಿನ ಮೈಕ್ ಒತ್ತಿ ಹಿಡಿದು ಮಾತನಾಡಿ, ನಂತರ ಬಿಡಿ. ಇನ್ನೊಂದು ಕಡೆ ಅನುವಾದ ಕಾಣುತ್ತದೆ ಮತ್ತು ಕೇಳುತ್ತದೆ."],
@@ -2430,7 +2488,16 @@
       histNoLines: "BaatChiit മുഴുവൻ വാക്കുകളും സൂക്ഷിക്കുന്നതിനു മുൻപ് സേവ് ചെയ്ത സംഭാഷണമാണിത് — ഇവിടെ ചുരുക്കം മാത്രം.",
       copied: "പകർത്തി — എവിടെയും പേസ്റ്റ് ചെയ്യാം",
       copyFailed: "ഈ ബ്രൗസറിൽ പകർത്താനായില്ല",
-      tourNext: "അടുത്തത്", tourStart: "തുടങ്ങാം", tourSkip: "ഇപ്പോൾ വേണ്ട",
+      tryFirst: "പരീക്ഷിക്കൂ: മൈക്ക് അമർത്തിപ്പിടിച്ച് പറയൂ — “നമസ്കാരം, സുഖമാണോ?”",
+      guestEmpty: "നിങ്ങളുടെ ഭാഷയിൽ സംസാരിക്കൂ — അവർക്ക് അവരുടെ ഭാഷയിൽ കേൾക്കാം.",
+      micAskTitle: "മൈക്കിന് അനുമതി നൽകൂ",
+      micAskBody: "മൈക്ക് ബട്ടൺ അമർത്തിപ്പിടിക്കുമ്പോൾ മാത്രമേ BaatChiit കേൾക്കൂ. ഫോൺ ഒരിക്കൽ ചോദിക്കും — Allow അമർത്തൂ.",
+      micAllow: "മൈക്ക് ഓണാക്കൂ",
+      micLater: "ഇപ്പോൾ വേണ്ട",
+      micDeniedTitle: "മൈക്ക് തടഞ്ഞിരിക്കുന്നു",
+      micDeniedAndroid: "Chrome-ൽ: വിലാസത്തിന് ഇടതുവശത്തെ ഐക്കണിൽ ടാപ്പ് ചെയ്യൂ → Permissions → Microphone → Allow. ഇൻസ്റ്റാൾ ചെയ്ത ആപ്പിൽ: Chrome → Settings → Site settings → Microphone-ൽ baatchiit.vercel.app-ന് അനുമതി നൽകൂ. അതുവരെ കീബോർഡ് ബട്ടൺ ഉപയോഗിച്ച് ടൈപ്പ് ചെയ്തും സംസാരിക്കാം.",
+      micDeniedIos: "Safari-യിൽ വിലാസത്തിനരികിലെ aA അമർത്തൂ → Website Settings → Microphone → Allow. അതുവരെ കീബോർഡ് ബട്ടൺ ഉപയോഗിച്ച് ടൈപ്പ് ചെയ്തും സംസാരിക്കാം.",
+      micTryAgain: "വീണ്ടും ശ്രമിക്കൂ",
       help: [
         ["രണ്ടു പേർ, ഒരു ഫോൺ", "സ്ക്രീൻ രണ്ടായി പകുത്തിരിക്കുന്നു. മുകൾഭാഗം മനഃപൂർവം തലകീഴായാണ് — ഫോൺ നടുവിൽ വെക്കൂ, രണ്ടു പേർക്കും നേരെ കാണാം."],
         ["മൈക്ക് അമർത്തി സംസാരിക്കൂ", "നിങ്ങളുടെ ഭാഗത്തെ വൃത്താകൃതിയിലുള്ള മൈക്ക് അമർത്തിപ്പിടിച്ച് സംസാരിക്കൂ, പിന്നെ വിടൂ. മറുഭാഗത്ത് പരിഭാഷ കാണുകയും കേൾക്കുകയും ചെയ്യും."],
@@ -2580,7 +2647,16 @@
       histNoLines: "BaatChiit पूर्ण शब्द साठवत नव्हतं तेव्हा ही बातचीत सेव्ह झाली होती — इथे फक्त झलक आहे.",
       copied: "कॉपी झालं — कुठेही पेस्ट करा",
       copyFailed: "या ब्राउझरमध्ये कॉपी करता आलं नाही",
-      tourNext: "पुढे", tourStart: "सुरू करा", tourSkip: "आत्ता नको",
+      tryFirst: "करून पाहा: माइक दाबून ठेवा आणि म्हणा — “नमस्कार, कसे आहात?”",
+      guestEmpty: "तुमच्या भाषेत बोला — समोरच्यांना त्यांच्या भाषेत ऐकू येईल.",
+      micAskTitle: "माइकला परवानगी द्या",
+      micAskBody: "तुम्ही माइक बटण दाबून ठेवता तेव्हाच BaatChiit ऐकतं. फोन एकदा विचारेल — Allow दाबा.",
+      micAllow: "माइक सुरू करा",
+      micLater: "आत्ता नको",
+      micDeniedTitle: "माइक बंद आहे",
+      micDeniedAndroid: "Chrome मध्ये: पत्त्याच्या डावीकडच्या आयकॉनवर टॅप करा → Permissions → Microphone → Allow. इन्स्टॉल केलेल्या अ‍ॅपमध्ये: Chrome → Settings → Site settings → Microphone मध्ये baatchiit.vercel.app ला परवानगी द्या. तोपर्यंत कीबोर्ड बटणाने लिहूनही बोलू शकता.",
+      micDeniedIos: "Safari मध्ये पत्त्याजवळचं aA दाबा → Website Settings → Microphone → Allow. तोपर्यंत कीबोर्ड बटणाने लिहूनही बोलू शकता.",
+      micTryAgain: "पुन्हा प्रयत्न करा",
       help: [
         ["दोन माणसं, एक फोन", "स्क्रीन दोन भागांत आहे. वरचा भाग मुद्दाम उलटा आहे — फोन मध्ये ठेवा, दोघांना सरळ दिसेल."],
         ["माइक दाबा आणि बोला", "तुमच्या बाजूचा गोल माइक दाबून धरा, बोला, मग सोडा. दुसऱ्या बाजूला भाषांतर दिसेल आणि ऐकू येईल."],
@@ -2730,7 +2806,16 @@
       histNoLines: "BaatChiit ପୂରା କଥା ସଞ୍ଚୟ କରିବା ଆଗରୁ ଏହି କଥାବାର୍ତ୍ତା ସେଭ୍ ହୋଇଥିଲା — ଏଠାରେ କେବଳ ସାରାଂଶ ଅଛି।",
       copied: "କପି ହେଲା — ଯେକୌଣସି ଜାଗାରେ ପେଷ୍ଟ କରନ୍ତୁ",
       copyFailed: "ଏହି ବ୍ରାଉଜରରେ କପି ହୋଇପାରିଲା ନାହିଁ",
-      tourNext: "ଆଗକୁ", tourStart: "ଆରମ୍ଭ କରନ୍ତୁ", tourSkip: "ବର୍ତ୍ତମାନ ନୁହେଁ",
+      tryFirst: "ଚେଷ୍ଟା କରନ୍ତୁ: ମାଇକ୍ ଚାପି ଧରି କୁହନ୍ତୁ — “ନମସ୍କାର, କେମିତି ଅଛନ୍ତି?”",
+      guestEmpty: "ନିଜ ଭାଷାରେ କୁହନ୍ତୁ — ସାମ୍ନା ଲୋକ ତାଙ୍କ ଭାଷାରେ ଶୁଣିବେ।",
+      micAskTitle: "ମାଇକ୍‌କୁ ଅନୁମତି ଦିଅନ୍ତୁ",
+      micAskBody: "ଆପଣ ମାଇକ୍ ବଟନ୍ ଚାପି ଧରିଥିବା ବେଳେ ହିଁ BaatChiit ଶୁଣେ। ଫୋନ୍ ଥରେ ପଚାରିବ — Allow ଦବାନ୍ତୁ।",
+      micAllow: "ମାଇକ୍ ଚାଲୁ କରନ୍ତୁ",
+      micLater: "ଏବେ ନୁହେଁ",
+      micDeniedTitle: "ମାଇକ୍ ବନ୍ଦ ଅଛି",
+      micDeniedAndroid: "Chrome ରେ: ଠିକଣାର ବାମ ପଟ ଆଇକନ୍‌ରେ ଟ୍ୟାପ୍ କରନ୍ତୁ → Permissions → Microphone → Allow। ଇନଷ୍ଟଲ୍ ହୋଇଥିବା ଆପ୍‌ରେ: Chrome → Settings → Site settings → Microphone ରେ baatchiit.vercel.app କୁ ଅନୁମତି ଦିଅନ୍ତୁ। ସେତେବେଳ ଯାଏଁ କୀବୋର୍ଡ ବଟନ୍‌ରେ ଲେଖି ମଧ୍ୟ କଥା ହୋଇପାରିବେ।",
+      micDeniedIos: "Safari ରେ ଠିକଣା ପାଖରେ aA ଦବାନ୍ତୁ → Website Settings → Microphone → Allow। ସେତେବେଳ ଯାଏଁ କୀବୋର୍ଡ ବଟନ୍‌ରେ ଲେଖି ମଧ୍ୟ କଥା ହୋଇପାରିବେ।",
+      micTryAgain: "ପୁଣି ଚେଷ୍ଟା କରନ୍ତୁ",
       help: [
         ["ଦୁଇ ଜଣ, ଗୋଟିଏ ଫୋନ୍", "ସ୍କ୍ରିନ ଦୁଇ ଭାଗରେ ବିଭକ୍ତ। ଉପର ଭାଗ ଜାଣିଶୁଣି ଓଲଟା — ଫୋନକୁ ମଝିରେ ରଖନ୍ତୁ, ଦୁହେଁ ସିଧା ଦେଖିପାରିବେ।"],
         ["ମାଇକ୍ ଦବାଇ କୁହନ୍ତୁ", "ନିଜ ପାଖର ଗୋଲ ମାଇକ୍ ଦବାଇ ଧରି କୁହନ୍ତୁ, ପରେ ଛାଡ଼ନ୍ତୁ। ଅନ୍ୟ ପାଖରେ ଅନୁବାଦ ଦେଖାଯିବ ଓ ଶୁଣାଯିବ।"],
@@ -2880,7 +2965,16 @@
       histNoLines: "ਇਹ ਗੱਲਬਾਤ ਉਦੋਂ ਸੰਭਾਲੀ ਗਈ ਸੀ ਜਦੋਂ BaatChiit ਪੂਰੇ ਸ਼ਬਦ ਨਹੀਂ ਰੱਖਦਾ ਸੀ — ਇੱਥੇ ਸਿਰਫ਼ ਝਲਕ ਹੈ।",
       copied: "ਕਾਪੀ ਹੋ ਗਿਆ — ਕਿਤੇ ਵੀ ਪੇਸਟ ਕਰੋ",
       copyFailed: "ਇਸ ਬ੍ਰਾਊਜ਼ਰ ਵਿੱਚ ਕਾਪੀ ਨਹੀਂ ਹੋ ਸਕਿਆ",
-      tourNext: "ਅੱਗੇ", tourStart: "ਸ਼ੁਰੂ ਕਰੋ", tourSkip: "ਹੁਣੇ ਨਹੀਂ",
+      tryFirst: "ਅਜ਼ਮਾ ਕੇ ਵੇਖੋ: ਮਾਈਕ ਦਬਾ ਕੇ ਰੱਖੋ ਅਤੇ ਕਹੋ — “ਸਤ ਸ੍ਰੀ ਅਕਾਲ, ਕੀ ਹਾਲ ਹੈ?”",
+      guestEmpty: "ਆਪਣੀ ਭਾਸ਼ਾ ਵਿੱਚ ਬੋਲੋ — ਸਾਹਮਣੇ ਵਾਲੇ ਨੂੰ ਉਨ੍ਹਾਂ ਦੀ ਭਾਸ਼ਾ ਵਿੱਚ ਸੁਣਾਈ ਦੇਵੇਗਾ।",
+      micAskTitle: "ਮਾਈਕ ਦੀ ਇਜਾਜ਼ਤ ਦਿਓ",
+      micAskBody: "BaatChiit ਸਿਰਫ਼ ਉਦੋਂ ਸੁਣਦਾ ਹੈ ਜਦੋਂ ਤੁਸੀਂ ਮਾਈਕ ਬਟਨ ਦਬਾ ਕੇ ਰੱਖਦੇ ਹੋ। ਫੋਨ ਇੱਕ ਵਾਰ ਪੁੱਛੇਗਾ — Allow ਦਬਾਓ।",
+      micAllow: "ਮਾਈਕ ਚਾਲੂ ਕਰੋ",
+      micLater: "ਹੁਣੇ ਨਹੀਂ",
+      micDeniedTitle: "ਮਾਈਕ ਬੰਦ ਹੈ",
+      micDeniedAndroid: "Chrome ਵਿੱਚ: ਪਤੇ ਦੇ ਖੱਬੇ ਪਾਸੇ ਵਾਲੇ ਆਈਕਨ 'ਤੇ ਟੈਪ ਕਰੋ → Permissions → Microphone → Allow। ਇੰਸਟਾਲ ਕੀਤੀ ਐਪ ਵਿੱਚ: Chrome → Settings → Site settings → Microphone ਵਿੱਚ baatchiit.vercel.app ਨੂੰ ਇਜਾਜ਼ਤ ਦਿਓ। ਉਦੋਂ ਤੱਕ ਕੀਬੋਰਡ ਬਟਨ ਨਾਲ ਲਿਖ ਕੇ ਵੀ ਗੱਲ ਕਰ ਸਕਦੇ ਹੋ।",
+      micDeniedIos: "Safari ਵਿੱਚ ਪਤੇ ਕੋਲ aA ਦਬਾਓ → Website Settings → Microphone → Allow। ਉਦੋਂ ਤੱਕ ਕੀਬੋਰਡ ਬਟਨ ਨਾਲ ਲਿਖ ਕੇ ਵੀ ਗੱਲ ਕਰ ਸਕਦੇ ਹੋ।",
+      micTryAgain: "ਦੁਬਾਰਾ ਕੋਸ਼ਿਸ਼ ਕਰੋ",
       help: [
         ["ਦੋ ਜਣੇ, ਇੱਕ ਫੋਨ", "ਸਕਰੀਨ ਦੋ ਹਿੱਸਿਆਂ ਵਿੱਚ ਹੈ। ਉੱਪਰਲਾ ਹਿੱਸਾ ਜਾਣ-ਬੁੱਝ ਕੇ ਉਲਟਾ ਹੈ — ਫੋਨ ਵਿਚਕਾਰ ਰੱਖੋ, ਦੋਹਾਂ ਨੂੰ ਸਿੱਧਾ ਦਿਸੇਗਾ।"],
         ["ਮਾਈਕ ਦਬਾ ਕੇ ਬੋਲੋ", "ਆਪਣੇ ਪਾਸੇ ਦਾ ਗੋਲ ਮਾਈਕ ਦਬਾ ਕੇ ਰੱਖੋ, ਬੋਲੋ, ਫਿਰ ਛੱਡ ਦਿਓ। ਦੂਜੇ ਪਾਸੇ ਅਨੁਵਾਦ ਦਿਸੇਗਾ ਤੇ ਸੁਣਾਈ ਦੇਵੇਗਾ।"],
@@ -3030,7 +3124,16 @@
       histNoLines: "BaatChiit முழு வார்த்தைகளைச் சேமிப்பதற்கு முன் இந்த உரையாடல் சேமிக்கப்பட்டது — இங்கே சுருக்கம் மட்டுமே.",
       copied: "நகலெடுக்கப்பட்டது — எங்கும் ஒட்டலாம்",
       copyFailed: "இந்த உலாவியில் நகலெடுக்க முடியவில்லை",
-      tourNext: "அடுத்து", tourStart: "தொடங்கு", tourSkip: "இப்போது வேண்டாம்",
+      tryFirst: "முயற்சி செய்யுங்கள்: மைக்கை அழுத்திப் பிடித்துச் சொல்லுங்கள் — “வணக்கம், எப்படி இருக்கீங்க?”",
+      guestEmpty: "உங்கள் மொழியிலேயே பேசுங்கள் — அவருக்கு அவர் மொழியில் கேட்கும்.",
+      micAskTitle: "மைக்கிற்கு அனுமதி தாருங்கள்",
+      micAskBody: "மைக் பொத்தானை அழுத்திப் பிடிக்கும்போது மட்டுமே BaatChiit கேட்கும். ஃபோன் ஒருமுறை கேட்கும் — Allow அழுத்துங்கள்.",
+      micAllow: "மைக்கை இயக்கு",
+      micLater: "இப்போது வேண்டாம்",
+      micDeniedTitle: "மைக் தடுக்கப்பட்டுள்ளது",
+      micDeniedAndroid: "Chrome-இல்: முகவரியின் இடப்பக்க ஐகானைத் தட்டுங்கள் → Permissions → Microphone → Allow. நிறுவிய ஆப்பில்: Chrome → Settings → Site settings → Microphone-இல் baatchiit.vercel.app-க்கு அனுமதி கொடுங்கள். அதுவரை கீபோர்டு பொத்தானைக் கொண்டு தட்டச்சு செய்தும் பேசலாம்.",
+      micDeniedIos: "Safari-இல் முகவரி அருகே உள்ள aA-ஐ அழுத்துங்கள் → Website Settings → Microphone → Allow. அதுவரை கீபோர்டு பொத்தானைக் கொண்டு தட்டச்சு செய்தும் பேசலாம்.",
+      micTryAgain: "மீண்டும் முயலுங்கள்",
       help: [
         ["இருவர், ஒரு ஃபோன்", "திரை இரண்டு பகுதிகளாக உள்ளது. மேல் பகுதி வேண்டுமென்றே தலைகீழாக உள்ளது — ஃபோனை நடுவில் வையுங்கள், இருவருக்கும் நேராகத் தெரியும்."],
         ["மைக்கை அழுத்திப் பேசுங்கள்", "உங்கள் பக்கத்தில் உள்ள வட்ட மைக்கை அழுத்திப் பிடித்துப் பேசி, பிறகு விடுங்கள். மறுபக்கம் மொழிபெயர்ப்பு தெரியும், கேட்கும்."],
@@ -3180,7 +3283,16 @@
       histNoLines: "BaatChiit పూర్తి మాటలు దాచుకోకముందు ఈ సంభాషణ సేవ్ అయింది — ఇక్కడ సారాంశం మాత్రమే ఉంది.",
       copied: "కాపీ అయింది — ఎక్కడైనా పేస్ట్ చేయండి",
       copyFailed: "ఈ బ్రౌజర్‌లో కాపీ చేయలేకపోయాం",
-      tourNext: "తర్వాత", tourStart: "ప్రారంభించండి", tourSkip: "ఇప్పుడు వద్దు",
+      tryFirst: "ప్రయత్నించండి: మైక్ నొక్కి పట్టుకుని చెప్పండి — “నమస్కారం, ఎలా ఉన్నారు?”",
+      guestEmpty: "మీ భాషలోనే మాట్లాడండి — వారికి వారి భాషలో వినిపిస్తుంది.",
+      micAskTitle: "మైక్‌కు అనుమతి ఇవ్వండి",
+      micAskBody: "మీరు మైక్ బటన్ నొక్కి పట్టుకున్నప్పుడు మాత్రమే BaatChiit వింటుంది. ఫోన్ ఒక్కసారి అడుగుతుంది — Allow నొక్కండి.",
+      micAllow: "మైక్ ఆన్ చేయండి",
+      micLater: "ఇప్పుడు కాదు",
+      micDeniedTitle: "మైక్ బ్లాక్ అయింది",
+      micDeniedAndroid: "Chrome‌లో: చిరునామాకు ఎడమవైపు ఉన్న ఐకాన్‌ను తాకండి → Permissions → Microphone → Allow. ఇన్‌స్టాల్ చేసిన యాప్‌లో: Chrome → Settings → Site settings → Microphone‌లో baatchiit.vercel.app‌కు అనుమతి ఇవ్వండి. అప్పటివరకు కీబోర్డ్ బటన్‌తో టైప్ చేసి కూడా మాట్లాడవచ్చు.",
+      micDeniedIos: "Safari‌లో చిరునామా పక్కన ఉన్న aA నొక్కండి → Website Settings → Microphone → Allow. అప్పటివరకు కీబోర్డ్ బటన్‌తో టైప్ చేసి కూడా మాట్లాడవచ్చు.",
+      micTryAgain: "మళ్లీ ప్రయత్నించండి",
       help: [
         ["ఇద్దరు, ఒక ఫోన్", "స్క్రీన్ రెండు భాగాలుగా ఉంది. పై భాగం కావాలనే తలకిందులుగా ఉంది — ఫోన్‌ను మధ్యలో పెట్టండి, ఇద్దరికీ నేరుగా కనిపిస్తుంది."],
         ["మైక్ నొక్కి మాట్లాడండి", "మీ వైపు ఉన్న గుండ్రటి మైక్ నొక్కి పట్టుకుని మాట్లాడి, తర్వాత వదలండి. అవతలి వైపు అనువాదం కనిపిస్తుంది, వినిపిస్తుంది."],
@@ -3231,7 +3343,7 @@
   // -----------------------------------------------------------------
   var state = {
     screen: "phone",
-    uiLang: localStorage.getItem(UI_LANG_KEY) || "en-IN",   // welcome/tour/help language
+    uiLang: localStorage.getItem(UI_LANG_KEY) || "en-IN",   // the app's own language
     account: null,              // {phone, plan, minutes, paymentsEnabled}
     pendingPhone: null,
     profileFrom: "setup",       // which screen Profile was opened from
@@ -3292,6 +3404,7 @@
   // -----------------------------------------------------------------
   function renderScreen(name) {
     state.screen = name;
+    if (name === "setup") trackStep("setup");
     var screens = document.querySelectorAll(".screen");
     for (var i = 0; i < screens.length; i++) {
       screens[i].classList.toggle("active", screens[i].id === "screen-" + name);
@@ -3313,9 +3426,9 @@
 
     // Sheet layer first: a sheet is just an extra entry on top of the
     // screen it opened over, so back closes it and goes no further.
-    // Rebuild rather than only-close — entries can stack (the tour is
-    // open when the user taps a strip icon), and then going back lands
-    // on an entry that still names a sheet.
+    // Rebuild rather than only-close — entries can stack (the mic card
+    // is open when the user taps a strip icon), and then going back
+    // lands on an entry that still names a sheet.
     closeSheets();
     if (st.bcSheet) showSheet(st.bcSheet);
 
@@ -3336,6 +3449,15 @@
       lastExitHintAt = Date.now();
       toast("Ek baar aur back dabao to app band ho jayega");
       history.pushState({ bcScreen: "setup" }, "");
+      return;
+    }
+
+    // Leaving the first conversation that actually translated something
+    // is when the optional "about you" questions get asked — once.
+    if (target === "setup" && state.screen === "main" && shouldAskAboutYou()) {
+      renderScreen("setup");
+      localStorage.setItem(OB_ASKED_KEY, "1");
+      openOnboarding(true);
       return;
     }
 
@@ -3569,11 +3691,10 @@
       clearInterval(state.resendCountdown);
       localStorage.setItem(AUTH_TOKEN_KEY, data.token);
       setAccount(data);
-      // Replaces the OTP entry either way, so back never returns to login.
-      // First-time accounts get the optional profile questions; everyone
-      // else goes straight to a conversation.
-      if (!data.onboarded) { renderObPurposes(); replaceScreen("onboarding"); }
-      else replaceScreen("setup");
+      // Replaces the OTP entry, so back never returns to login. Everyone
+      // goes straight towards a conversation: the optional "about you"
+      // questions now wait until after the first one (see popstate).
+      replaceScreen("setup");
     }).catch(function (err) {
       btn.disabled = false;
       $("otp-error").textContent = err.message;
@@ -3678,14 +3799,11 @@
     renderFeeds();
     renderSideHeads();
     showScreen("main");
-    // Warm the mic up now (a full tap, nothing being held): the
-    // permission prompt must never race the first push-to-talk hold.
-    ensureMicStream().catch(function (err) {
-      console.error(err);
-      notice("host", t("micDenied"));
-    });
+    trackStep("start");
+    // Settle the mic now, before anyone holds the button: the permission
+    // prompt must never race the first push-to-talk hold.
+    prepareMic();
     warmUpServer();
-    maybeStartTour();
   });
 
   $("btn-back-setup").addEventListener("click", function () { history.back(); });
@@ -3769,6 +3887,11 @@
             (secondary ? '<div class="bubble-secondary">' + withNumberChips(secondary) + "</div>" : "") +
           "</div>";
       });
+      // Nothing said yet: tell each side what to do, in the app's language
+      // for the owner and as a plain promise for the other person.
+      if (!state.messages.length) {
+        html = '<div class="empty-hint">' + escapeHtml(t(side === "host" ? "tryFirst" : "guestEmpty")) + "</div>";
+      }
       feed.innerHTML = html;
       feed.scrollTop = feed.scrollHeight;
     });
@@ -4149,7 +4272,7 @@
 
   // A sheet is one history entry above the screen it covers, so the
   // back key closes it first instead of leaving the conversation.
-  var SHEETS = ["history", "transcript", "compose", "phrases", "help", "langpair", "tour"];
+  var SHEETS = ["history", "transcript", "compose", "phrases", "help", "langpair", "mic"];
   function hideAllSheets() {
     $("sheet-backdrop").classList.remove("open");
     SHEETS.forEach(function (s) { $(s + "-sheet").classList.remove("open"); });
@@ -4165,17 +4288,14 @@
     if (which === "phrases") { preferPackForPurpose(); renderPhrasePacks(); }
     if (which === "help") renderHelp();
     if (which === "langpair") renderLangPair();
-    // The tour dims the screen itself, so it doesn't want the backdrop.
-    if (which === "tour") { $("sheet-backdrop").classList.remove("open"); renderTour(); }
+    // The mic card dims the screen itself, so it doesn't want the backdrop.
+    if (which === "mic") { $("sheet-backdrop").classList.remove("open"); renderMicSheet(); }
   }
   function openSheet(which) {
     showSheet(which);
     history.pushState({ bcScreen: state.screen, bcSheet: which }, "");
   }
   function closeSheets() {            // visual only — popstate calls this
-    // Dismissing the tour with the back key counts as having seen it,
-    // otherwise it reappears on the next conversation.
-    if ($("tour-sheet").classList.contains("open")) localStorage.setItem(TOUR_SEEN_KEY, "1");
     hideAllSheets();
   }
   function dismissSheet() {           // user-initiated close
@@ -4303,14 +4423,11 @@
   }
 
   // -----------------------------------------------------------------
-  // Help: one list of explanations, shown two ways — as a one-time
-  // tour after the first conversation starts, and any time from the
-  // "?" button. Hinglish, matching the rest of the app's voice.
+  // Help: one list of explanations, any time from the "?" buttons.
+  // (Until 2026-10-12 four of them also popped up as a tour when the
+  // first conversation opened; the empty-conversation prompt replaced it.)
   // -----------------------------------------------------------------
   var HELP_ICONS = ["📱", "🎤", "🖐️", "💬", "🔁", "🌐", "₹", "🕐"];
-  var TOUR_STEPS = [0, 1, 3, 6];   // the four that matter on day one
-  var TOUR_SEEN_KEY = "bc_tour_seen";
-  var tourPos = 0;
 
   function t(key) {
     var pack = UI_STRINGS[state.uiLang] || UI_STRINGS["en-IN"];
@@ -4322,7 +4439,7 @@
   }
 
   // Applies the chosen language to the welcome/OTP screens and the
-  // tour/help copy. The rest of the app stays English for now.
+  // help copy. The rest of the app stays English for now.
   function applyUiLang(code) {
     state.uiLang = code;
     localStorage.setItem(UI_LANG_KEY, code);
@@ -4350,7 +4467,6 @@
     $("t-about").textContent = t("about");
     $("t-help-title").textContent = t("helpTitle");
     $("btn-close-help").textContent = t("close");
-    $("tour-skip").textContent = t("tourSkip");
     if (!$("btn-resend-otp").disabled) $("btn-resend-otp").textContent = t("resend");
 
     // setup screen
@@ -4430,7 +4546,7 @@
     if ($("phrases-sheet").classList.contains("open")) renderPhrasePacks();
     if ($("langpair-sheet").classList.contains("open")) renderLangPair();
     if ($("help-sheet").classList.contains("open")) renderHelp();
-    if ($("tour-sheet").classList.contains("open")) renderTour();
+    if ($("mic-sheet").classList.contains("open")) renderMicSheet();
 
     // The app language is almost always the language this person speaks,
     // so pre-select it as their conversation language too.
@@ -4514,38 +4630,87 @@
     }).join("");
   }
 
-  function renderTour() {
-    var idx = TOUR_STEPS[tourPos];
-    var step = helpItems()[idx];
-    $("tour-icon").textContent = HELP_ICONS[idx];
-    $("tour-title").textContent = step[0];
-    $("tour-body").textContent = step[1];
-    $("tour-dots").innerHTML = TOUR_STEPS.map(function (_, i) {
-      return '<span data-on="' + (i === tourPos) + '"></span>';
-    }).join("");
-    $("tour-next").textContent = tourPos === TOUR_STEPS.length - 1 ? t("tourStart") : t("tourNext");
+  // -----------------------------------------------------------------
+  // First-day steps, reported once per account so the admin panel can
+  // show where new people stop between logging in and translating (see
+  // recordStep in api/auth.js). Remembered per phone number, so a second
+  // account on the same phone still reports its own.
+  // -----------------------------------------------------------------
+  var stepsInFlight = {};
+  function trackStep(step) {
+    var a = state.account, token = localStorage.getItem(AUTH_TOKEN_KEY);
+    if (!a || !token) return;
+    var key = "bc_steps_" + a.phone, done = {};
+    try { done = JSON.parse(localStorage.getItem(key)) || {}; } catch (e) { done = {}; }
+    if (done[step] || stepsInFlight[key + step]) return;
+    stepsInFlight[key + step] = true;
+    authFetch({ action: "step", step: step, token: token }).then(function () {
+      try {
+        done = JSON.parse(localStorage.getItem(key)) || {};
+        done[step] = 1;
+        localStorage.setItem(key, JSON.stringify(done));
+      } catch (e) { /* storage full: it'll resend, harmlessly */ }
+    }).catch(function () { /* stats only — never in anyone's way */ })
+      .then(function () { delete stepsInFlight[key + step]; });
   }
 
-  function endTour() {
-    localStorage.setItem(TOUR_SEEN_KEY, "1");
-    dismissSheet();
-  }
-  $("tour-next").addEventListener("click", function () {
-    if (tourPos < TOUR_STEPS.length - 1) { tourPos++; renderTour(); }
-    else endTour();
-  });
-  $("tour-skip").addEventListener("click", endTour);
+  // -----------------------------------------------------------------
+  // The microphone. A bare system dialog asking for it is easy to
+  // refuse, and a refusal is silent: the person just finds a mic button
+  // that does nothing, and leaves. So the app says why first, and if it
+  // was refused, says exactly how to turn it back on — and that typing
+  // works meanwhile.
+  // -----------------------------------------------------------------
+  var micSheetMode = "ask";          // "ask" | "denied"
 
-  // Shown once, after the first conversation actually opens — so it
-  // explains the split screen while the split screen is behind it.
-  function maybeStartTour() {
-    if (localStorage.getItem(TOUR_SEEN_KEY) === "1") return;
-    setTimeout(function () {
+  function micPermission() {
+    try {
+      if (!navigator.permissions || !navigator.permissions.query) return Promise.resolve("unknown");
+      return navigator.permissions.query({ name: "microphone" })
+        .then(function (p) { return p.state; }, function () { return "unknown"; });
+    } catch (e) { return Promise.resolve("unknown"); }
+  }
+  function isPermissionError(err) {
+    return !!err && (err.name === "NotAllowedError" || err.name === "SecurityError" || err.name === "PermissionDeniedError");
+  }
+  // Called as a conversation opens.
+  function prepareMic() {
+    micPermission().then(function (perm) {
       if (state.screen !== "main") return;
-      tourPos = 0;
-      openSheet("tour");
-    }, 500);
+      if (perm === "prompt") { openMicSheet("ask"); return; }
+      if (perm === "denied") { trackStep("mic_denied"); openMicSheet("denied"); return; }
+      // Granted, or a browser that won't say: take it now, as before.
+      takeMic();
+    });
   }
+  function takeMic() {
+    return ensureMicStream().then(function (stream) {
+      trackStep("mic_ok");
+      return stream;
+    }, function (err) {
+      console.error(err);
+      if (isPermissionError(err)) { trackStep("mic_denied"); openMicSheet("denied"); }
+      else notice("host", t("micDenied"));
+      throw err;
+    });
+  }
+  function openMicSheet(mode) {
+    micSheetMode = mode;
+    if ($("mic-sheet").classList.contains("open")) { renderMicSheet(); return; }
+    openSheet("mic");
+  }
+  function renderMicSheet() {
+    var denied = micSheetMode === "denied";
+    $("mic-title").textContent = t(denied ? "micDeniedTitle" : "micAskTitle");
+    $("mic-body").textContent = denied ? t(isIOS() ? "micDeniedIos" : "micDeniedAndroid") : t("micAskBody");
+    $("btn-mic-allow").textContent = t(denied ? "micTryAgain" : "micAllow");
+    $("btn-mic-later").textContent = t("micLater");
+  }
+  $("btn-mic-allow").addEventListener("click", function () {
+    // Inside the tap, so the phone's own prompt appears straight away.
+    takeMic().then(function () { dismissSheet(); }, function () { /* the card now says how to fix it */ });
+  });
+  $("btn-mic-later").addEventListener("click", dismissSheet);
 
   $("btn-help-1").addEventListener("click", function () { openSheet("help"); });
   $("btn-help-2").addEventListener("click", function () { openSheet("help"); });
@@ -4607,7 +4772,16 @@
     });
   }
 
-  function openOnboarding() {
+  var OB_ASKED_KEY = "bc_ob_asked";
+  var obAfterChat = false;          // opened on leaving a first conversation
+  function shouldAskAboutYou() {
+    return !!(state.account && !state.account.onboarded &&
+      localStorage.getItem(OB_ASKED_KEY) !== "1" &&
+      state.messages.some(function (m) { return m.type !== "phrase"; }));
+  }
+
+  function openOnboarding(afterChat) {
+    obAfterChat = afterChat === true;
     var a = state.account || {};
     $("ob-name").value = a.name || "";
     $("ob-city").value = a.city || "";
@@ -4634,12 +4808,16 @@
     }).catch(function () { /* keep whatever we already had */ })
       .then(function () {
         btn.disabled = false;
-        replaceScreen("setup");
+        // Asked on the way out of a conversation: it sits one entry above
+        // the setup screen, so step back to it rather than stacking a
+        // second setup entry the back key would then have to walk through.
+        if (obAfterChat && (history.state || {}).bcScreen === "onboarding") { obAfterChat = false; history.back(); }
+        else replaceScreen("setup");
       });
   }
   $("btn-ob-save").addEventListener("click", function () { saveOnboarding(false); });
   $("btn-ob-skip").addEventListener("click", function () { saveOnboarding(true); });
-  $("btn-profile-edit").addEventListener("click", function () { openOnboarding(); });
+  $("btn-profile-edit").addEventListener("click", function () { openOnboarding(false); });
   function openProfile(from) {
     state.profileFrom = from;
     renderProfile();
@@ -4982,6 +5160,7 @@
 
   function startRecording(side) {
     var micBtn = $("mic-" + side);
+    trackStep("press");
     ensureMicStream().then(function (stream) {
       if (state.recordingSide) return; // one mic, one recording at a time
       var mimeType = pickMimeType();
@@ -5046,6 +5225,7 @@
     }).catch(function (err) {
       console.error(err);
       notice(side, t("micDenied"));
+      if (isPermissionError(err)) { trackStep("mic_denied"); openMicSheet("denied"); }
     });
   }
 

@@ -159,6 +159,8 @@ async function overview() {
     for (let i = 0; i < flat.length; i += 2) pairs.push({ pair: flat[i], count: Number(flat[i + 1]) || 0 });
   } catch { pairs = []; }
 
+  const funnel = await firstSteps(users);
+
   const totalExchanges = Number(await redis(["GET", "stats:exchanges"])) || 0;
   const byUser = users.reduce((s, u) => s + (u.exchanges || 0), 0);
   const exchanges = Math.max(totalExchanges, byUser);
@@ -184,7 +186,30 @@ async function overview() {
     },
     daily,
     pairs,
+    funnel,
   };
+}
+
+// Where new people stop between logging in and their first translation.
+// Only accounts made since the app started reporting steps count — older
+// ones have no step data, and would read as a cliff after "signed up".
+const FUNNEL_SINCE = Date.parse("2026-10-12T00:00:00+05:30");
+const FAST_FIRST_MS = 10 * 60 * 1000;
+
+async function firstSteps(users) {
+  const cohort = users.filter((u) => u.firstSeen && u.firstSeen >= FUNNEL_SINCE);
+  const count = { signedUp: cohort.length, setup: 0, start: 0, mic_ok: 0, mic_denied: 0, press: 0, translated: 0, fast: 0 };
+  for (const u of cohort) {
+    let steps = {};
+    try {
+      const flat = (await redis(["HGETALL", `funnel:${u.phone}`])) || [];
+      for (let i = 0; i < flat.length; i += 2) steps[flat[i]] = Number(flat[i + 1]);
+    } catch { steps = {}; }
+    ["setup", "start", "mic_ok", "mic_denied", "press"].forEach((k) => { if (steps[k]) count[k]++; });
+    if (u.exchanges) count.translated++;
+    if (u.firstTranslatedAt && u.firstTranslatedAt - u.firstSeen <= FAST_FIRST_MS) count.fast++;
+  }
+  return { since: FUNNEL_SINCE, ...count };
 }
 
 async function listUsers(body) {
@@ -542,8 +567,27 @@ function loadOverview() {
         }).join("") + "</table>"
       : '<p class="muted" style="font-size:13px;">No pairs recorded yet.</p>';
 
+    // First steps of accounts made since step tracking began: each row
+    // is how many got that far, as a share of everyone who signed up.
+    var f = d.funnel || { signedUp: 0 };
+    var steps = [
+      ["Signed up", f.signedUp], ["Saw the setup screen", f.setup], ["Opened a conversation", f.start],
+      ["Allowed the microphone", f.mic_ok], ["Refused the microphone", f.mic_denied, true],
+      ["Pressed the mic", f.press], ["Got a translation", f.translated],
+      ["… within 10 minutes of signing up", f.fast]
+    ];
+    var funnel = f.signedUp
+      ? steps.map(function(s){
+          var pct = Math.round((s[1] || 0) / f.signedUp * 100);
+          return '<div class="bar-row"><span class="bar-day" style="width:210px;">' + s[0] + '</span>' +
+            '<span class="bar"><span class="bar-fill" style="width:' + pct + '%;' + (s[2] ? 'background:#B5461E;' : '') + '"></span></span>' +
+            '<span class="bar-n">' + (s[1] || 0) + " · " + pct + '%</span></div>';
+        }).join("")
+      : '<p class="muted" style="font-size:13px;">No new accounts since ' + new Date(f.since).toLocaleDateString("en-IN") + ' yet — this fills in as people sign up.</p>';
+
     $("tab-overview").innerHTML =
       '<div class="grid">' + cards + '</div>' +
+      '<h2>First steps — new accounts since ' + new Date(f.since || Date.now()).toLocaleDateString("en-IN") + '</h2>' + funnel +
       '<h2>Each day — people / translations</h2>' + bars +
       '<h2>Most used language pairs</h2>' + pairs;
   }).catch(function(e){ $("tab-overview").innerHTML = '<p class="muted">' + esc(e.message) + '</p>'; });

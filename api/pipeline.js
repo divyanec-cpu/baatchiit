@@ -268,6 +268,9 @@ module.exports = async function handler(req, res) {
     if (user) {
       user.deciminutes = Math.max(0, (user.deciminutes || 0) - DECIMINUTES_PER_EXCHANGE);
       user.lastSeen = Date.now();
+      // For the admin funnel: how long from signing up to a first
+      // translation (see recordStep in api/auth.js).
+      if (!user.exchanges) user.firstTranslatedAt = Date.now();
       user.exchanges = (user.exchanges || 0) + 1;
       await saveUser(user);
       await recordActivity(user.phone, translation.sourceLangCode || detectedLang, targetLangCode);

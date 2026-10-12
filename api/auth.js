@@ -99,8 +99,10 @@ module.exports = async function handler(req, res) {
         return await whoAmI(body, res);
       case "logout":
         return await logout(body, res);
+      case "step":
+        return await recordStep(body, res);
       default:
-        return res.status(400).json({ error: "action must be one of: config, verify, profile, me, logout." });
+        return res.status(400).json({ error: "action must be one of: config, verify, profile, me, logout, step." });
     }
   } catch (err) {
     console.error("auth error:", err);
@@ -172,6 +174,25 @@ async function saveProfile(body, res) {
   user.onboardedAt = user.onboardedAt || Date.now();
   await saveUser(user);
   return res.status(200).json(accountPayload(user));
+}
+
+// ---------------------------------------------------------------------
+// First-day steps. Half the accounts made before 2026-10-12 logged in
+// and never translated anything, and nothing showed where they stopped.
+// The app reports each step below the first time an account reaches it;
+// the admin overview turns them into a funnel. Kept in its own hash
+// (funnel:<phone>) with HSETNX — first time wins, and it never touches
+// the user record, so it can't race the minutes balance.
+// ---------------------------------------------------------------------
+const STEPS = new Set(["setup", "start", "mic_ok", "mic_denied", "press"]);
+
+async function recordStep(body, res) {
+  const step = String(body.step || "");
+  if (!STEPS.has(step)) return res.status(400).json({ error: "Unknown step." });
+  const session = await getSession(body.token);
+  if (!session) return res.status(401).json({ error: "Not logged in." });
+  await redis(["HSETNX", `funnel:${session.phone}`, step, String(Date.now())]);
+  return res.status(200).json({ ok: true });
 }
 
 async function whoAmI(body, res) {
